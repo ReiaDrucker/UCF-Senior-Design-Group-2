@@ -32,7 +32,7 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap>../../../Pictures/Saved Pictures/Toad Template 1.jpg</pixmap>
+     <pixmap>GUI Visual Studio Project/test_Image.png</pixmap>
     </property>
     <property name="scaledContents">
      <bool>false</bool>
