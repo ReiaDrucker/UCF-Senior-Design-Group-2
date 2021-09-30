@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31702.278
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Testing", "Testing.pyproj", "{0DE4EDD4-374D-4994-A90D-C0F93093CFAF}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SDF Project", "SDF Project.pyproj", "{0DE4EDD4-374D-4994-A90D-C0F93093CFAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

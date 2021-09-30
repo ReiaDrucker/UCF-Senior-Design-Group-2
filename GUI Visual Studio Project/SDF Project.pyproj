@@ -3,15 +3,17 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>0de4edd4-374d-4994-a90d-c0f93093cfaf</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>Testing.py</StartupFile>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>UIModule.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>Testing</Name>
+    <Name>SDF Project</Name>
     <RootNamespace>Testing</RootNamespace>
     <TestFramework>Pytest</TestFramework>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,7 +24,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Testing.py" />
+    <Compile Include="PointModule.py" />
+    <Compile Include="UIModule.py" />
+    <Compile Include="VectorModule.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

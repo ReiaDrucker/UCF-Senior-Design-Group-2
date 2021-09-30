@@ -35,7 +35,7 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap>GUI Visual Studio Project/test_Image.png</pixmap>
+     <pixmap>test_Image.png</pixmap>
     </property>
     <property name="scaledContents">
      <bool>false</bool>
@@ -279,9 +279,17 @@
     <addaction name="actionShow_Right_Image"/>
     <addaction name="actionShow_Interpolated_Image"/>
    </widget>
+   <widget class="QMenu" name="menuZoom">
+    <property name="title">
+     <string>Zoom</string>
+    </property>
+    <addaction name="actionZoom_In"/>
+    <addaction name="actionZoom_Out"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuUpload_Images"/>
    <addaction name="menuToggle_Display_Options"/>
+   <addaction name="menuZoom"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
@@ -339,20 +347,51 @@
    <property name="text">
     <string>Toggle Vector Display</string>
    </property>
+   <property name="statusTip">
+    <string>Hide / Show Vectors on the Image</string>
+   </property>
   </action>
   <action name="actionShow_Left_Image">
    <property name="text">
     <string>Show Left Image</string>
+   </property>
+   <property name="statusTip">
+    <string>Show the uploaded left image</string>
    </property>
   </action>
   <action name="actionShow_Right_Image">
    <property name="text">
     <string>Show Right Image</string>
    </property>
+   <property name="statusTip">
+    <string>Show to uploaded right image</string>
+   </property>
   </action>
   <action name="actionShow_Interpolated_Image">
    <property name="text">
     <string>Show Interpolated Image</string>
+   </property>
+  </action>
+  <action name="actionZoom_In">
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+   <property name="statusTip">
+    <string>Zoom in on the image</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+=</string>
+   </property>
+  </action>
+  <action name="actionZoom_Out">
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+   <property name="statusTip">
+    <string>Zoom out on the image</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+-</string>
    </property>
   </action>
  </widget>

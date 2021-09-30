@@ -218,6 +218,12 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
+
+    p1 = Point("A", 1, 2, 3, 121, 666)
+    print(p1)
+    arr = p1.getRealCoordinates()
+    print(arr)
+
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
