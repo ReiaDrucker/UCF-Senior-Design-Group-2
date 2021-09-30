@@ -5,7 +5,7 @@
     <ProjectGuid>0de4edd4-374d-4994-a90d-c0f93093cfaf</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>UIModule.py</StartupFile>
+    <StartupFile>gui.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -24,9 +24,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="PointModule.py" />
-    <Compile Include="UIModule.py" />
-    <Compile Include="VectorModule.py" />
+    <Compile Include="point.py" />
+    <Compile Include="gui.py" />
+    <Compile Include="vector.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

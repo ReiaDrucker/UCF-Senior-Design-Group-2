@@ -1,6 +1,0 @@
-class Vector(object):
-    pass
-
-
-
-

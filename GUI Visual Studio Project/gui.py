@@ -218,11 +218,17 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
+    from point import *
+    #from vector import *
 
     p1 = Point("A", 1, 2, 3, 121, 666)
+    p2 = Point("B", 0, 1, 4, 6, 7)
     print(p1)
-    arr = p1.getRealCoordinates()
-    print(arr)
+    print(p1.getRealCoordinates())
+    print(p1.getPixelCoordinates())
+    print(p1.getMagnitude())
+    #v1 = Vector(p1,p2)
+    #print(v1)
 
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
