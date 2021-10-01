@@ -21,7 +21,7 @@ class Ui_MainWindow(object):
         self.photo.setScaledContents(False)
         self.photo.setObjectName("photo")
 
-
+        # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidgetPoints.setGeometry(QtCore.QRect(900, 70, 601, 351))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
@@ -91,6 +91,8 @@ class Ui_MainWindow(object):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setItem(0, 3, item)
+
+        # Button to add dummy point.
         self.pushButtonAdd_Dummy_Point = QtWidgets.QPushButton(self.centralwidget)
         self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(900, 430, 151, 28))
         self.pushButtonAdd_Dummy_Point.setObjectName("pushButtonAdd_Dummy_Point")
@@ -98,6 +100,8 @@ class Ui_MainWindow(object):
         self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(900, 860, 151, 28))
         self.pushButtonAdd_Dummy_Vector.setObjectName("pushButtonAdd_Dummy_Vector")
         MainWindow.setCentralWidget(self.centralwidget)
+
+        # Creates menu bar.
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1567, 26))
         self.menubar.setObjectName("menubar")
@@ -148,9 +152,12 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+    # Basically names everything.
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Stereogram Depth Finder"))
+
+        # Names row and column items of point table.
         item = self.tableWidgetPoints.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Point 1"))
         item = self.tableWidgetPoints.verticalHeaderItem(1)
@@ -163,6 +170,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Real Coordinates"))
         __sortingEnabled = self.tableWidgetPoints.isSortingEnabled()
         self.tableWidgetPoints.setSortingEnabled(False)
+
+        # Filling in cells of point table.
         item = self.tableWidgetPoints.item(0, 0)
         item.setText(_translate("MainWindow", "A"))
         item = self.tableWidgetPoints.item(0, 1)
@@ -176,6 +185,8 @@ class Ui_MainWindow(object):
         item = self.tableWidgetPoints.item(1, 2)
         item.setText(_translate("MainWindow", "(1, 0, 0)"))
         self.tableWidgetPoints.setSortingEnabled(__sortingEnabled)
+
+        # Names row and column items of vector table.
         item = self.tableWidgetVectors.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Vector 1"))
         item = self.tableWidgetVectors.horizontalHeaderItem(0)
@@ -188,6 +199,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Magnitude"))
         __sortingEnabled = self.tableWidgetVectors.isSortingEnabled()
         self.tableWidgetVectors.setSortingEnabled(False)
+
+        # Fills in cells of vector table.
         item = self.tableWidgetVectors.item(0, 0)
         item.setText(_translate("MainWindow", "AB"))
         item = self.tableWidgetVectors.item(0, 1)
@@ -197,8 +210,12 @@ class Ui_MainWindow(object):
         item = self.tableWidgetVectors.item(0, 3)
         item.setText(_translate("MainWindow", "1"))
         self.tableWidgetVectors.setSortingEnabled(__sortingEnabled)
+
+        # Names buttons to add rows to tables.
         self.pushButtonAdd_Dummy_Point.setText(_translate("MainWindow", "Add Dummy Point"))
         self.pushButtonAdd_Dummy_Vector.setText(_translate("MainWindow", "Add Dummy Vector"))
+
+        # Names all of the menu bar actions.
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuUpload_Images.setTitle(_translate("MainWindow", "Upload Images"))
         self.menuToggle_Display_Options.setTitle(_translate("MainWindow", "Toggle Display Options"))
