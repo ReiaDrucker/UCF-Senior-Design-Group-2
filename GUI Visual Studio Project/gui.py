@@ -3,11 +3,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        # Window initialization.
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1567, 1062)
         MainWindow.setMouseTracking(True)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+
+        # Uploading and drawing image onto interface.
         self.photo = QtWidgets.QLabel(self.centralwidget)
         self.photo.setGeometry(QtCore.QRect(20, 10, 981, 961))
         font = QtGui.QFont()
@@ -17,6 +20,8 @@ class Ui_MainWindow(object):
         self.photo.setPixmap(QtGui.QPixmap("test_Image.png"))
         self.photo.setScaledContents(False)
         self.photo.setObjectName("photo")
+
+
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidgetPoints.setGeometry(QtCore.QRect(900, 70, 601, 351))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")

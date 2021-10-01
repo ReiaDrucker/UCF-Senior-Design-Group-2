@@ -21,6 +21,7 @@ class Point(object):
     def getPixelCoordinates(self):
         return [self.length, self.width]
 
+    # Calculates magnitude of length from (0,0,0) to current point.
     def getMagnitude(self):
         return math.sqrt(self.x**2 + self.y**2 + self.z**2)
 
