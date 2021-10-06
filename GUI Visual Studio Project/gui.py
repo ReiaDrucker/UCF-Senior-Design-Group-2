@@ -248,15 +248,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
 if __name__ == "__main__":
     import sys
+    import math
     from point import *
     from vector import *
 
-    p1 = Point("A", 1, 2, 3, 121, 666)
+    p1 = Point("A", 0, 0, 0, 0, 0)
     p2 = Point("B", 0, 1, 4, 6, 7)
-    print(p1)
-    print(p2)
+    p3 = Point("C", 1, 2, 3, 4, 5)
+
     v1 = Vector(p1,p2)
-    print(v1)
+    v2 = Vector(p1, p3);
 
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
