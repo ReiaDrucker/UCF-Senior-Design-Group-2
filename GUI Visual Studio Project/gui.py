@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+import os
 
-
-class Ui_MainWindow(object):
+class Ui_MainWindow(QtWidgets.QWidget):
     def setupUi(self, MainWindow):
         # Window initialization.
         MainWindow.setObjectName("MainWindow")
@@ -124,6 +124,7 @@ class Ui_MainWindow(object):
         self.actionExport_Data = QtWidgets.QAction(MainWindow)
         self.actionExport_Data.setObjectName("actionExport_Data")
         self.actionUpload_Left = QtWidgets.QAction(MainWindow)
+        self.actionUpload_Left.triggered.connect(self.openImage)
         self.actionUpload_Left.setObjectName("actionUpload_Left")
         self.actionUpload_Right = QtWidgets.QAction(MainWindow)
         self.actionUpload_Right.setObjectName("actionUpload_Right")
@@ -236,6 +237,13 @@ class Ui_MainWindow(object):
         self.actionShow_Left_Image.setText(_translate("MainWindow", "Show Left Image"))
         self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
         self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
+
+    # Changes the left image to whatever you choose to upload.
+    def openImage(self):
+        fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
+        name = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
+        self.photo.setPixmap(QtGui.QPixmap(name[0]))
+        self.update()
 
 
 if __name__ == "__main__":
