@@ -15,8 +15,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # Uploading and drawing image onto interface.
         self.photo = QtWidgets.QLabel(self.centralwidget)
-
-        #Use a 16:9 resolution currently
         self.photo.setGeometry(QtCore.QRect(20, 10, 960, 540))
         font = QtGui.QFont()
         font.setPointSize(36)
@@ -26,10 +24,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.photo.setScaledContents(True)
         self.photo.setObjectName("photo")
+        self.photo.mousePressEvent = self.getPos
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 600, 300))
+        self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 550, 300))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
         self.tableWidgetPoints.setColumnCount(3)
         self.tableWidgetPoints.setRowCount(2)
@@ -66,7 +65,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setItem(1, 2, item)
         self.tableWidgetVectors = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 600, 300))
+        self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 550, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
         self.tableWidgetVectors.setRowCount(1)
@@ -299,7 +298,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.tableWidgetVectors.setItem(count, i, item)
-    
+
+    # On mouseclick print the x and y coordinates with 0,0 as the top left
+    # Problem is that it works even when an image is not loaded currently because the image container is always loaded
+    def getPos(self, event):
+        x = event.pos().x()
+        y = event.pos().y() 
+        print(x)
+        print(y)
 
 
 if __name__ == "__main__":
