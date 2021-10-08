@@ -2,28 +2,34 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
+
     def setupUi(self, MainWindow):
         # Window initialization.
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1567, 1062)
+
+        # Window sizes should be based on the monitor resolution rather than a hard coded pixel value
+        MainWindow.resize(1600, 1000)
         MainWindow.setMouseTracking(True)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
         # Uploading and drawing image onto interface.
         self.photo = QtWidgets.QLabel(self.centralwidget)
-        self.photo.setGeometry(QtCore.QRect(20, 10, 981, 961))
+
+        #Use a 16:9 resolution currently
+        self.photo.setGeometry(QtCore.QRect(20, 10, 960, 540))
         font = QtGui.QFont()
         font.setPointSize(36)
         self.photo.setFont(font)
         self.photo.setText("")
         self.photo.setPixmap(QtGui.QPixmap("GUI Visual Studio Project/test_Image.png"))
-        self.photo.setScaledContents(False)
+
+        self.photo.setScaledContents(True)
         self.photo.setObjectName("photo")
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetPoints.setGeometry(QtCore.QRect(900, 70, 601, 351))
+        self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 600, 300))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
         self.tableWidgetPoints.setColumnCount(3)
         self.tableWidgetPoints.setRowCount(2)
@@ -60,7 +66,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setItem(1, 2, item)
         self.tableWidgetVectors = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetVectors.setGeometry(QtCore.QRect(900, 500, 601, 351))
+        self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 600, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
         self.tableWidgetVectors.setRowCount(1)
@@ -94,12 +100,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # Button to add dummy point.
         self.pushButtonAdd_Dummy_Point = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(900, 430, 151, 28))
+        self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(1000, 400, 150, 30))
         self.pushButtonAdd_Dummy_Point.setObjectName("pushButtonAdd_Dummy_Point")
         self.pushButtonAdd_Dummy_Point.clicked.connect(self.addDummyPoint)
 
         self.pushButtonAdd_Dummy_Vector = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(900, 860, 151, 28))
+        self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(1000, 800, 150, 30))
         self.pushButtonAdd_Dummy_Vector.setObjectName("pushButtonAdd_Dummy_Vector")
         self.pushButtonAdd_Dummy_Vector.clicked.connect(self.addDummyVector)
 
@@ -127,11 +133,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionSave_As.setObjectName("actionSave_As")
         self.actionExport_Data = QtWidgets.QAction(MainWindow)
         self.actionExport_Data.setObjectName("actionExport_Data")
+
         self.actionUpload_Left = QtWidgets.QAction(MainWindow)
         self.actionUpload_Left.triggered.connect(self.openImage)
         self.actionUpload_Left.setObjectName("actionUpload_Left")
+
         self.actionUpload_Right = QtWidgets.QAction(MainWindow)
+        self.actionUpload_Right.triggered.connect(self.openImage)
         self.actionUpload_Right.setObjectName("actionUpload_Right")
+
         self.actionShow_Vectors = QtWidgets.QAction(MainWindow)
         self.actionShow_Vectors.setObjectName("actionShow_Vectors")
         self.actionShow_Left_Image = QtWidgets.QAction(MainWindow)
@@ -242,13 +252,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
         self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
 
-    # Changes the left image to whatever you choose to upload.
+    # Changes the image widget to display the selected file.
     def openImage(self):
         fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
-        name = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
-        self.photo.setPixmap(QtGui.QPixmap(name[0]))
-        self.update()
+        newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
 
+        # Don't update if they didn't select an image
+        # Probably also don't want to update if they select the same image
+        if(newName[0] != ""):
+            self.photo.setPixmap(QtGui.QPixmap(newName[0]))
+            self.update()
+        
     # Adds dummy point row to point table widget.
     def addDummyPoint(self):
         # Get current number of rows.
