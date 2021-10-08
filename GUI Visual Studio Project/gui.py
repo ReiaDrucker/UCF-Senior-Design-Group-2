@@ -293,13 +293,16 @@ if __name__ == "__main__":
     import math
     from point import *
     from vector import *
+    import numpy as np
 
     p1 = Point("A", 0, 0, 0, 0, 0)
     p2 = Point("B", 0, 1, 4, 6, 7)
     p3 = Point("C", 1, 2, 3, 4, 5)
+    #print(p2)
 
-    v1 = Vector(p1,p2)
-    v2 = Vector(p1, p3);
+    v1 = Vector(p3,p2)
+    print(v1)
+    #v2 = Vector(p1, p3);
 
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
