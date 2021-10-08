@@ -17,7 +17,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         font.setPointSize(36)
         self.photo.setFont(font)
         self.photo.setText("")
-        self.photo.setPixmap(QtGui.QPixmap("test_Image.png"))
+        self.photo.setPixmap(QtGui.QPixmap("GUI Visual Studio Project/test_Image.png"))
         self.photo.setScaledContents(False)
         self.photo.setObjectName("photo")
 
@@ -96,9 +96,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonAdd_Dummy_Point = QtWidgets.QPushButton(self.centralwidget)
         self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(900, 430, 151, 28))
         self.pushButtonAdd_Dummy_Point.setObjectName("pushButtonAdd_Dummy_Point")
+        self.pushButtonAdd_Dummy_Point.clicked.connect(self.addDummyPoint)
+
         self.pushButtonAdd_Dummy_Vector = QtWidgets.QPushButton(self.centralwidget)
         self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(900, 860, 151, 28))
         self.pushButtonAdd_Dummy_Vector.setObjectName("pushButtonAdd_Dummy_Vector")
+        self.pushButtonAdd_Dummy_Vector.clicked.connect(self.addDummyVector)
+
         MainWindow.setCentralWidget(self.centralwidget)
 
         # Creates menu bar.
@@ -244,6 +248,44 @@ class Ui_MainWindow(QtWidgets.QWidget):
         name = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
         self.photo.setPixmap(QtGui.QPixmap(name[0]))
         self.update()
+
+    # Adds dummy point row to point table widget.
+    def addDummyPoint(self):
+        # Get current number of rows.
+        count = self.tableWidgetPoints.rowCount()
+
+        # Create new row and give it proper header name.
+        self.tableWidgetPoints.insertRow(count)
+        item = QtWidgets.QTableWidgetItem()
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+        item.setText("Point " + str(count+1))
+        self.tableWidgetPoints.setVerticalHeaderItem(count, item)
+
+        # Create each item and text align center.
+        for i in range(3):
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.tableWidgetPoints.setItem(count, i, item)
+       
+                
+    # Adds dummy vector row to vector table widget.
+    def addDummyVector(self):
+        # Get current number of rows.
+        count = self.tableWidgetVectors.rowCount()
+
+        # Create new row and give it proper header name.
+        self.tableWidgetVectors.insertRow(count)
+        item = QtWidgets.QTableWidgetItem()
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+        item.setText("Vector " + str(count+1))
+        self.tableWidgetVectors.setVerticalHeaderItem(count, item)
+
+        # Create each item and text align center.
+        for i in range(4):
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.tableWidgetVectors.setItem(count, i, item)
+    
 
 
 if __name__ == "__main__":
