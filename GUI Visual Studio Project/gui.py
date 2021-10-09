@@ -22,13 +22,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.photo.setText("")
         self.photo.setPixmap(QtGui.QPixmap("GUI Visual Studio Project/test_Image.png"))
 
-        self.photo.setScaledContents(True)
+        #Doesn't copy the scaling data
+        self.photoImage = self.photo.pixmap().toImage()
+
+        self.photo.setScaledContents(False)
         self.photo.setObjectName("photo")
         self.photo.mousePressEvent = self.getPos
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 550, 300))
+        self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 580, 300))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
         self.tableWidgetPoints.setColumnCount(3)
         self.tableWidgetPoints.setRowCount(2)
@@ -65,7 +68,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setItem(1, 2, item)
         self.tableWidgetVectors = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 550, 300))
+        self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
         self.tableWidgetVectors.setRowCount(1)
@@ -260,6 +263,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
             self.photo.setPixmap(QtGui.QPixmap(newName[0]))
+            self.photoImage = self.photo.pixmap().toImage()
             self.update()
         
     # Adds dummy point row to point table widget.
@@ -299,6 +303,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.tableWidgetVectors.setItem(count, i, item)
 
+    # Doesn't work should be called by getPOS (gets called when you click on the image)
+    def paintEvent(self, event):
+        print("called the paintEvent")
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setPen(QtGui.QPen(QtCore.Qt.red, 20))
+        painter.drawArc(QtCore.QRectF(250, 250, 10, 10), 0, 5760)
+        painter.end()
+
     # On mouseclick print the x and y coordinates with 0,0 as the top left
     # Problem is that it works even when an image is not loaded currently because the image container is always loaded
     def getPos(self, event):
@@ -306,7 +319,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         y = event.pos().y() 
         print(x)
         print(y)
+        self.paintEvent(event)
+        print(self.photoImage.pixelColor(x,y).name())
 
+    
 
 if __name__ == "__main__":
     import sys
