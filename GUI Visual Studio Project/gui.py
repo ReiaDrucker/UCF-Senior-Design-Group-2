@@ -1,4 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from photoDisplayer import *
+
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -13,6 +15,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
+        # Need to add this to the central widget somehow
+        self.pd = PhotoDisplayer(960, 540)
+        self.pd.setGeometry(QtCore.QRect(20, 970, 960, 540))
+        print(self.pd.parent())
+        
+
         # Uploading and drawing image onto interface.
         self.photo = QtWidgets.QLabel(self.centralwidget)
         self.photo.setGeometry(QtCore.QRect(20, 10, 960, 540))
@@ -22,12 +30,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.photo.setText("")
         self.photo.setPixmap(QtGui.QPixmap("GUI Visual Studio Project/test_Image.png"))
 
-        #Doesn't copy the scaling data
-        self.photoImage = self.photo.pixmap().toImage()
-
-        self.photo.setScaledContents(False)
+        self.photo.setScaledContents(True)
         self.photo.setObjectName("photo")
         self.photo.mousePressEvent = self.getPos
+
+        print(self.photo.parent())
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
@@ -111,6 +118,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonAdd_Dummy_Vector.setObjectName("pushButtonAdd_Dummy_Vector")
         self.pushButtonAdd_Dummy_Vector.clicked.connect(self.addDummyVector)
 
+        # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
 
         # Creates menu bar.
@@ -263,7 +271,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
             self.photo.setPixmap(QtGui.QPixmap(newName[0]))
-            self.photoImage = self.photo.pixmap().toImage()
             self.update()
         
     # Adds dummy point row to point table widget.
@@ -303,15 +310,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.tableWidgetVectors.setItem(count, i, item)
 
-    # Doesn't work should be called by getPOS (gets called when you click on the image)
-    def paintEvent(self, event):
-        print("called the paintEvent")
-        painter = QtGui.QPainter()
-        painter.begin(self)
-        painter.setPen(QtGui.QPen(QtCore.Qt.red, 20))
-        painter.drawArc(QtCore.QRectF(250, 250, 10, 10), 0, 5760)
-        painter.end()
-
     # On mouseclick print the x and y coordinates with 0,0 as the top left
     # Problem is that it works even when an image is not loaded currently because the image container is always loaded
     def getPos(self, event):
@@ -319,8 +317,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         y = event.pos().y() 
         print(x)
         print(y)
-        self.paintEvent(event)
-        print(self.photoImage.pixelColor(x,y).name())
 
     
 
