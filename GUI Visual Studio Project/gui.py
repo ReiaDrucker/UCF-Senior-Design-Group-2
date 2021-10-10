@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
-
+from pointDialog import *
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -15,10 +15,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
-        # Need to add this to the central widget somehow
-        self.pd = PhotoDisplayer(960, 540)
-        self.pd.setGeometry(QtCore.QRect(20, 970, 960, 540))
-        print(self.pd.parent())
+        
         
 
         # Uploading and drawing image onto interface.
@@ -35,6 +32,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.photo.mousePressEvent = self.getPos
 
         print(self.photo.parent())
+
+        # Need to add this to the central widget somehow
+        self.pd = PhotoDisplayer(960, 540)
+        self.pd.setGeometry(QtCore.QRect(20, 970, 960, 540))
+        print(self.pd.parent())
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
@@ -275,6 +277,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         
     # Adds dummy point row to point table widget.
     def addDummyPoint(self):
+        #print("Hello", s)
+        dialog = pointDialog(self)
+        #dialog.setWindowTitle("Enter New Point")
+        dialog.exec()
+        """
         # Get current number of rows.
         count = self.tableWidgetPoints.rowCount()
 
@@ -290,7 +297,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.tableWidgetPoints.setItem(count, i, item)
-       
+       """
                 
     # Adds dummy vector row to vector table widget.
     def addDummyVector(self):
@@ -317,6 +324,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         y = event.pos().y() 
         print(x)
         print(y)
+        self.pd.repaint()
 
     
 
