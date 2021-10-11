@@ -21,7 +21,6 @@ class pointDialog(QDialog):
         self.nameBox = QLineEdit(self)
         self.pixelBox = QLineEdit(self)
         self.realBox = QLineEdit(self)
-        
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
