@@ -15,28 +15,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
-        
-        
 
         # Uploading and drawing image onto interface.
-        self.photo = QtWidgets.QLabel(self.centralwidget)
-        self.photo.setGeometry(QtCore.QRect(20, 10, 960, 540))
-        font = QtGui.QFont()
-        font.setPointSize(36)
-        self.photo.setFont(font)
-        self.photo.setText("")
-        self.photo.setPixmap(QtGui.QPixmap("GUI Visual Studio Project/test_Image.png"))
-
-        self.photo.setScaledContents(True)
-        self.photo.setObjectName("photo")
-        self.photo.mousePressEvent = self.getPos
-
-        print(self.photo.parent())
-
-        # Need to add this to the central widget somehow
-        self.pd = PhotoDisplayer(960, 540)
-        self.pd.setGeometry(QtCore.QRect(20, 970, 960, 540))
-        print(self.pd.parent())
+        self.pd = PhotoDisplayer(960, 540, self.centralwidget)
+        self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
+        self.pd.setObjectName("photoDisplay")
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
@@ -272,7 +255,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Don't update if they didn't select an image
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
-            self.photo.setPixmap(QtGui.QPixmap(newName[0]))
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
             self.update()
         
     # Adds dummy point row to point table widget.
@@ -316,15 +299,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.tableWidgetVectors.setItem(count, i, item)
-
-    # On mouseclick print the x and y coordinates with 0,0 as the top left
-    # Problem is that it works even when an image is not loaded currently because the image container is always loaded
-    def getPos(self, event):
-        x = event.pos().x()
-        y = event.pos().y() 
-        print(x)
-        print(y)
-        self.pd.repaint()
 
     
 
