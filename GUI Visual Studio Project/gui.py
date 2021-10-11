@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
 from pointDialog import *
+from vectorDialog import *
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -14,7 +15,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setMouseTracking(True)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-
 
         # Uploading and drawing image onto interface.
         self.pd = PhotoDisplayer(960, 540, self.centralwidget)
@@ -284,6 +284,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 
     # Adds dummy vector row to vector table widget.
     def addDummyVector(self):
+
+        dialog = vectorDialog(self)
+        dialog.exec()
+        """
         # Get current number of rows.
         count = self.tableWidgetVectors.rowCount()
 
@@ -299,7 +303,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.tableWidgetVectors.setItem(count, i, item)
-
+        """
     
 
 if __name__ == "__main__":
