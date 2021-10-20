@@ -319,7 +319,7 @@ if __name__ == "__main__":
     #print(p2)
 
     v1 = Vector(p3,p2)
-    print(v1)
+    #print(v1)
     #v2 = Vector(p1, p3);
 
     app = QtWidgets.QApplication(sys.argv)
