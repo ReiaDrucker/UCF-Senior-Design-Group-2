@@ -22,6 +22,11 @@ class PhotoDisplayer(QWidget):
         self.testPoint1 = None
         self.testPoint2 = None
 
+        # Different pen styles for points and vectors
+        self.pointPen = QPen(Qt.red, 5)
+        self.vectorPen = QPen(Qt.black, 3)
+
+
     def paintEvent(self, event):
         painter = QPainter()
         painter.begin(self)
@@ -33,7 +38,7 @@ class PhotoDisplayer(QWidget):
         # This is how we draw a vector between two points
         self.drawVector(self.testPoint1, self.testPoint2, painter)
 
-        painter.setPen(QPen(Qt.red, 5))
+        painter.setPen(self.pointPen)
         # If we have some points try to draw them
         if(self.testPoint1 != None):
             painter.drawPoint(self.testPoint1.getPixelCoordinates()[0],self.testPoint1.getPixelCoordinates()[1])
@@ -64,7 +69,7 @@ class PhotoDisplayer(QWidget):
 
     def drawVector(self, p1, p2, painter):
         if(p1 != None and p2 != None):
-            painter.setPen(QPen(Qt.black, 3))
+            painter.setPen(self.vectorPen)
             painter.drawLine(p1.getPixelCoordinates()[0],p1.getPixelCoordinates()[1],p2.getPixelCoordinates()[0],p2.getPixelCoordinates()[1])
             
 
