@@ -20,7 +20,6 @@ class pointDialog(QDialog):
         # Text input boxes.
         self.nameBox = QLineEdit(self)
         self.pixelBox = QLineEdit(self)
-        self.realBox = QLineEdit(self)
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
@@ -28,6 +27,8 @@ class pointDialog(QDialog):
         self.layout.addRow(message)
         self.layout.addRow("Name:", self.nameBox)
         self.layout.addRow("Pixel Coordinates:", self.pixelBox)
-        self.layout.addRow("Real Coordinates:", self.realBox)
         self.layout.addRow(self.buttonBox)
         self.setLayout(self.layout)
+
+def addPoint(self):
+    print("Placeholder")

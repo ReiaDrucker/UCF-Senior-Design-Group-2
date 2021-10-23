@@ -14,10 +14,14 @@ class Point(object):
     def getRealCoordinates(self):
         return self.realCoordinates
 
+    def getRealCoordinatesStr(self):
+        return "(" + str(self.realCoordinates[0]) + ", " + str(self.realCoordinates[1]) + ", " + str(self.realCoordinates[2]) + ")"
+
     def getPixelCoordinates(self):
         return self.pixelCoordinates
 
-
+    def getPixelCoordinatesStr(self):
+        return "(" + str(self.pixelCoordinates[0]) + ", " + str(self.pixelCoordinates[1]) + ")"
 
 
 

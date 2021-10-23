@@ -36,7 +36,7 @@ class vectorDialog(QDialog):
         self.setLayout(self.layout)
 
     # TODO: Decipher combo box choices to add vector to table.
-    def addVector():
+    def addVector(self):
         vName = self.nameBox.text()
 
         #p1 = Point(self.nameBox.text())

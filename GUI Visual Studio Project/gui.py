@@ -16,22 +16,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
-        # Uploading and drawing image onto interface.
-        self.pd = PhotoDisplayer(960, 540, self.centralwidget)
-        self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
-        self.pd.setObjectName("photoDisplay")
+        
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 580, 300))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
         self.tableWidgetPoints.setColumnCount(3)
-        self.tableWidgetPoints.setRowCount(2)
+
+        #self.tableWidgetPoints.setRowCount(2)
+        '''
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setVerticalHeaderItem(0, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidgetPoints.setVerticalHeaderItem(1, item)
+        '''
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setHorizontalHeaderItem(0, item)
@@ -41,24 +41,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setHorizontalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(0, 0, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(0, 1, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(0, 2, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(1, 0, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(1, 1, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(1, 2, item)
+
         self.tableWidgetVectors = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
@@ -91,6 +74,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setItem(0, 3, item)
+
+        # Uploading and drawing image onto interface.
+        self.pd = PhotoDisplayer(960, 540, self.tableWidgetPoints, self.tableWidgetVectors, self.centralwidget)
+        self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
+        self.pd.setObjectName("photoDisplay")
 
         # Button to add dummy point.
         self.pushButtonAdd_Dummy_Point = QtWidgets.QPushButton(self.centralwidget)
@@ -168,20 +156,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setWindowTitle(_translate("MainWindow", "Stereogram Depth Finder"))
 
         # Names row and column items of point table.
+        '''
         item = self.tableWidgetPoints.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Point 1"))
         item = self.tableWidgetPoints.verticalHeaderItem(1)
         item.setText(_translate("MainWindow", "Point 2"))
+        '''
         item = self.tableWidgetPoints.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Name"))
         item = self.tableWidgetPoints.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Pixel Coordinates"))
         item = self.tableWidgetPoints.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "Real Coordinates"))
+       
         __sortingEnabled = self.tableWidgetPoints.isSortingEnabled()
         self.tableWidgetPoints.setSortingEnabled(False)
 
         # Filling in cells of point table.
+        '''
         item = self.tableWidgetPoints.item(0, 0)
         item.setText(_translate("MainWindow", "A"))
         item = self.tableWidgetPoints.item(0, 1)
@@ -194,6 +186,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setText(_translate("MainWindow", "(1, 0)"))
         item = self.tableWidgetPoints.item(1, 2)
         item.setText(_translate("MainWindow", "(1, 0, 0)"))
+        '''
         self.tableWidgetPoints.setSortingEnabled(__sortingEnabled)
 
         # Names row and column items of vector table.
@@ -211,6 +204,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.tableWidgetVectors.setSortingEnabled(False)
 
         # Fills in cells of vector table.
+        '''
         item = self.tableWidgetVectors.item(0, 0)
         item.setText(_translate("MainWindow", "AB"))
         item = self.tableWidgetVectors.item(0, 1)
@@ -219,6 +213,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setText(_translate("MainWindow", "(1, 0, 0)"))
         item = self.tableWidgetVectors.item(0, 3)
         item.setText(_translate("MainWindow", "1"))
+        '''
         self.tableWidgetVectors.setSortingEnabled(__sortingEnabled)
 
         # Names buttons to add rows to tables.
