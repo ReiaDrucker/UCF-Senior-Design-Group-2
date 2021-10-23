@@ -19,9 +19,6 @@ class PhotoDisplayer(QWidget):
         #Should be filled blue to start
         self.pix.fill(Qt.blue)
 
-        self.testPoint1 = None
-        self.testPoint2 = None
-
         self.pTable = pTable
         self.vTable = vTable
 
@@ -39,37 +36,29 @@ class PhotoDisplayer(QWidget):
         painter.begin(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
+        # Paint the image to the screen
         painter.drawPixmap(QPoint(), self.pix)
-        
-        # This is how we draw a vector between two points
-        self.drawVector(self.testPoint1, self.testPoint2, painter)
 
-        painter.setPen(self.pointPen)
+        # Draw all the vectors
+        self.drawVectors(painter)
 
-        # If we have some points try to draw them
-        if(self.testPoint1 != None):
-            painter.drawPoint(self.testPoint1.getPixelCoordinates()[0],self.testPoint1.getPixelCoordinates()[1])
-        if(self.testPoint2 != None):
-            painter.drawPoint(self.testPoint2.getPixelCoordinates()[0],self.testPoint2.getPixelCoordinates()[1])
-
-       
-
-        #painter.end()
+        # Draw all the points
+        self.drawPoints(painter)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:            
             x = event.pos().x()
             y = event.pos().y() 
-            print(event.pos())
 
             # Add these to a list should be what we actually do but for now it just sets point one and from then on updates point 2
-            if(self.testPoint1 == None):
-                self.testPoint1 = Point("Point " + str(self.points.size + 1), 0, 0, 0, x, y)
-                self.points = np.append(self.points, self.testPoint1)
+            if(self.points.size != 0):
+                self.points = np.append(self.points, Point("Point " + str(self.points.size + 1), 0, 0, 0, x, y))
             else:
-                self.testPoint2 = Point("Point " + str(self.points.size + 1), 0, 0, 0, x, y)
-                self.points = np.append(self.points, self.testPoint2)
-                self.vectors = np.append(self.vectors, Vector(self.testPoint1, self.testPoint2))
+                self.points = np.append(self.points, Point("Point " + str(self.points.size + 1), 0, 0, 0, x, y))
+
+            # For now make a vector with the two most recent points when we draw a point
+            if(self.points.size >= 2):
+                self.vectors = np.append(self.vectors, Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1]))
                 self.updateVectorTable()
 
             self.updatePointTable()
@@ -79,10 +68,20 @@ class PhotoDisplayer(QWidget):
         self.pix = new
         self.update()
 
-    def drawVector(self, p1, p2, painter):
-        if(p1 != None and p2 != None):
-            painter.setPen(self.vectorPen)
-            painter.drawLine(p1.getPixelCoordinates()[0],p1.getPixelCoordinates()[1],p2.getPixelCoordinates()[0],p2.getPixelCoordinates()[1])
+    def drawVectors(self, painter):
+        painter.setPen(self.vectorPen)
+
+        #Draw all vectors
+        for vec in self.vectors:
+            # Access the points that made this vector and draw a line based on those coordinates
+            painter.drawLine(vec.getReferencePoints()[0].getPixelCoordinates()[0], vec.getReferencePoints()[0].getPixelCoordinates()[1],
+                                vec.getReferencePoints()[1].getPixelCoordinates()[0], vec.getReferencePoints()[1].getPixelCoordinates()[1])
+    def drawPoints(self, painter):
+        painter.setPen(self.pointPen)
+
+        # Draw all points
+        for point in self.points:
+            painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
 
     # Update point table with new point in array.
     def updatePointTable(self):
@@ -99,7 +98,6 @@ class PhotoDisplayer(QWidget):
 
             # Set name column.
             item = QTableWidgetItem()
-            print(curPoint.name)
             item.setTextAlignment(Qt.AlignCenter)
             item.setText(curPoint.name)
             self.pTable.setItem(count, 0, item)
@@ -131,7 +129,6 @@ class PhotoDisplayer(QWidget):
 
             # Set name column.
             item = QTableWidgetItem()
-            print(curVector.name)
             item.setTextAlignment(Qt.AlignCenter)
             item.setText(curVector.name)
             self.vTable.setItem(count, 0, item)
