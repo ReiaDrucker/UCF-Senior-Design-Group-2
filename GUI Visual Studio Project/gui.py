@@ -234,17 +234,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(selection == 1 and self.rightImagePath != None):
             self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
-
-    # Changes the image widget to display the selected file.
-    def openImage(self):
-        fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
-        newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
-
-        # Don't update if they didn't select an image
-        # Probably also don't want to update if they select the same image
-        if(newName[0] != ""):
-            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
-            self.update()
         
     # Adds dummy point row to point table widget.
     def addDummyPoint(self):

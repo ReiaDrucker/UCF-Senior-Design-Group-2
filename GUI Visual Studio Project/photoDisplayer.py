@@ -11,8 +11,9 @@ class PhotoDisplayer(QWidget):
 
     def __init__(self, width, height, pTable=None, vTable=None, parent=None):
         super(PhotoDisplayer, self).__init__(parent)
-        self.window_width, self.window_height = width, height
-        self.setMinimumSize(self.window_width, self.window_height)
+        self.setMaximumWidth(width)
+        self.setMaximumHeight(height)
+        self.resize(width, height)
 
         self.pix = QPixmap(self.rect().size())
         
@@ -82,7 +83,10 @@ class PhotoDisplayer(QWidget):
                 self.update()
 
     def setNewPixmap(self, new):
+
+        # When you get a new image resize the pixmap to fit it
         self.pix = new
+        self.resize(self.pix.width(), self.pix.height())
         self.update()
 
     def drawVectors(self, painter):
