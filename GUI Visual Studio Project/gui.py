@@ -115,8 +115,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionUpload_Right.triggered.connect(self.openImage)
         self.actionUpload_Right.setObjectName("actionUpload_Right")
 
+        # When you click this toggle is switches whether points and vectors are displayed
         self.actionShow_Vectors = QtWidgets.QAction(MainWindow)
+        self.actionShow_Vectors.triggered.connect(self.pd.toggleDraw)
         self.actionShow_Vectors.setObjectName("actionShow_Vectors")
+
         self.actionShow_Left_Image = QtWidgets.QAction(MainWindow)
         self.actionShow_Left_Image.setObjectName("actionShow_Left_Image")
         self.actionShow_Right_Image = QtWidgets.QAction(MainWindow)
@@ -136,6 +139,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuUpload_Images.menuAction())
         self.menubar.addAction(self.menuToggle_Display_Options.menuAction())
+
+
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)

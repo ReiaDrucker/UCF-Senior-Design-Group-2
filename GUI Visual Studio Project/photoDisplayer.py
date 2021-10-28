@@ -21,7 +21,6 @@ class PhotoDisplayer(QWidget):
 
         self.pTable = pTable
         self.vTable = vTable
-        self.pDraw = False
 
         # Different pen styles for points and vectors
         self.pointPen = QPen(Qt.red, 5)
@@ -30,6 +29,13 @@ class PhotoDisplayer(QWidget):
         # Initialize point/vector arrays for tables.
         self.points = np.array([])
         self.vectors = np.array([])
+
+        self.drawStuff = True
+
+    def toggleDraw(self):
+       self.drawStuff = not(self.drawStuff)
+       print(self.drawStuff)
+       self.update()
 
 
     def paintEvent(self, event):
@@ -40,38 +46,39 @@ class PhotoDisplayer(QWidget):
         # Paint the image to the screen
         painter.drawPixmap(QPoint(), self.pix)
 
-        # Draw all the vectors
-        self.drawVectors(painter)
+        # Only draw the points and vectors if the toggle is set to true
+        if(self.drawStuff):
+            # Draw all the vectors
+            self.drawVectors(painter)
 
-        # Draw all the points
-        self.drawPoints(painter)
+            # Draw all the points
+            self.drawPoints(painter)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:            
-            x = event.pos().x()
-            y = event.pos().y() 
+        if(self.drawStuff):
+            if event.button() == Qt.LeftButton:            
+                x = event.pos().x()
+                y = event.pos().y() 
 
-            # Determine name of new point.
-            if (self.points.size > 25):
-                case = ord('a')
-            else:
-                case = ord('A')
-            pName = chr(self.points.size % 26 + case)
+                # Determine name of new point.
+                if (self.points.size > 25):
+                    case = ord('a')
+                else:
+                    case = ord('A')
+                pName = chr(self.points.size % 26 + case)
             
-            # Add point to array.
-            self.points = np.append(self.points, Point(pName, 0, 0, 0, x, y))
+                # Add point to array.
+                self.points = np.append(self.points, Point(pName, 0, 0, 0, x, y))
             
-            # For now make a vector with the two most recent points when we draw a point
-            if(self.points.size >= 2):
-                self.vectors = np.append(self.vectors, Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1]))
-                self.updateVectorTable()
+                # For now make a vector with the two most recent points when we draw a point
+                if(self.points.size >= 2):
+                    self.vectors = np.append(self.vectors, Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1]))
+                    self.updateVectorTable()
 
-            # Update table with new point.
-            self.updatePointTable()
+                # Update table with new point.
+                self.updatePointTable()
 
-            # Indicate there is new point to draw.
-            self.pDraw = True
-            self.update()
+                self.update()
 
     def setNewPixmap(self, new):
         self.pix = new
@@ -89,11 +96,9 @@ class PhotoDisplayer(QWidget):
     def drawPoints(self, painter):
         painter.setPen(self.pointPen)
 
-        # Draw all points only if a new point has been added.
-        if self.pDraw:
-            for point in self.points:
-                painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
-            self.pDraw = False
+        # Draw all points
+        for point in self.points:
+            painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
         
     # Update point table with new point in array.
     def updatePointTable(self):
@@ -162,6 +167,8 @@ class PhotoDisplayer(QWidget):
             item.setText(str(np.linalg.norm(curVector.getPixelCoordinates())))
             item.setTextAlignment(Qt.AlignCenter)
             self.vTable.setItem(count, 3, item)
+
+   
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
