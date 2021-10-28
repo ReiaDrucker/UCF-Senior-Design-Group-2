@@ -7,6 +7,10 @@ import os
 class Ui_MainWindow(QtWidgets.QWidget):
 
     def setupUi(self, MainWindow):
+
+        self.leftImagePath = ""
+        self.rightImagePath = ""
+
         # Window initialization.
         MainWindow.setObjectName("MainWindow")
 
@@ -15,6 +19,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setMouseTracking(True)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+
+
 
         # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
@@ -104,19 +110,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionExport_Data.setObjectName("actionExport_Data")
 
         self.actionUpload_Left = QtWidgets.QAction(MainWindow)
-        self.actionUpload_Left.triggered.connect(self.openImage)
+        self.actionUpload_Left.triggered.connect(self.uploadLeftImage)
         self.actionUpload_Left.setObjectName("actionUpload_Left")
 
         self.actionUpload_Right = QtWidgets.QAction(MainWindow)
-        self.actionUpload_Right.triggered.connect(self.openImage)
+        self.actionUpload_Right.triggered.connect(self.uploadRightImage)
         self.actionUpload_Right.setObjectName("actionUpload_Right")
 
+        # When you click this toggle is switches whether points and vectors are displayed
         self.actionShow_Vectors = QtWidgets.QAction(MainWindow)
+        self.actionShow_Vectors.triggered.connect(self.pd.toggleDraw)
         self.actionShow_Vectors.setObjectName("actionShow_Vectors")
+
+        # When you click we switch to the left image
         self.actionShow_Left_Image = QtWidgets.QAction(MainWindow)
+        self.actionShow_Left_Image.triggered.connect(lambda: self.displayImage(0))
         self.actionShow_Left_Image.setObjectName("actionShow_Left_Image")
+
+        # When you click we switch to the right image
         self.actionShow_Right_Image = QtWidgets.QAction(MainWindow)
+        self.actionShow_Right_Image.triggered.connect(lambda: self.displayImage(1))
         self.actionShow_Right_Image.setObjectName("actionShow_Right_Image")
+
         self.actionShow_Interpolated_Image = QtWidgets.QAction(MainWindow)
         self.actionShow_Interpolated_Image.setObjectName("actionShow_Interpolated_Image")
         self.menuFile.addAction(self.actionOpen)
@@ -132,6 +147,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuUpload_Images.menuAction())
         self.menubar.addAction(self.menuToggle_Display_Options.menuAction())
+
+
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -187,6 +204,36 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShow_Left_Image.setText(_translate("MainWindow", "Show Left Image"))
         self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
         self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
+
+    def uploadLeftImage(self):
+        fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
+        newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
+
+        # Don't update if they didn't select an image
+        # Probably also don't want to update if they select the same image
+        if(newName[0] != ""):
+            self.leftImagePath = newName[0]
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
+            self.update()
+
+    def uploadRightImage(self):
+        fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
+        newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
+
+        # Don't update if they didn't select an image
+        # Probably also don't want to update if they select the same image
+        if(newName[0] != ""):
+            self.rightImagePath = newName[0]
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
+            self.update()
+
+    def displayImage(self, selection):
+        if(selection == 0 and self.leftImagePath != None):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImagePath))
+            self.update()
+        if(selection == 1 and self.rightImagePath != None):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
+            self.update()
 
     # Changes the image widget to display the selected file.
     def openImage(self):
