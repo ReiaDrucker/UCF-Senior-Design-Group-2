@@ -21,6 +21,7 @@ class PhotoDisplayer(QWidget):
 
         self.pTable = pTable
         self.vTable = vTable
+        self.pDraw = False
 
         # Different pen styles for points and vectors
         self.pointPen = QPen(Qt.red, 5)
@@ -50,18 +51,26 @@ class PhotoDisplayer(QWidget):
             x = event.pos().x()
             y = event.pos().y() 
 
-            # Add these to a list should be what we actually do but for now it just sets point one and from then on updates point 2
-            if(self.points.size != 0):
-                self.points = np.append(self.points, Point("Point " + str(self.points.size + 1), 0, 0, 0, x, y))
+            # Determine name of new point.
+            if (self.points.size > 25):
+                case = ord('a')
             else:
-                self.points = np.append(self.points, Point("Point " + str(self.points.size + 1), 0, 0, 0, x, y))
-
+                case = ord('A')
+            pName = chr(self.points.size % 26 + case)
+            
+            # Add point to array.
+            self.points = np.append(self.points, Point(pName, 0, 0, 0, x, y))
+            
             # For now make a vector with the two most recent points when we draw a point
             if(self.points.size >= 2):
                 self.vectors = np.append(self.vectors, Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1]))
                 self.updateVectorTable()
 
+            # Update table with new point.
             self.updatePointTable()
+
+            # Indicate there is new point to draw.
+            self.pDraw = True
             self.update()
 
     def setNewPixmap(self, new):
@@ -76,13 +85,16 @@ class PhotoDisplayer(QWidget):
             # Access the points that made this vector and draw a line based on those coordinates
             painter.drawLine(vec.getReferencePoints()[0].getPixelCoordinates()[0], vec.getReferencePoints()[0].getPixelCoordinates()[1],
                                 vec.getReferencePoints()[1].getPixelCoordinates()[0], vec.getReferencePoints()[1].getPixelCoordinates()[1])
+    
     def drawPoints(self, painter):
         painter.setPen(self.pointPen)
 
-        # Draw all points
-        for point in self.points:
-            painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
-
+        # Draw all points only if a new point has been added.
+        if self.pDraw:
+            for point in self.points:
+                painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
+            self.pDraw = False
+        
     # Update point table with new point in array.
     def updatePointTable(self):
         if self.pTable != None:
@@ -145,8 +157,11 @@ class PhotoDisplayer(QWidget):
             item.setTextAlignment(Qt.AlignCenter)
             self.vTable.setItem(count, 2, item)
 
-            # TODO: Magnitude, should be easy but it's not a function in the vector class yet
-            # so I'm leaving it blank for now.
+            # Set magnitude column.
+            item = QTableWidgetItem()
+            item.setText(str(np.linalg.norm(curVector.getPixelCoordinates())))
+            item.setTextAlignment(Qt.AlignCenter)
+            self.vTable.setItem(count, 3, item)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
