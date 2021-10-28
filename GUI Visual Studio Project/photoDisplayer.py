@@ -62,9 +62,10 @@ class PhotoDisplayer(QWidget):
             self.points = np.append(self.points, Point(pName, 0, 0, 0, x, y))
             
             # For now make a vector with the two most recent points when we draw a point
-            if(self.points.size >= 2):
-                self.vectors = np.append(self.vectors, Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1]))
-                self.updateVectorTable()
+            # if(self.points.size >= 2):
+            #     v = Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1])
+            #     #self.vectors = np.append(self.vectors, Vector(self.points[len(self.points) - 2], self.points[len(self.points) - 1]))
+            #     self.updateVectorTable(v)
 
             # Update table with new point.
             self.updatePointTable()
@@ -90,10 +91,14 @@ class PhotoDisplayer(QWidget):
         painter.setPen(self.pointPen)
 
         # Draw all points only if a new point has been added.
-        if self.pDraw:
-            for point in self.points:
-                painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
-            self.pDraw = False
+        # TODO: When the boolean to check if there is new stuff to draw is activated,
+        # the points disappear from displayer when dialog window is opened and only reappear
+        # when a new point is created. So I'm deactivating it for now.
+        
+        #if self.pDraw:
+        for point in self.points:
+            painter.drawPoint(point.getPixelCoordinates()[0], point.getPixelCoordinates()[1])
+        #self.pDraw = False
         
     # Update point table with new point in array.
     def updatePointTable(self):
@@ -127,11 +132,13 @@ class PhotoDisplayer(QWidget):
             self.pTable.setItem(count, 2, item)
 
     # Update vector table with new vector in array.
-    def updateVectorTable(self):
+    def updateVectorTable(self, curVector):
         if self.vTable != None:
             # Create new row and give it proper header name.
+            self.vectors = np.append(self.vectors, curVector)
             count = self.vectors.size - 1
-            curVector = self.vectors[count]
+
+            #curVector = self.vectors[count]
             self.vTable.insertRow(count)
 
             item = QTableWidgetItem()

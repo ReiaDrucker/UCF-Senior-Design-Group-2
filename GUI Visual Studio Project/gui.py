@@ -36,10 +36,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
-        self.tableWidgetVectors.setRowCount(1)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetVectors.setVerticalHeaderItem(0, item)
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setHorizontalHeaderItem(0, item)
@@ -146,42 +142,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setWindowTitle(_translate("MainWindow", "Stereogram Depth Finder"))
 
         # Names row and column items of point table.
-        '''
-        item = self.tableWidgetPoints.verticalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Point 1"))
-        item = self.tableWidgetPoints.verticalHeaderItem(1)
-        item.setText(_translate("MainWindow", "Point 2"))
-        '''
         item = self.tableWidgetPoints.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Name"))
         item = self.tableWidgetPoints.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Pixel Coordinates"))
         item = self.tableWidgetPoints.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "Real Coordinates"))
-       
-        __sortingEnabled = self.tableWidgetPoints.isSortingEnabled()
         self.tableWidgetPoints.setSortingEnabled(False)
 
-        # Filling in cells of point table.
-        '''
-        item = self.tableWidgetPoints.item(0, 0)
-        item.setText(_translate("MainWindow", "A"))
-        item = self.tableWidgetPoints.item(0, 1)
-        item.setText(_translate("MainWindow", "(0, 0)"))
-        item = self.tableWidgetPoints.item(0, 2)
-        item.setText(_translate("MainWindow", "(0, 0, 0)"))
-        item = self.tableWidgetPoints.item(1, 0)
-        item.setText(_translate("MainWindow", "B"))
-        item = self.tableWidgetPoints.item(1, 1)
-        item.setText(_translate("MainWindow", "(1, 0)"))
-        item = self.tableWidgetPoints.item(1, 2)
-        item.setText(_translate("MainWindow", "(1, 0, 0)"))
-        '''
-        self.tableWidgetPoints.setSortingEnabled(__sortingEnabled)
-
         # Names row and column items of vector table.
-        item = self.tableWidgetVectors.verticalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Vector 1"))
         item = self.tableWidgetVectors.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Name"))
         item = self.tableWidgetVectors.horizontalHeaderItem(1)
@@ -192,19 +161,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setText(_translate("MainWindow", "Magnitude"))
         __sortingEnabled = self.tableWidgetVectors.isSortingEnabled()
         self.tableWidgetVectors.setSortingEnabled(False)
-
-        # Fills in cells of vector table.
-        '''
-        item = self.tableWidgetVectors.item(0, 0)
-        item.setText(_translate("MainWindow", "AB"))
-        item = self.tableWidgetVectors.item(0, 1)
-        item.setText(_translate("MainWindow", "(1, 0)"))
-        item = self.tableWidgetVectors.item(0, 2)
-        item.setText(_translate("MainWindow", "(1, 0, 0)"))
-        item = self.tableWidgetVectors.item(0, 3)
-        item.setText(_translate("MainWindow", "1"))
-        '''
-        self.tableWidgetVectors.setSortingEnabled(__sortingEnabled)
 
         # Names buttons to add rows to tables.
         self.pushButtonAdd_Dummy_Point.setText(_translate("MainWindow", "Add Dummy Point"))
@@ -245,51 +201,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         
     # Adds dummy point row to point table widget.
     def addDummyPoint(self):
-        #print("Hello", s)
         dialog = pointDialog(self)
-        #dialog.setWindowTitle("Enter New Point")
         dialog.exec()
-        """
-        # Get current number of rows.
-        count = self.tableWidgetPoints.rowCount()
-
-        # Create new row and give it proper header name.
-        self.tableWidgetPoints.insertRow(count)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        item.setText("Point " + str(count+1))
-        self.tableWidgetPoints.setVerticalHeaderItem(count, item)
-
-        # Create each item and text align center.
-        for i in range(3):
-            item = QtWidgets.QTableWidgetItem()
-            item.setTextAlignment(QtCore.Qt.AlignCenter)
-            self.tableWidgetPoints.setItem(count, i, item)
-       """
                 
     # Adds dummy vector row to vector table widget.
     def addDummyVector(self):
 
         dialog = vectorDialog(self)
-        dialog.exec()
-        """
-        # Get current number of rows.
-        count = self.tableWidgetVectors.rowCount()
-
-        # Create new row and give it proper header name.
-        self.tableWidgetVectors.insertRow(count)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        item.setText("Vector " + str(count+1))
-        self.tableWidgetVectors.setVerticalHeaderItem(count, item)
-
-        # Create each item and text align center.
-        for i in range(4):
-            item = QtWidgets.QTableWidgetItem()
-            item.setTextAlignment(QtCore.Qt.AlignCenter)
-            self.tableWidgetVectors.setItem(count, i, item)
-        """
-    
+        dialog.exec()    
 
 if __name__ == "__main__":
     import sys
