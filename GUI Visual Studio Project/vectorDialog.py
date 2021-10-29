@@ -28,8 +28,8 @@ class vectorDialog(QDialog):
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
-        message = QLabel("Enter information about the new point below.")
-        self.layout.addRow(message)
+        self.message = QLabel("Enter information about the new point below.")
+        self.layout.addRow(self.message)
         self.nameBox = QLineEdit(self)
         self.layout.addRow("Name:", self.nameBox)
         self.layout.addRow("Starting Point:", self.pointCombo)
@@ -37,15 +37,23 @@ class vectorDialog(QDialog):
         self.layout.addRow(self.buttonBox)
         self.setLayout(self.layout)
 
-    # TODO: Decipher combo box choices to add vector to table.
+    # Adds new vector to table and lists through photoDisplayer.
     def addVector(self, pd):
         vName = self.nameBox.text()
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
+        
+        if vName == "":
+            vName = pd.points[p1Index].name + "-" + pd.points[p2Index].name
+
         v = Vector(pd.points[p1Index], pd.points[p2Index])
         v.name = vName
-        pd.updateVectorTable(v)
-        pd.update()
-        self.close()
+
+        if p1Index == p2Index:
+            self.message.setText("You need to enter two distinct points!")
+        else:
+            pd.updateVectorTable(v)
+            pd.update()
+            self.close()
         
 
