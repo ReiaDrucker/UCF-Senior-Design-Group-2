@@ -26,6 +26,11 @@ class vectorDialog(QDialog):
             self.pointCombo.addItem(itemStr)
             self.pointCombo2.addItem(itemStr)
 
+        # Default indices are the last 2 points
+        if(parent.tableWidgetPoints.rowCount() >= 2):
+            self.pointCombo.setCurrentIndex(parent.tableWidgetPoints.rowCount()-2)
+            self.pointCombo2.setCurrentIndex(parent.tableWidgetPoints.rowCount()-1)
+
         # Create layout and add everything to it.
         self.layout = QFormLayout()
         self.message = QLabel("Enter information about the new point below.")
