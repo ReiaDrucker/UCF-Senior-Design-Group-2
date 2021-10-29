@@ -27,6 +27,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 580, 300))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
         self.tableWidgetPoints.setColumnCount(3)
+        self.tableWidgetPoints.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -42,6 +43,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
+        self.tableWidgetVectors.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setHorizontalHeaderItem(0, item)
@@ -66,6 +69,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setItem(0, 3, item)
+        
 
         # Uploading and drawing image onto interface.
         self.pd = PhotoDisplayer(960, 540, self.tableWidgetPoints, self.tableWidgetVectors, self.centralwidget)
