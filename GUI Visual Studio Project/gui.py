@@ -1,36 +1,33 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from photoDisplayer import *
+from pointDialog import *
+from vectorDialog import *
+import os
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QtWidgets.QWidget):
+
     def setupUi(self, MainWindow):
+
+        self.leftImagePath = ""
+        self.rightImagePath = ""
+
         # Window initialization.
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1567, 1062)
+
+        # Window sizes should be based on the monitor resolution rather than a hard coded pixel value
+        MainWindow.resize(1600, 1000)
         MainWindow.setMouseTracking(True)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
-        # Uploading and drawing image onto interface.
-        self.photo = QtWidgets.QLabel(self.centralwidget)
-        self.photo.setGeometry(QtCore.QRect(20, 10, 981, 961))
-        font = QtGui.QFont()
-        font.setPointSize(36)
-        self.photo.setFont(font)
-        self.photo.setText("")
-        self.photo.setPixmap(QtGui.QPixmap("test_Image.png"))
-        self.photo.setScaledContents(False)
-        self.photo.setObjectName("photo")
 
 
+        # Initialize point table for storing points.
         self.tableWidgetPoints = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetPoints.setGeometry(QtCore.QRect(900, 70, 601, 351))
+        self.tableWidgetPoints.setGeometry(QtCore.QRect(1000, 70, 580, 300))
         self.tableWidgetPoints.setObjectName("tableWidgetPoints")
         self.tableWidgetPoints.setColumnCount(3)
-        self.tableWidgetPoints.setRowCount(2)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setVerticalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidgetPoints.setVerticalHeaderItem(1, item)
+
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setHorizontalHeaderItem(0, item)
@@ -40,32 +37,11 @@ class Ui_MainWindow(object):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setHorizontalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(0, 0, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(0, 1, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(0, 2, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(1, 0, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(1, 1, item)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetPoints.setItem(1, 2, item)
+
         self.tableWidgetVectors = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidgetVectors.setGeometry(QtCore.QRect(900, 500, 601, 351))
+        self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
-        self.tableWidgetVectors.setRowCount(1)
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.tableWidgetVectors.setVerticalHeaderItem(0, item)
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setHorizontalHeaderItem(0, item)
@@ -90,13 +66,27 @@ class Ui_MainWindow(object):
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setItem(0, 3, item)
+
+        # Uploading and drawing image onto interface.
+        self.pd = PhotoDisplayer(960, 540, self.tableWidgetPoints, self.tableWidgetVectors, self.centralwidget)
+        self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
+        self.pd.setObjectName("photoDisplay")
+
+        # Button to add dummy point.
         self.pushButtonAdd_Dummy_Point = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(900, 430, 151, 28))
+        self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(1000, 400, 150, 30))
         self.pushButtonAdd_Dummy_Point.setObjectName("pushButtonAdd_Dummy_Point")
+        self.pushButtonAdd_Dummy_Point.clicked.connect(self.addDummyPoint)
+
         self.pushButtonAdd_Dummy_Vector = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(900, 860, 151, 28))
+        self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(1000, 800, 150, 30))
         self.pushButtonAdd_Dummy_Vector.setObjectName("pushButtonAdd_Dummy_Vector")
+        self.pushButtonAdd_Dummy_Vector.clicked.connect(self.addDummyVector)
+
+        # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
+
+        # Creates menu bar.
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1567, 26))
         self.menubar.setObjectName("menubar")
@@ -118,16 +108,30 @@ class Ui_MainWindow(object):
         self.actionSave_As.setObjectName("actionSave_As")
         self.actionExport_Data = QtWidgets.QAction(MainWindow)
         self.actionExport_Data.setObjectName("actionExport_Data")
+
         self.actionUpload_Left = QtWidgets.QAction(MainWindow)
+        self.actionUpload_Left.triggered.connect(self.uploadLeftImage)
         self.actionUpload_Left.setObjectName("actionUpload_Left")
+
         self.actionUpload_Right = QtWidgets.QAction(MainWindow)
+        self.actionUpload_Right.triggered.connect(self.uploadRightImage)
         self.actionUpload_Right.setObjectName("actionUpload_Right")
+
+        # When you click this toggle is switches whether points and vectors are displayed
         self.actionShow_Vectors = QtWidgets.QAction(MainWindow)
+        self.actionShow_Vectors.triggered.connect(self.pd.toggleDraw)
         self.actionShow_Vectors.setObjectName("actionShow_Vectors")
+
+        # When you click we switch to the left image
         self.actionShow_Left_Image = QtWidgets.QAction(MainWindow)
+        self.actionShow_Left_Image.triggered.connect(lambda: self.displayImage(0))
         self.actionShow_Left_Image.setObjectName("actionShow_Left_Image")
+
+        # When you click we switch to the right image
         self.actionShow_Right_Image = QtWidgets.QAction(MainWindow)
+        self.actionShow_Right_Image.triggered.connect(lambda: self.displayImage(1))
         self.actionShow_Right_Image.setObjectName("actionShow_Right_Image")
+
         self.actionShow_Interpolated_Image = QtWidgets.QAction(MainWindow)
         self.actionShow_Interpolated_Image.setObjectName("actionShow_Interpolated_Image")
         self.menuFile.addAction(self.actionOpen)
@@ -144,39 +148,26 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuUpload_Images.menuAction())
         self.menubar.addAction(self.menuToggle_Display_Options.menuAction())
 
+
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+    # Basically names everything.
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Stereogram Depth Finder"))
-        item = self.tableWidgetPoints.verticalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Point 1"))
-        item = self.tableWidgetPoints.verticalHeaderItem(1)
-        item.setText(_translate("MainWindow", "Point 2"))
+
+        # Names row and column items of point table.
         item = self.tableWidgetPoints.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Name"))
         item = self.tableWidgetPoints.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Pixel Coordinates"))
         item = self.tableWidgetPoints.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "Real Coordinates"))
-        __sortingEnabled = self.tableWidgetPoints.isSortingEnabled()
         self.tableWidgetPoints.setSortingEnabled(False)
-        item = self.tableWidgetPoints.item(0, 0)
-        item.setText(_translate("MainWindow", "A"))
-        item = self.tableWidgetPoints.item(0, 1)
-        item.setText(_translate("MainWindow", "(0, 0)"))
-        item = self.tableWidgetPoints.item(0, 2)
-        item.setText(_translate("MainWindow", "(0, 0, 0)"))
-        item = self.tableWidgetPoints.item(1, 0)
-        item.setText(_translate("MainWindow", "B"))
-        item = self.tableWidgetPoints.item(1, 1)
-        item.setText(_translate("MainWindow", "(1, 0)"))
-        item = self.tableWidgetPoints.item(1, 2)
-        item.setText(_translate("MainWindow", "(1, 0, 0)"))
-        self.tableWidgetPoints.setSortingEnabled(__sortingEnabled)
-        item = self.tableWidgetVectors.verticalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Vector 1"))
+
+        # Names row and column items of vector table.
         item = self.tableWidgetVectors.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Name"))
         item = self.tableWidgetVectors.horizontalHeaderItem(1)
@@ -187,17 +178,12 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Magnitude"))
         __sortingEnabled = self.tableWidgetVectors.isSortingEnabled()
         self.tableWidgetVectors.setSortingEnabled(False)
-        item = self.tableWidgetVectors.item(0, 0)
-        item.setText(_translate("MainWindow", "AB"))
-        item = self.tableWidgetVectors.item(0, 1)
-        item.setText(_translate("MainWindow", "(1, 0)"))
-        item = self.tableWidgetVectors.item(0, 2)
-        item.setText(_translate("MainWindow", "(1, 0, 0)"))
-        item = self.tableWidgetVectors.item(0, 3)
-        item.setText(_translate("MainWindow", "1"))
-        self.tableWidgetVectors.setSortingEnabled(__sortingEnabled)
+
+        # Names buttons to add rows to tables.
         self.pushButtonAdd_Dummy_Point.setText(_translate("MainWindow", "Add Dummy Point"))
         self.pushButtonAdd_Dummy_Vector.setText(_translate("MainWindow", "Add Dummy Vector"))
+
+        # Names all of the menu bar actions.
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuUpload_Images.setTitle(_translate("MainWindow", "Upload Images"))
         self.menuToggle_Display_Options.setTitle(_translate("MainWindow", "Toggle Display Options"))
@@ -219,19 +205,62 @@ class Ui_MainWindow(object):
         self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
         self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
 
+    def uploadLeftImage(self):
+        fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
+        newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
+
+        # Don't update if they didn't select an image
+        # Probably also don't want to update if they select the same image
+        if(newName[0] != ""):
+            self.leftImagePath = newName[0]
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
+            self.update()
+
+    def uploadRightImage(self):
+        fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
+        newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
+
+        # Don't update if they didn't select an image
+        # Probably also don't want to update if they select the same image
+        if(newName[0] != ""):
+            self.rightImagePath = newName[0]
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
+            self.update()
+
+    def displayImage(self, selection):
+        if(selection == 0 and self.leftImagePath != None):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImagePath))
+            self.update()
+        if(selection == 1 and self.rightImagePath != None):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
+            self.update()
+        
+    # Adds dummy point row to point table widget.
+    def addDummyPoint(self):
+        dialog = pointDialog(self)
+        dialog.exec()
+                
+    # Adds dummy vector row to vector table widget.
+    def addDummyVector(self):
+
+        dialog = vectorDialog(self)
+        dialog.exec()    
 
 if __name__ == "__main__":
     import sys
     import math
     from point import *
     from vector import *
+    import numpy as np
 
     p1 = Point("A", 0, 0, 0, 0, 0)
     p2 = Point("B", 0, 1, 4, 6, 7)
     p3 = Point("C", 1, 2, 3, 4, 5)
+    #print(p2)
 
-    v1 = Vector(p1,p2)
-    v2 = Vector(p1, p3);
+    v1 = Vector(p3,p2)
+    #print(v1)
+    #v2 = Vector(p1, p3);
 
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
