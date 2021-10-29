@@ -4,12 +4,14 @@ from disparity import disparity_uncalibrated
 import numpy as np
 import cv2 as cv
 
+EPS = 1e-15
+
 def uvd_to_xyz(uvd, f, b):
     u = uvd[:,:,0]
     v = uvd[:,:,1]
     d = uvd[:,:,2]
 
-    z = f * b / d
+    z = f * b / (d + EPS)
     x = u * z / f
     y = v * z / f
 
