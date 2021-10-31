@@ -43,17 +43,27 @@ class vectorDialog(QDialog):
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
         
+        # If textbox for name is empty, give default name.
         if vName == "":
             vName = pd.points[p1Index].name + "-" + pd.points[p2Index].name
 
+        # Create new vector.
         v = Vector(pd.points[p1Index], pd.points[p2Index])
         v.name = vName
 
+        # If same point selected twice, don't accept.
         if p1Index == p2Index:
             self.message.setText("You need to enter two distinct points!")
         else:
-            pd.updateVectorTable(v)
-            pd.update()
-            self.close()
-        
-
+            # If equivalent vector already exists, don't accept.
+            exists = False
+            for vec in pd.vectors:
+                if v.getPixelCoordinatesStr() == vec.getPixelCoordinatesStr():
+                    exists = True
+            if exists == True:
+                self.message.setText("Vector already exists!")
+            # No errors, then accept.
+            else:
+                pd.updateVectorTable(v)
+                pd.update()
+                self.close()

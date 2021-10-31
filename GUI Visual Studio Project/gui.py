@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
 from pointDialog import *
 from vectorDialog import *
+from deleteVectorDialog import *
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -79,9 +80,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonAdd_Dummy_Point.clicked.connect(self.addDummyPoint)
 
         self.pushButtonAdd_Dummy_Vector = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(1000, 800, 150, 30))
+        self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(1000, 830, 150, 30))
         self.pushButtonAdd_Dummy_Vector.setObjectName("pushButtonAdd_Dummy_Vector")
         self.pushButtonAdd_Dummy_Vector.clicked.connect(self.addDummyVector)
+
+        self.pushButtonDelete_Vector = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonDelete_Vector.setGeometry(QtCore.QRect(1200, 830, 150, 30))
+        self.pushButtonDelete_Vector.setObjectName("pushButtonDelete_Vector")
+        self.pushButtonDelete_Vector.clicked.connect(self.deleteVector)
 
         # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
@@ -182,6 +188,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Names buttons to add rows to tables.
         self.pushButtonAdd_Dummy_Point.setText(_translate("MainWindow", "Add Dummy Point"))
         self.pushButtonAdd_Dummy_Vector.setText(_translate("MainWindow", "Add Dummy Vector"))
+        self.pushButtonDelete_Vector.setText(_translate("MainWindow", "Delete Vector"))
 
         # Names all of the menu bar actions.
         self.menuFile.setTitle(_translate("MainWindow", "File"))
@@ -242,9 +249,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 
     # Adds dummy vector row to vector table widget.
     def addDummyVector(self):
-
         dialog = vectorDialog(self)
-        dialog.exec()    
+        dialog.exec()
+    
+    # Deletes vector from vector table.
+    def deleteVector(self):
+        dialog = deleteVectorDialog(self)
+        dialog.exec()
 
 if __name__ == "__main__":
     import sys
