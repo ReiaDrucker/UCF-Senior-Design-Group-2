@@ -16,6 +16,7 @@ class PhotoDisplayer(QWidget):
         self.resize(width, height)
 
         self.pix = QPixmap(self.rect().size())
+        self.real = None
         
         #Should be filled blue to start
         self.pix.fill(Qt.blue)
@@ -69,7 +70,7 @@ class PhotoDisplayer(QWidget):
                 pName = chr(self.points.size % 26 + case)
             
                 # Add point to array.
-                self.points = np.append(self.points, Point(pName, 0, 0, 0, x, y))
+                self.points = np.append(self.points, Point(pName, x, y, self.real))
             
             # For now make a vector with the two most recent points when we draw a point
             # if(self.points.size >= 2):
@@ -89,6 +90,20 @@ class PhotoDisplayer(QWidget):
         self.resize(self.pix.width(), self.pix.height())
         self.update()
 
+    def setNewReal(self, real):
+        self.real = real
+        for i,p in enumerate(self.points):
+            # Calculate the new real coordinates
+            p.updateReal(real)
+
+            if self.pTable is not None:
+                # Update the table
+                item = QTableWidgetItem()
+                item.setText(p.getRealCoordinatesStr())
+                item.setTextAlignment(Qt.AlignCenter)
+                self.pTable.setItem(i, 2, item)
+            
+
     def drawVectors(self, painter):
         painter.setPen(self.vectorPen)
 
@@ -107,7 +122,7 @@ class PhotoDisplayer(QWidget):
         
     # Update point table with new point in array.
     def updatePointTable(self):
-        if self.pTable != None:
+        if self.pTable is not None:
             # Create new row and give it proper header name.
             count = self.points.size - 1
             curPoint = self.points[count]
@@ -171,7 +186,7 @@ class PhotoDisplayer(QWidget):
 
             # Set magnitude column.
             item = QTableWidgetItem()
-            item.setText(str(np.linalg.norm(curVector.getPixelCoordinates())))
+            item.setText(str(np.linalg.norm(curVector.getRealCoordinates())))
             item.setTextAlignment(Qt.AlignCenter)
             self.vTable.setItem(count, 3, item)
 

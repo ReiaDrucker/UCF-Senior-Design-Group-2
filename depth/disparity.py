@@ -1,5 +1,3 @@
-from matching import ImageWithFeatures, remove_match_outliers
-
 import cv2 as cv
 import numpy as np
 import random
@@ -235,6 +233,8 @@ def disparity_uncalibrated(left, right, verbose = False):
     return ret
 
 if __name__ == '__main__':
+    from matching import ImageWithFeatures
+
     # Still no good way to find ty besides manual tuning,
     # but it is very important to get it right to avoid distortion during rectification
     # 3.5 pixels seems OK

@@ -1,20 +1,22 @@
+import os
+import cv2 as cv
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 from photoDisplayer import *
 from pointDialog import *
 from vectorDialog import *
-import os
+from real import *
 
 class Ui_MainWindow(QtWidgets.QWidget):
 
     def setupUi(self, MainWindow):
-
-        self.leftImagePath = ""
-        self.rightImagePath = ""
+        self.leftImage = None
+        self.rightImage = None
 
         # Window initialization.
         MainWindow.setObjectName("MainWindow")
 
-        # Window sizes should be based on the monitor resolution rather than a hard coded pixel value
+        # TODO: Window sizes should be based on the monitor resolution rather than a hard coded pixel value
         MainWindow.resize(1600, 1000)
         MainWindow.setMouseTracking(True)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -205,6 +207,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
         self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
 
+    def loadImage(self, path):
+        img = cv.imread(path, cv.IMREAD_COLOR)
+
+        # Resize to fit in the photo viewer
+        # FIXME: this will break whenever resizing is implemented
+        #   Ideally the photo displayers coordinate system should be separate from our points
+        s = max(img.shape[1] / self.pd.geometry().width(), img.shape[0] / self.pd.geometry().height())
+        shape = np.int0([img.shape[1] / s, img.shape[0] / s])
+        img = cv.resize(img, shape)
+
+        print(img.shape)
+
+        return QtGui.QImage(img, img.shape[1], img.shape[0], img.shape[1] * 3, QtGui.QImage.Format_BGR888)
+
+
     def uploadLeftImage(self):
         fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
         newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
@@ -212,8 +229,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Don't update if they didn't select an image
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
-            self.leftImagePath = newName[0]
-            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
+            self.leftImage = self.loadImage(newName[0])
+            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImage))
+            self.displayReal()
             self.update()
 
     def uploadRightImage(self):
@@ -223,16 +241,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Don't update if they didn't select an image
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
-            self.rightImagePath = newName[0]
-            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
+            self.rightImage = self.loadImage(newName[0])
+            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImage))
+            self.displayReal()
             self.update()
 
     def displayImage(self, selection):
-        if(selection == 0 and self.leftImagePath != None):
-            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImagePath))
+        if(selection == 0 and self.leftImage != None):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImage))
             self.update()
-        if(selection == 1 and self.rightImagePath != None):
-            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
+        if(selection == 1 and self.rightImage != None):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImage))
             self.update()
         
     # Adds dummy point row to point table widget.
@@ -244,7 +263,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def addDummyVector(self):
 
         dialog = vectorDialog(self)
-        dialog.exec()    
+        dialog.exec()
+
+    def displayReal(self):
+        if self.leftImage and self.rightImage:
+            real = getRealFromImages(self.leftImage, self.rightImage)
+            self.pd.setNewReal(real)
 
 if __name__ == "__main__":
     import sys
@@ -253,9 +277,9 @@ if __name__ == "__main__":
     from vector import *
     import numpy as np
 
-    p1 = Point("A", 0, 0, 0, 0, 0)
-    p2 = Point("B", 0, 1, 4, 6, 7)
-    p3 = Point("C", 1, 2, 3, 4, 5)
+    p1 = Point("A", 0, 0)
+    p2 = Point("B", 6, 7)
+    p3 = Point("C", 4, 5)
     #print(p2)
 
     v1 = Vector(p3,p2)
