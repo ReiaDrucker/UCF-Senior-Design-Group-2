@@ -5,7 +5,7 @@ from vector import *
 from point import *
 import numpy as np
 
-class deleteVectorDialog(QDialog):
+class deletePointDialog(QDialog):
     def __init__(self,parent=None):
         # Initialize dialog window.
         super().__init__()
@@ -15,27 +15,27 @@ class deleteVectorDialog(QDialog):
         # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(buttonBox)
-        self.buttonBox.accepted.connect(lambda: self.deleteVector(parent))
+        self.buttonBox.accepted.connect(lambda: self.deletePoint(parent))
         self.buttonBox.rejected.connect(self.reject)
 
         # Drop-down menu.
-        self.vectorCombo = QComboBox(self)
-        for v in parent.pd.vectors:
-            itemStr = v.name + ": " + v.getPixelCoordinatesStr() + "; " + v.getRealCoordinatesStr()
-            self.vectorCombo.addItem(itemStr)
+        self.pointCombo = QComboBox(self)
+        for i in range(parent.tableWidgetPoints.rowCount()):
+            itemStr = parent.tableWidgetPoints.item(i,0).text() + ": " + parent.tableWidgetPoints.item(i,1).text() + "; " + parent.tableWidgetPoints.item(i,2).text()
+            self.pointCombo.addItem(itemStr)
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
-        self.message = QLabel("Select the vector to delete.")
+        self.message = QLabel("Select the point to delete.")
         self.layout.addRow(self.message)
-        self.layout.addRow("Vector List:", self.vectorCombo)
+        self.layout.addRow("Point List:", self.pointCombo)
         self.layout.addRow(self.buttonBox)
         self.setLayout(self.layout)
 
     # Adds new vector to table and lists through photoDisplayer.
-    def deleteVector(self, parent):
-        vIndex = self.vectorCombo.currentIndex()
-        parent.pd.vectors = np.delete(parent.pd.vectors, vIndex)
-        parent.tableWidgetVectors.removeRow(vIndex)
+    def deletePoint(self, parent):
+        pIndex = self.pointCombo.currentIndex()
+        parent.pd.points = np.delete(parent.pd.points, pIndex)
+        parent.tableWidgetPoints.removeRow(pIndex)
         parent.pd.update()
         self.close()

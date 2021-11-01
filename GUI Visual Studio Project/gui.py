@@ -3,6 +3,7 @@ from photoDisplayer import *
 from pointDialog import *
 from vectorDialog import *
 from deleteVectorDialog import *
+from deletePointDialog import *
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -40,12 +41,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetPoints.setHorizontalHeaderItem(2, item)
 
+        # Set up vector tables.
         self.tableWidgetVectors = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidgetVectors.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.tableWidgetVectors.setObjectName("tableWidgetVectors")
         self.tableWidgetVectors.setColumnCount(4)
         self.tableWidgetVectors.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        
+    
         item = QtWidgets.QTableWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidgetVectors.setHorizontalHeaderItem(0, item)
@@ -82,6 +84,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonAdd_Dummy_Point.setGeometry(QtCore.QRect(1000, 400, 150, 30))
         self.pushButtonAdd_Dummy_Point.setObjectName("pushButtonAdd_Dummy_Point")
         self.pushButtonAdd_Dummy_Point.clicked.connect(self.addDummyPoint)
+
+        self.pushButtonDelete_Point = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonDelete_Point.setGeometry(QtCore.QRect(1200, 400, 150, 30))
+        self.pushButtonDelete_Point.setObjectName("pushButtonDelete_Point")
+        self.pushButtonDelete_Point.clicked.connect(self.deletePoint)
 
         self.pushButtonAdd_Dummy_Vector = QtWidgets.QPushButton(self.centralwidget)
         self.pushButtonAdd_Dummy_Vector.setGeometry(QtCore.QRect(1000, 830, 150, 30))
@@ -190,9 +197,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.tableWidgetVectors.setSortingEnabled(False)
 
         # Names buttons to add rows to tables.
-        self.pushButtonAdd_Dummy_Point.setText(_translate("MainWindow", "Add Dummy Point"))
-        self.pushButtonAdd_Dummy_Vector.setText(_translate("MainWindow", "Add Dummy Vector"))
+        self.pushButtonAdd_Dummy_Point.setText(_translate("MainWindow", "Add Point"))
+        self.pushButtonAdd_Dummy_Vector.setText(_translate("MainWindow", "Add Vector"))
         self.pushButtonDelete_Vector.setText(_translate("MainWindow", "Delete Vector"))
+        self.pushButtonDelete_Point.setText(_translate("MainWindow", "Delete Point"))
 
         # Names all of the menu bar actions.
         self.menuFile.setTitle(_translate("MainWindow", "File"))
@@ -259,6 +267,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
     # Deletes vector from vector table.
     def deleteVector(self):
         dialog = deleteVectorDialog(self)
+        dialog.exec()
+
+    # Deletes point from point table.
+    def deletePoint(self):
+        dialog = deletePointDialog(self)
         dialog.exec()
 
 if __name__ == "__main__":
