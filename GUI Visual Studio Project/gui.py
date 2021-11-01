@@ -4,6 +4,7 @@ from pointDialog import *
 from vectorDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
+from changeColorDialog import *
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -78,6 +79,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pd = PhotoDisplayer(960, 540, self.tableWidgetPoints, self.tableWidgetVectors, self.centralwidget)
         self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
         self.pd.setObjectName("photoDisplay")
+
+        self.pushButtonChange_Vector_Color = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonChange_Vector_Color.setGeometry(QtCore.QRect(1000, 10, 150, 30))
+        self.pushButtonChange_Vector_Color.setObjectName("pushButtonChange_Vector_Color")
+        self.pushButtonChange_Vector_Color.clicked.connect(lambda: self.changeColor(0))
+
+        self.pushButtonChange_Point_Color = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonChange_Point_Color.setGeometry(QtCore.QRect(1200, 10, 150, 30))
+        self.pushButtonChange_Point_Color.setObjectName("pushButtonChange_Point_Color")
+        self.pushButtonChange_Point_Color.clicked.connect(lambda: self.changeColor(1))
 
         # Button to add dummy point.
         self.pushButtonAdd_Dummy_Point = QtWidgets.QPushButton(self.centralwidget)
@@ -201,6 +212,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonAdd_Dummy_Vector.setText(_translate("MainWindow", "Add Vector"))
         self.pushButtonDelete_Vector.setText(_translate("MainWindow", "Delete Vector"))
         self.pushButtonDelete_Point.setText(_translate("MainWindow", "Delete Point"))
+        self.pushButtonChange_Vector_Color.setText(_translate("MainWindow", "Select Vector Color"))
+        self.pushButtonChange_Point_Color.setText(_translate("MainWindow", "Select Point Color"))
 
         # Names all of the menu bar actions.
         self.menuFile.setTitle(_translate("MainWindow", "File"))
@@ -272,6 +285,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
     # Deletes point from point table.
     def deletePoint(self):
         dialog = deletePointDialog(self)
+        dialog.exec()
+
+    def changeColor(self, changeType):
+        dialog = changeColorDialog(self, changeType)
         dialog.exec()
 
 if __name__ == "__main__":
