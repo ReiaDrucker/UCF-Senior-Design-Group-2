@@ -33,9 +33,12 @@ class deletePointDialog(QDialog):
         self.setLayout(self.layout)
 
     # Adds new vector to table and lists through photoDisplayer.
+    # TODO: If vector uses now-deleted point, delete that vector from vector list too.
     def deletePoint(self, parent):
         pIndex = self.pointCombo.currentIndex()
-        parent.pd.points = np.delete(parent.pd.points, pIndex)
-        parent.tableWidgetPoints.removeRow(pIndex)
-        parent.pd.update()
+
+        if pIndex >= 0:
+            parent.pd.points = np.delete(parent.pd.points, pIndex)
+            parent.tableWidgetPoints.removeRow(pIndex)
+            parent.pd.update()
         self.close()

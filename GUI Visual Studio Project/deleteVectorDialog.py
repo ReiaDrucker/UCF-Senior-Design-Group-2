@@ -35,7 +35,9 @@ class deleteVectorDialog(QDialog):
     # Adds new vector to table and lists through photoDisplayer.
     def deleteVector(self, parent):
         vIndex = self.vectorCombo.currentIndex()
-        parent.pd.vectors = np.delete(parent.pd.vectors, vIndex)
-        parent.tableWidgetVectors.removeRow(vIndex)
-        parent.pd.update()
+        
+        if vIndex >= 0:
+            parent.pd.vectors = np.delete(parent.pd.vectors, vIndex)
+            parent.tableWidgetVectors.removeRow(vIndex)
+            parent.pd.update()
         self.close()

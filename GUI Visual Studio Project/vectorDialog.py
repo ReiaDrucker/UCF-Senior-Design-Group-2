@@ -47,7 +47,7 @@ class vectorDialog(QDialog):
         vName = self.nameBox.text()
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
-        
+
         # If textbox for name is empty, give default name.
         if vName == "":
             vName = pd.points[p1Index].name + "-" + pd.points[p2Index].name
@@ -57,6 +57,7 @@ class vectorDialog(QDialog):
         v.name = vName
 
         # If same point selected twice, don't accept.
+        
         if p1Index == p2Index:
             self.message.setText("You need to enter two distinct points!")
         else:
