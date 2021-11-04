@@ -28,6 +28,12 @@ class changeColorDialog(QDialog):
             itemStr = self.colorNames[i]
             self.colorCombo.addItem(itemStr)
 
+        if(self.changePoint == 1):
+            self.colorCombo.setCurrentIndex(self.colors.index(parent.pd.pointPen.color()))
+
+        if(self.changePoint == 0):
+            self.colorCombo.setCurrentIndex(self.colors.index(parent.pd.vectorPen.color()))
+
         # Create layout and add everything to it.
         self.layout = QFormLayout()
         self.message = QLabel("Select the color you would like.")
