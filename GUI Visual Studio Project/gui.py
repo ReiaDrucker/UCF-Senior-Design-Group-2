@@ -5,6 +5,7 @@ from vectorDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
 from changeColorDialog import *
+import pickle
 import os
 
 class Ui_MainWindow(QtWidgets.QWidget):
@@ -112,12 +113,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
         self.actionOpen = QtWidgets.QAction(MainWindow)
+        self.actionOpen.triggered.connect(self.loadGUIFromFile)
         self.actionOpen.setObjectName("actionOpen")
+
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
+
         self.actionSave_As = QtWidgets.QAction(MainWindow)
+        self.actionSave_As.triggered.connect(self.saveGUIToFile)
         self.actionSave_As.setObjectName("actionSave_As")
+
         self.actionExport_Data = QtWidgets.QAction(MainWindow)
         self.actionExport_Data.setObjectName("actionExport_Data")
 
@@ -252,6 +259,48 @@ class Ui_MainWindow(QtWidgets.QWidget):
         dialog = changeColorDialog(self, changeType)
         dialog.exec()
 
+    # Write to a file
+    # Can't pickle UI_MainWindow need to figure out how to do that
+    # Probably best to use QDatastream instead
+    def saveGUIToFile(self):
+        fname = "SDFDATA File (*.SDFDATA)"
+        filePath = QtWidgets.QFileDialog.getSaveFileName(self, "Select Directory To Save To", os.getcwd(), fname, fname)
+
+        objectToSave = [self.pd.points, self.pd.vectors]
+
+        # If path is valid serialize the data into the file
+        if(filePath[0] != ""):
+            with open(filePath[0], 'wb') as handle:
+                pickle.dump(objectToSave, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
+            # Write the data via out
+
+    #Load a file
+    # Probably best to use QDatastream instead
+    def loadGUIFromFile(self):
+
+        fname = "SDFDATA File (*.SDFDATA)"
+        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
+
+        # Make sure they selected something correct
+        if(filePath[0] != "" and filePath[0].endswith(".SDFDATA")):
+            with open(filePath[0], 'rb') as handle:
+                data = pickle.load(handle)
+                self.pd.points = data[0]
+                self.pd.vectors = data[1]
+                #self.pd.updatePointTable()
+                #self.pd.updateVectorTable()
+
+            # Read the data via inStream
+
+            # Turn off the old UI
+            # Return the new one
+            return None
+        else:
+            return None
+
+        
+
 if __name__ == "__main__":
     import sys
     import math
@@ -259,11 +308,12 @@ if __name__ == "__main__":
     from vector import *
     import numpy as np
 
-    p1 = Point("A", 0, 0, 0, 0, 0)
+    
+    #p1 = Point("A", 0, 0, 0, 0, 0)
     p2 = Point("B", 0, 1, 4, 6, 7)
     p3 = Point("C", 1, 2, 3, 4, 5)
     #print(p2)
-
+ 
     v1 = Vector(p3,p2)
     #print(v1)
     #v2 = Vector(p1, p3);
