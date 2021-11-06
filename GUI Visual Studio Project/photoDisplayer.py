@@ -113,26 +113,22 @@ class PhotoDisplayer(QWidget):
             curPoint = self.points[count]
             self.pTable.insertRow(count)
 
-            item = QTableWidgetItem()
+            item = QTableWidgetItem("Point " + str(count + 1))
             item.setTextAlignment(Qt.AlignCenter)
-            item.setText("Point " + str(count + 1))
             self.pTable.setVerticalHeaderItem(count, item)
 
             # Set name column.
-            item = QTableWidgetItem()
+            item = QTableWidgetItem(curPoint.name)
             item.setTextAlignment(Qt.AlignCenter)
-            item.setText(curPoint.name)
             self.pTable.setItem(count, 0, item)
 
             # Set pixel coordinates column.
-            item = QTableWidgetItem()
-            item.setText(curPoint.getPixelCoordinatesStr())
+            item = QTableWidgetItem(curPoint.getPixelCoordinatesStr())
             item.setTextAlignment(Qt.AlignCenter)
             self.pTable.setItem(count, 1, item)
 
             # Set real coordinates column.
-            item = QTableWidgetItem()
-            item.setText(curPoint.getRealCoordinatesStr())
+            item = QTableWidgetItem(curPoint.getRealCoordinatesStr())
             item.setTextAlignment(Qt.AlignCenter)
             self.pTable.setItem(count, 2, item)
 
@@ -146,32 +142,27 @@ class PhotoDisplayer(QWidget):
             #curVector = self.vectors[count]
             self.vTable.insertRow(count)
 
-            item = QTableWidgetItem()
+            item = QTableWidgetItem("Vector " + str(count + 1))
             item.setTextAlignment(Qt.AlignCenter)
-            item.setText("Vector " + str(count + 1))
             self.vTable.setVerticalHeaderItem(count, item)
 
             # Set name column.
-            item = QTableWidgetItem()
+            item = QTableWidgetItem(curVector.name)
             item.setTextAlignment(Qt.AlignCenter)
-            item.setText(curVector.name)
             self.vTable.setItem(count, 0, item)
 
             # Set pixel coordinates column.
-            item = QTableWidgetItem()
-            item.setText(curVector.getPixelCoordinatesStr())
+            item = QTableWidgetItem(curVector.getPixelCoordinatesStr())
             item.setTextAlignment(Qt.AlignCenter)
             self.vTable.setItem(count, 1, item)
 
             # Set real coordinates column.
-            item = QTableWidgetItem()
-            item.setText(curVector.getRealCoordinatesStr())
+            item = QTableWidgetItem(curVector.getRealCoordinatesStr())
             item.setTextAlignment(Qt.AlignCenter)
             self.vTable.setItem(count, 2, item)
 
             # Set magnitude column.
-            item = QTableWidgetItem()
-            item.setText(str(np.linalg.norm(curVector.getPixelCoordinates())))
+            item = QTableWidgetItem(str(np.linalg.norm(curVector.getPixelCoordinates())))
             item.setTextAlignment(Qt.AlignCenter)
             self.vTable.setItem(count, 3, item)
 

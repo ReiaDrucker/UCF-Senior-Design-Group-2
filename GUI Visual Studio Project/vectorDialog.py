@@ -21,15 +21,15 @@ class vectorDialog(QDialog):
         # Drop-down menu.
         self.pointCombo = QComboBox(self)
         self.pointCombo2 = QComboBox(self)
-        for i in range(parent.tableWidgetPoints.rowCount()):
-            itemStr = parent.tableWidgetPoints.item(i,0).text() + ": " + parent.tableWidgetPoints.item(i,1).text() + "; " + parent.tableWidgetPoints.item(i,2).text()
+        for i in range(parent.pointTable.rowCount()):
+            itemStr = parent.pointTable.item(i,0).text() + ": " + parent.pointTable.item(i,1).text() + "; " + parent.pointTable.item(i,2).text()
             self.pointCombo.addItem(itemStr)
             self.pointCombo2.addItem(itemStr)
 
         # Default indices are the last 2 points
-        if(parent.tableWidgetPoints.rowCount() >= 2):
-            self.pointCombo.setCurrentIndex(parent.tableWidgetPoints.rowCount()-2)
-            self.pointCombo2.setCurrentIndex(parent.tableWidgetPoints.rowCount()-1)
+        if(parent.pointTable.rowCount() >= 2):
+            self.pointCombo.setCurrentIndex(parent.pointTable.rowCount()-2)
+            self.pointCombo2.setCurrentIndex(parent.pointTable.rowCount()-1)
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()

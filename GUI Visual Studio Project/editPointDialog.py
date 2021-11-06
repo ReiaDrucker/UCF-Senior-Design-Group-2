@@ -5,17 +5,17 @@ from vector import *
 from point import *
 import numpy as np
 
-class deletePointDialog(QDialog):
+class editPointDialog(QDialog):
     def __init__(self,parent=None):
         # Initialize dialog window.
         super().__init__()
         self.parent = parent
-        self.setWindowTitle("Delete Vector")
+        self.setWindowTitle("Edit Vector")
 
         # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(buttonBox)
-        self.buttonBox.accepted.connect(lambda: self.deletePoint(parent))
+        self.buttonBox.accepted.connect(lambda: self.editPoint(parent))
         self.buttonBox.rejected.connect(self.reject)
 
         # Drop-down menu.
@@ -33,12 +33,12 @@ class deletePointDialog(QDialog):
         self.setLayout(self.layout)
 
     # Adds new vector to table and lists through photoDisplayer.
-    # TODO: If vector uses now-deleted point, delete that vector from vector list too.
-    def deletePoint(self, parent):
+    def editPoint(self, parent):
         pIndex = self.pointCombo.currentIndex()
 
         if pIndex >= 0:
             parent.pd.points = np.delete(parent.pd.points, pIndex)
             parent.pointTable.removeRow(pIndex)
             parent.pd.update()
+
         self.close()
