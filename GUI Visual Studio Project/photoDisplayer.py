@@ -108,7 +108,7 @@ class PhotoDisplayer(QWidget):
     # Update point table with new point in array.
     def updatePointTable(self):
         if self.pTable != None:
-            self.pTable.clear()
+            self.pTable.clearContents()
             self.pTable.setRowCount(0)
 
             for count in range(self.points.size):
@@ -138,7 +138,7 @@ class PhotoDisplayer(QWidget):
     # Update vector table with new vector in array.
     def updateVectorTable(self):
         if self.vTable != None:
-            self.vTable.clear()
+            self.vTable.clearContents()
             self.vTable.setRowCount(0)
             for count in range(self.vectors.size):
                 # Create new row and give it proper header name.

@@ -105,6 +105,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1567, 26))
 
+        # Menu options.
         self.menuFile = QtWidgets.QMenu("File", self.menubar)
         self.menuUploadImages = QtWidgets.QMenu("Upload Images", self.menubar)
         self.menuToggleDisplayOptions = QtWidgets.QMenu("Toggle Display Options", self.menubar)
@@ -114,9 +115,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.actionOpen = QtWidgets.QAction(MainWindow)
+        self.actionOpen = QtWidgets.QAction("Open", MainWindow)
         self.actionOpen.triggered.connect(self.loadGUIFromFile)
-        self.actionOpen.setObjectName("actionOpen")
+        #self.actionOpen.setObjectName("actionOpen")
 
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
@@ -175,19 +176,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Stereogram Depth Finder"))
 
-        # Names row and column items of point table.
-        #self.pointTable.setSortingEnabled(False)
-
-        # Names row and column items of vector table.
-        #__sortingEnabled = self.vectorTable.isSortingEnabled()
-        #self.vectorTable.setSortingEnabled(False)
-
         # Names buttons to add rows to tables.
         self.pushButtonChange_Vector_Color.setText(_translate("MainWindow", "Select Vector Color"))
         self.pushButtonChange_Point_Color.setText(_translate("MainWindow", "Select Point Color"))
 
         # Names all of the menu bar actions.
-        self.actionOpen.setText(_translate("MainWindow", "Open"))
+        #self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionOpen.setStatusTip(_translate("MainWindow", "Open a file"))
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionSave.setStatusTip(_translate("MainWindow", "Save a file"))
@@ -288,8 +282,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 data = pickle.load(handle)
                 self.pd.points = data[0]
                 self.pd.vectors = data[1]
-                #self.pd.updatePointTable()
-                #self.pd.updateVectorTable()
+                self.pd.updatePointTable()
+                self.pd.updateVectorTable()
 
             # Read the data via inStream
 
