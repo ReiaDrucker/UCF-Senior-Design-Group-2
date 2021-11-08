@@ -46,7 +46,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable.setObjectName("vectorTable")
         self.vectorTable.setColumnCount(4)
         self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
+        
         # Set up columns for vector table.
         for i in range(4):
             item = QtWidgets.QTableWidgetItem()

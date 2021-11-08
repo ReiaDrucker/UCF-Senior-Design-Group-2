@@ -15,7 +15,7 @@ class deleteVectorDialog(QDialog):
         # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(buttonBox)
-        self.buttonBox.accepted.connect(lambda: self.deleteVector(parent))
+        self.buttonBox.accepted.connect(self.deleteVector)
         self.buttonBox.rejected.connect(self.reject)
 
         # Drop-down menu.
@@ -33,11 +33,11 @@ class deleteVectorDialog(QDialog):
         self.setLayout(self.layout)
 
     # Adds new vector to table and lists through photoDisplayer.
-    def deleteVector(self, parent):
+    def deleteVector(self):
         vIndex = self.vectorCombo.currentIndex()
         
         if vIndex >= 0:
-            parent.pd.vectors = np.delete(parent.pd.vectors, vIndex)
-            parent.vectorTable.removeRow(vIndex)
-            parent.pd.update()
+            self.parent.pd.vectors = np.delete(self.parent.pd.vectors, vIndex)
+            self.parent.pd.updateVectorTable()
+            self.parent.pd.update()
         self.close()

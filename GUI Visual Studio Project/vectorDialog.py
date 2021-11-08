@@ -15,7 +15,7 @@ class vectorDialog(QDialog):
         # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(buttonBox)
-        self.buttonBox.accepted.connect(lambda: self.addVector(parent.pd))
+        self.buttonBox.accepted.connect(self.addVector)
         self.buttonBox.rejected.connect(self.reject)
 
         # Drop-down menu.
@@ -43,17 +43,17 @@ class vectorDialog(QDialog):
         self.setLayout(self.layout)
 
     # Adds new vector to table and lists through photoDisplayer.
-    def addVector(self, pd):
+    def addVector(self):
         vName = self.nameBox.text()
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
 
         # If textbox for name is empty, give default name.
         if vName == "":
-            vName = pd.points[p1Index].name + "-" + pd.points[p2Index].name
+            vName = self.parent.pd.points[p1Index].name + "-" + self.parent.pd.points[p2Index].name
 
         # Create new vector.
-        v = Vector(pd.points[p1Index], pd.points[p2Index])
+        v = Vector(self.parent.pd.points[p1Index], self.parent.pd.points[p2Index])
         v.name = vName
 
         # If same point selected twice, don't accept.
@@ -63,13 +63,14 @@ class vectorDialog(QDialog):
         else:
             # If equivalent vector already exists, don't accept.
             exists = False
-            for vec in pd.vectors:
+            for vec in self.parent.pd.vectors:
                 if v.getPixelCoordinatesStr() == vec.getPixelCoordinatesStr():
                     exists = True
             if exists == True:
                 self.message.setText("Vector already exists!")
             # No errors, then accept.
             else:
-                pd.updateVectorTable(v)
-                pd.update()
+                self.parent.pd.vectors = np.append(self.parent.pd.vectors, v)
+                self.parent.pd.updateVectorTable()
+                self.parent.pd.update()
                 self.close()
