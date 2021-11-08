@@ -115,19 +115,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.actionOpen = QtWidgets.QAction("Open", MainWindow)
-        self.actionOpen.triggered.connect(self.loadGUIFromFile)
-        #self.actionOpen.setObjectName("actionOpen")
-
-        self.actionSave = QtWidgets.QAction(MainWindow)
-        self.actionSave.setObjectName("actionSave")
-
-        self.actionSave_As = QtWidgets.QAction(MainWindow)
-        self.actionSave_As.triggered.connect(self.saveGUIToFile)
-        self.actionSave_As.setObjectName("actionSave_As")
+        self.actionLoad_Data = QtWidgets.QAction("Open", MainWindow)
+        self.actionLoad_Data.triggered.connect(self.loadGUIFromFile)
+        self.actionLoad_Data.setObjectName("actionLoad_Data")
 
         self.actionExport_Data = QtWidgets.QAction(MainWindow)
         self.actionExport_Data.setObjectName("actionExport_Data")
+        self.actionExport_Data.triggered.connect(self.saveGUIToFile)
 
         self.actionUpload_Left = QtWidgets.QAction(MainWindow)
         self.actionUpload_Left.triggered.connect(self.uploadLeftImage)
@@ -154,9 +148,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.actionShow_Interpolated_Image = QtWidgets.QAction(MainWindow)
         self.actionShow_Interpolated_Image.setObjectName("actionShow_Interpolated_Image")
-        self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addAction(self.actionSave)
-        self.menuFile.addAction(self.actionSave_As)
+        self.menuFile.addAction(self.actionLoad_Data)
         self.menuFile.addAction(self.actionExport_Data)
         self.menuUploadImages.addAction(self.actionUpload_Left)
         self.menuUploadImages.addAction(self.actionUpload_Right)
@@ -181,15 +173,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonChange_Point_Color.setText(_translate("MainWindow", "Select Point Color"))
 
         # Names all of the menu bar actions.
-        #self.actionOpen.setText(_translate("MainWindow", "Open"))
-        self.actionOpen.setStatusTip(_translate("MainWindow", "Open a file"))
-        self.actionSave.setText(_translate("MainWindow", "Save"))
-        self.actionSave.setStatusTip(_translate("MainWindow", "Save a file"))
-        self.actionSave.setShortcut(_translate("MainWindow", "Ctrl+S"))
-        self.actionSave_As.setText(_translate("MainWindow", "Save As"))
-        self.actionSave_As.setStatusTip(_translate("MainWindow", "Save this file as a new file"))
+        self.actionLoad_Data.setText(_translate("MainWindow", "Load Data"))
+        self.actionLoad_Data.setStatusTip(_translate("MainWindow", "Load data from SDFDATA file"))
+
         self.actionExport_Data.setText(_translate("MainWindow", "Export Data"))
-        self.actionExport_Data.setStatusTip(_translate("MainWindow", "Export vector related data"))
+        self.actionExport_Data.setStatusTip(_translate("MainWindow", "Export data as SDFDATA file"))
+        self.actionExport_Data.setShortcut(_translate("MainWindow", "Ctrl+S"))
+
         self.actionUpload_Left.setText(_translate("MainWindow", "Upload Left"))
         self.actionUpload_Left.setStatusTip(_translate("MainWindow", "Upload the left half of a stereogram pair"))
         self.actionUpload_Right.setText(_translate("MainWindow", "Upload Right"))
@@ -222,10 +212,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.update()
 
     def displayImage(self, selection):
-        if(selection == 0 and self.leftImagePath != None):
+        if(selection == 0 and self.leftImagePath != None and os.path.exists(self.leftImagePath)):
             self.pd.setNewPixmap(QtGui.QPixmap(self.leftImagePath))
             self.update()
-        if(selection == 1 and self.rightImagePath != None):
+        if(selection == 1 and self.rightImagePath != None and os.path.exists(self.rightImagePath)):
             self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
         
@@ -260,7 +250,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         fname = "SDFDATA File (*.SDFDATA)"
         filePath = QtWidgets.QFileDialog.getSaveFileName(self, "Select Directory To Save To", os.getcwd(), fname, fname)
 
-        objectToSave = [self.pd.points, self.pd.vectors]
+        objectToSave = [self.pd.points, self.pd.vectors, self.leftImagePath, self.rightImagePath]
 
         # If path is valid serialize the data into the file
         if(filePath[0] != ""):
@@ -280,10 +270,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(filePath[0] != "" and filePath[0].endswith(".SDFDATA")):
             with open(filePath[0], 'rb') as handle:
                 data = pickle.load(handle)
+
+                # Load point and vecotr data
                 self.pd.points = data[0]
                 self.pd.vectors = data[1]
                 self.pd.updatePointTable()
                 self.pd.updateVectorTable()
+
+                # Load image path data
+                self.leftImagePath = data[2]
+                self.rightImagePath = data[3]
+                
+                # Tries left and then right
+                self.displayImage(0)
+                self.displayImage(1)
 
             # Read the data via inStream
 
