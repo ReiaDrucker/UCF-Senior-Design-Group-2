@@ -48,29 +48,32 @@ class vectorDialog(QDialog):
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
 
-        # If textbox for name is empty, give default name.
-        if vName == "":
-            vName = self.parent.pd.points[p1Index].name + "-" + self.parent.pd.points[p2Index].name
+        if p1Index >= 0 and p2Index >= 0:
+            # If textbox for name is empty, give default name.
+            if vName == "":
+                vName = self.parent.pd.points[p1Index].name + "-" + self.parent.pd.points[p2Index].name
 
-        # Create new vector.
-        v = Vector(self.parent.pd.points[p1Index], self.parent.pd.points[p2Index])
-        v.name = vName
+            # Create new vector.
+            v = Vector(self.parent.pd.points[p1Index], self.parent.pd.points[p2Index])
+            v.name = vName
 
-        # If same point selected twice, don't accept.
-        
-        if p1Index == p2Index:
-            self.message.setText("You need to enter two distinct points!")
-        else:
-            # If equivalent vector already exists, don't accept.
-            exists = False
-            for vec in self.parent.pd.vectors:
-                if v.getPixelCoordinatesStr() == vec.getPixelCoordinatesStr():
-                    exists = True
-            if exists == True:
-                self.message.setText("Vector already exists!")
-            # No errors, then accept.
+            # If same point selected twice, don't accept.
+            
+            if p1Index == p2Index:
+                self.message.setText("You need to enter two distinct points!")
             else:
-                self.parent.pd.vectors = np.append(self.parent.pd.vectors, v)
-                self.parent.pd.updateVectorTable()
-                self.parent.pd.update()
-                self.close()
+                # If equivalent vector already exists, don't accept.
+                exists = False
+                for vec in self.parent.pd.vectors:
+                    if v.getPixelCoordinatesStr() == vec.getPixelCoordinatesStr():
+                        exists = True
+                if exists == True:
+                    self.message.setText("Vector already exists!")
+                # No errors, then accept.
+                else:
+                    self.parent.pd.vectors = np.append(self.parent.pd.vectors, v)
+                    self.parent.pd.updateVectorTable()
+                    self.parent.pd.update()
+                    self.close()
+        else:
+            self.close()
