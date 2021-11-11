@@ -6,27 +6,31 @@ from point import *
 import numpy as np
 
 class deletePointDialog(QDialog):
-    def __init__(self,parent=None):
+    # Initialize dialog window.
+    def __init__(self, pd):
         # Initialize dialog window.
         super().__init__()
-        self.parent = parent
         self.setWindowTitle("Delete Vector")
+        self.createLayout(pd)
+
+    # Create form layout for dialog window.
+    def createLayout(self, pd):
+        self.message = QLabel("Select the point to delete.")
 
         # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(buttonBox)
-        self.buttonBox.accepted.connect(lambda: self.deletePoint(parent))
+        self.buttonBox.accepted.connect(lambda: self.deletePoint(pd))
         self.buttonBox.rejected.connect(self.reject)
 
         # Drop-down menu.
         self.pointCombo = QComboBox(self)
-        for i in range(parent.pointTable.rowCount()):
-            itemStr = parent.pointTable.item(i,0).text() + ": " + parent.pointTable.item(i,1).text() + "; " + parent.pointTable.item(i,2).text()
+        for point in pd.points:
+            itemStr = point.getComboStr()
             self.pointCombo.addItem(itemStr)
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
-        self.message = QLabel("Select the point to delete.")
         self.layout.addRow(self.message)
         self.layout.addRow("Point List:", self.pointCombo)
         self.layout.addRow(self.buttonBox)
@@ -34,11 +38,14 @@ class deletePointDialog(QDialog):
 
     # Adds new vector to table and lists through photoDisplayer.
     # TODO: If vector uses now-deleted point, delete that vector from vector list too.
-    def deletePoint(self, parent):
+    def deletePoint(self, pd):
+        # Get chosen index.
         pIndex = self.pointCombo.currentIndex()
 
-        if pIndex >= 0:
-            parent.pd.points = np.delete(parent.pd.points, pIndex)
-            parent.pointTable.removeRow(pIndex)
-            parent.pd.update()
+        # If there are valid points.
+        #if pIndex >= 0:
+        pd.points = np.delete(pd.points, pIndex)
+        pd.updatePointTable()
+        pd.update()
+
         self.close()

@@ -4,6 +4,7 @@ from pointDialog import *
 from vectorDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
+from editPointDialog import *
 from changeColorDialog import *
 import pickle
 import os
@@ -81,7 +82,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.buttonAddPoint.clicked.connect(self.addPoint)
         self.buttonDeletePoint.clicked.connect(self.deletePoint)
-        self.buttonEditPoint.clicked.connect(self.deletePoint)
+        self.buttonEditPoint.clicked.connect(self.editPoint)
 
         # Buttons for vectors.
         self.buttonAddVector = QtWidgets.QPushButton("Add Vector", self.centralwidget)
@@ -224,13 +225,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
     
     # Deletes vector from vector table.
     def deleteVector(self):
-        dialog = deleteVectorDialog(self)
-        dialog.exec()
+        if self.pd.vectors.size > 0:
+            dialog = deleteVectorDialog(self.pd)
+            dialog.exec()
 
     # Deletes point from point table.
     def deletePoint(self):
-        dialog = deletePointDialog(self)
-        dialog.exec()
+        if self.pd.points.size > 0:
+            dialog = deletePointDialog(self.pd)
+            dialog.exec()
+
+    # Edits point in point table.
+    def editPoint(self):
+        if self.pd.points.size > 0:
+            dialog = editPointDialog(self.pd)
+            dialog.exec()
 
     def changeColor(self, changeType):
         dialog = changeColorDialog(self, changeType)
