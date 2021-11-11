@@ -19,14 +19,15 @@ class pointDialog(QDialog):
 
         # Text input boxes.
         self.nameBox = QLineEdit(self)
-        self.pixelBox = QLineEdit(self)
-
+        self.pixelXBox = QLineEdit(self)
+        self.pixelYBox = QLineEdit(self)
+        
         # Create layout and add everything to it.
         self.layout = QFormLayout()
-        #self.layout.setAlignment(QtCore.Qt.AlignCenter)
         self.layout.addRow(message)
         self.layout.addRow("Name:", self.nameBox)
-        self.layout.addRow("Pixel Coordinates:", self.pixelBox)
+        self.layout.addRow("Pixel X:", self.pixelXBox)
+        self.layout.addRow("Pixel Y:", self.pixelYBox)
         self.layout.addRow(self.buttonBox)
         self.setLayout(self.layout)
 

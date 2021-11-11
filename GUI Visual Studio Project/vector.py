@@ -4,8 +4,10 @@ import numpy as np
 class Vector(object):
 
     # This initialization gives a value equivalent to translating p1 to the origin and then translating p2 by the same amount
-    def __init__(self, p1, p2):
-        self.name = p1.name + p2.name
+    def __init__(self, p1, p2, name=""):
+        self.name = p1.name + "-" + p2.name
+        if name != "":
+            self.name = name
         self.realCoordinates = np.subtract(p2.getRealCoordinates(),p1.getRealCoordinates())
         self.pixelCoordinates = np.subtract(p2.getPixelCoordinates(),p1.getPixelCoordinates())
         self.point1Ref = p1

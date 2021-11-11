@@ -15,12 +15,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.leftImagePath = ""
         self.rightImagePath = ""
 
-        # Window initialization.
-        MainWindow.setObjectName("MainWindow")
-
         # Window sizes should be based on the monitor resolution rather than a hard coded pixel value.
         MainWindow.resize(1600, 1000)
         MainWindow.setMouseTracking(True)
+        MainWindow.setWindowTitle("Stereogram Depth Finder")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -180,21 +178,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonChange_Vector_Color.setText(_translate("MainWindow", "Select Vector Color"))
         self.pushButtonChange_Point_Color.setText(_translate("MainWindow", "Select Point Color"))
 
-        # Names all of the menu bar actions.
-        #self.actionOpen.setText(_translate("MainWindow", "Open"))
-        #self.actionOpen.setStatusTip(_translate("MainWindow", "Open a file"))
-        #self.actionSave.setText(_translate("MainWindow", "Save"))
-        #self.actionSave.setStatusTip(_translate("MainWindow", "Save a file"))
-        #self.actionSave.setShortcut(_translate("MainWindow", "Ctrl+S"))
-        #self.actionSave_As.setText(_translate("MainWindow", "Save As"))
-        #self.actionSave_As.setStatusTip(_translate("MainWindow", "Save this file as a new file"))
-        #self.actionExport_Data.setText(_translate("MainWindow", "Export Data"))
-        #self.actionExport_Data.setStatusTip(_translate("MainWindow", "Export vector related data"))
-        #self.actionUpload_Left.setText(_translate("MainWindow", "Upload Left"))
-        #self.actionUpload_Left.setStatusTip(_translate("MainWindow", "Upload the left half of a stereogram pair"))
-        #self.actionUpload_Right.setText(_translate("MainWindow", "Upload Right"))
-        #self.actionUpload_Right.setStatusTip(_translate("MainWindow", "Upload the right half of a stereogram pair"))
-        #self.actionShow_Vectors.setText(_translate("MainWindow", "Toggle Vector Display"))
         self.actionShow_Left_Image.setText(_translate("MainWindow", "Show Left Image"))
         self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
         self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
@@ -229,14 +212,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
         
-    # Adds dummy point row to point table widget.
+    # Adds point row to point table widget.
     def addPoint(self):
         dialog = pointDialog(self)
         dialog.exec()
                 
-    # Adds dummy vector row to vector table widget.
+    # Adds vector row to vector table widget.
     def addVector(self):
-        dialog = vectorDialog(self)
+        dialog = vectorDialog(self.pd)
         dialog.exec()
     
     # Deletes vector from vector table.

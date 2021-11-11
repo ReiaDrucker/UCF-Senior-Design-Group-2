@@ -23,7 +23,8 @@ class Point(object):
     def getPixelCoordinatesStr(self):
         return "(" + str(self.pixelCoordinates[0]) + ", " + str(self.pixelCoordinates[1]) + ")"
 
-
+    def getComboStr(self):
+        return self.name + ": " + self.getPixelCoordinatesStr() + "; " + self.getRealCoordinatesStr()
 
 
 
