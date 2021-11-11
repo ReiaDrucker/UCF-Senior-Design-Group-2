@@ -7,7 +7,7 @@ import numpy as np
 
 class vectorDialog(QDialog):
     # Initialize dialog window. 
-    def __init__(self,pd=None):
+    def __init__(self, pd):
         super().__init__()
         self.setWindowTitle("Enter New Vector")
         self.createLayout(pd)
@@ -22,6 +22,7 @@ class vectorDialog(QDialog):
         self.buttonBox.accepted.connect(lambda: self.addVector(pd))
         self.buttonBox.rejected.connect(self.reject)
 
+        # Create box for name input.
         self.nameBox = QLineEdit(self)
 
         # Create drop-down menus and fill them with available points.
@@ -48,6 +49,7 @@ class vectorDialog(QDialog):
 
     # Adds new vector to table and lists through photoDisplayer.
     def addVector(self, pd):
+        # Get chosen indexes of combo boxes.
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
 

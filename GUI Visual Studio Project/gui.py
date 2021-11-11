@@ -214,7 +214,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         
     # Adds point row to point table widget.
     def addPoint(self):
-        dialog = pointDialog(self)
+        dialog = pointDialog(self.pd)
         dialog.exec()
                 
     # Adds vector row to vector table widget.
