@@ -205,10 +205,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.update()
 
     def displayImage(self, selection):
-        if(selection == 0 and self.leftImagePath != None):
+        if(selection == 0 and self.leftImagePath != None and os.path.exists(self.leftImagePath)):
             self.pd.setNewPixmap(QtGui.QPixmap(self.leftImagePath))
             self.update()
-        if(selection == 1 and self.rightImagePath != None):
+        if(selection == 1 and self.rightImagePath != None and os.path.exists(self.rightImagePath)):
             self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
         
@@ -243,7 +243,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         fname = "SDFDATA File (*.SDFDATA)"
         filePath = QtWidgets.QFileDialog.getSaveFileName(self, "Select Directory To Save To", os.getcwd(), fname, fname)
 
-        objectToSave = [self.pd.points, self.pd.vectors]
+        objectToSave = [self.pd.points, self.pd.vectors, self.leftImagePath, self.rightImagePath]
 
         # If path is valid serialize the data into the file
         if(filePath[0] != ""):
@@ -263,10 +263,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(filePath[0] != "" and filePath[0].endswith(".SDFDATA")):
             with open(filePath[0], 'rb') as handle:
                 data = pickle.load(handle)
+
+                # Load point and vecotr data
                 self.pd.points = data[0]
                 self.pd.vectors = data[1]
                 self.pd.updatePointTable()
                 self.pd.updateVectorTable()
+
+                # Load image path data
+                self.leftImagePath = data[2]
+                self.rightImagePath = data[3]
+                
+                # Tries left and then right
+                self.displayImage(0)
+                self.displayImage(1)
 
             # Read the data via inStream
 
