@@ -5,6 +5,7 @@ from vectorDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
 from editPointDialog import *
+from editVectorDialog import *
 from changeColorDialog import *
 import pickle
 import os
@@ -12,7 +13,7 @@ import os
 class Ui_MainWindow(QtWidgets.QWidget):
 
     def setupUi(self, MainWindow):
-
+        # Initialize image paths.
         self.leftImagePath = ""
         self.rightImagePath = ""
 
@@ -61,15 +62,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
         self.pd.setObjectName("photoDisplay")
 
-        self.pushButtonChange_Vector_Color = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonChange_Vector_Color.setGeometry(QtCore.QRect(1000, 10, 150, 30))
-        self.pushButtonChange_Vector_Color.setObjectName("pushButtonChange_Vector_Color")
-        self.pushButtonChange_Vector_Color.clicked.connect(lambda: self.changeColor(0))
+        self.pushButtonChangeVectorColor = QtWidgets.QPushButton("Select Vector Color", self.centralwidget)
+        self.pushButtonChangeVectorColor.setGeometry(QtCore.QRect(1000, 10, 150, 30))
+        self.pushButtonChangeVectorColor.clicked.connect(lambda: self.changeColor(0))
 
-        self.pushButtonChange_Point_Color = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonChange_Point_Color.setGeometry(QtCore.QRect(1200, 10, 150, 30))
-        self.pushButtonChange_Point_Color.setObjectName("pushButtonChange_Point_Color")
-        self.pushButtonChange_Point_Color.clicked.connect(lambda: self.changeColor(1))
+        self.pushButtonChangePointColor = QtWidgets.QPushButton("Select Point Color", self.centralwidget)
+        self.pushButtonChangePointColor.setGeometry(QtCore.QRect(1200, 10, 150, 30))
+        self.pushButtonChangePointColor.clicked.connect(lambda: self.changeColor(1))
 
         # Buttons for points.
         self.buttonAddPoint = QtWidgets.QPushButton("Add Point", self.centralwidget)
@@ -95,7 +94,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.buttonAddVector.clicked.connect(self.addVector)      
         self.buttonDeleteVector.clicked.connect(self.deleteVector)
-        self.buttonEditVector.clicked.connect(self.deletePoint)
+        self.buttonEditVector.clicked.connect(self.editVector)
 
         # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
@@ -143,45 +142,36 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShowVectors.triggered.connect(self.pd.toggleDraw)
 
         # When you click we switch to the left image
-        self.actionShow_Left_Image = QtWidgets.QAction(MainWindow)
-        self.actionShow_Left_Image.triggered.connect(lambda: self.displayImage(0))
+        self.actionShowLeftImage = QtWidgets.QAction("Show Left Image", MainWindow)
+        self.actionShowLeftImage.triggered.connect(lambda: self.displayImage(0))
 
         # When you click we switch to the right image
-        self.actionShow_Right_Image = QtWidgets.QAction(MainWindow)
-        self.actionShow_Right_Image.triggered.connect(lambda: self.displayImage(1))
-        self.actionShow_Right_Image.setObjectName("actionShow_Right_Image")
+        self.actionShowRightImage = QtWidgets.QAction("Show Right Image", MainWindow)
+        self.actionShowRightImage.triggered.connect(lambda: self.displayImage(1))
 
-        self.actionShow_Interpolated_Image = QtWidgets.QAction(MainWindow)
-        self.actionShow_Interpolated_Image.setObjectName("actionShow_Interpolated_Image")
+        # TODO: Button not connected yet.
+        self.actionShowInterpolatedImage = QtWidgets.QAction("Show Interpolated Image", MainWindow)
+        
+        # Add actions to menus.
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionSave)
         self.menuFile.addAction(self.actionSaveAs)
         self.menuFile.addAction(self.actionExportData)
+
         self.menuUploadImages.addAction(self.actionUploadLeft)
         self.menuUploadImages.addAction(self.actionUploadRight)
+
         self.menuToggleDisplayOptions.addAction(self.actionShowVectors)
-        self.menuToggleDisplayOptions.addAction(self.actionShow_Left_Image)
-        self.menuToggleDisplayOptions.addAction(self.actionShow_Right_Image)
-        self.menuToggleDisplayOptions.addAction(self.actionShow_Interpolated_Image)
-        self.menubar.addAction(self.menuFile.menuAction())
-        self.menubar.addAction(self.menuUploadImages.menuAction())
-        self.menubar.addAction(self.menuToggleDisplayOptions.menuAction())
+        self.menuToggleDisplayOptions.addAction(self.actionShowLeftImage)
+        self.menuToggleDisplayOptions.addAction(self.actionShowRightImage)
+        self.menuToggleDisplayOptions.addAction(self.actionShowInterpolatedImage)
+        
+        # Add menus to menu bar.
+        self.menubar.addMenu(self.menuFile)
+        self.menubar.addMenu(self.menuUploadImages)
+        self.menubar.addMenu(self.menuToggleDisplayOptions)
 
-        self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    # Basically names everything.
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Stereogram Depth Finder"))
-
-        # Names buttons to add rows to tables.
-        self.pushButtonChange_Vector_Color.setText(_translate("MainWindow", "Select Vector Color"))
-        self.pushButtonChange_Point_Color.setText(_translate("MainWindow", "Select Point Color"))
-
-        self.actionShow_Left_Image.setText(_translate("MainWindow", "Show Left Image"))
-        self.actionShow_Right_Image.setText(_translate("MainWindow", "Show Right Image"))
-        self.actionShow_Interpolated_Image.setText(_translate("MainWindow", "Show Interpolated Image"))
 
     def uploadLeftImage(self):
         fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
@@ -244,6 +234,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def changeColor(self, changeType):
         dialog = changeColorDialog(self, changeType)
         dialog.exec()
+
+    def editVector(self):
+        if self.pd.vectors.size > 0:
+            dialog = editVectorDialog(self.pd)
+            dialog.exec()
 
     # Write to a file
     # Can't pickle UI_MainWindow need to figure out how to do that

@@ -10,12 +10,12 @@ class editPointDialog(QDialog):
     def __init__(self, pd):
         # Initialize dialog window.
         super().__init__()
-        self.setWindowTitle("Delete Vector")
+        self.setWindowTitle("Edit Vector")
         self.createLayout(pd)
 
     # Create form layout for dialog window.
     def createLayout(self, pd):
-        self.message = QLabel("Select the point to delete.")
+        self.message = QLabel("Select the point to edit.")
 
         # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
