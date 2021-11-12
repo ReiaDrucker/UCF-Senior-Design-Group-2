@@ -6,36 +6,41 @@ from point import *
 import numpy as np
 
 class vectorDialog(QDialog):
-    def __init__(self,parent=None):
-        # Initialize dialog window.
+    # Initialize dialog window. 
+    def __init__(self, pd):
         super().__init__()
-        self.parent = parent
         self.setWindowTitle("Enter New Vector")
+        self.createLayout(pd)
+        
+    # Create form layout of dialog window.
+    def createLayout(self, pd):
+        self.message = QLabel("Enter information about the new point below.")
 
         # Create button box.
-        buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        self.buttonBox = QDialogButtonBox(buttonBox)
-        self.buttonBox.accepted.connect(lambda: self.addVector(parent.pd))
+        buttonOptions = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.buttonBox = QDialogButtonBox(buttonOptions)
+        self.buttonBox.accepted.connect(lambda: self.addVector(pd))
         self.buttonBox.rejected.connect(self.reject)
 
-        # Drop-down menu.
+        # Create box for name input.
+        self.nameBox = QLineEdit(self)
+
+        # Create drop-down menus and fill them with available points.
         self.pointCombo = QComboBox(self)
         self.pointCombo2 = QComboBox(self)
-        for i in range(parent.tableWidgetPoints.rowCount()):
-            itemStr = parent.tableWidgetPoints.item(i,0).text() + ": " + parent.tableWidgetPoints.item(i,1).text() + "; " + parent.tableWidgetPoints.item(i,2).text()
+        for point in pd.points:
+            itemStr = point.getComboStr()
             self.pointCombo.addItem(itemStr)
             self.pointCombo2.addItem(itemStr)
 
-        # Default indices are the last 2 points
-        if(parent.tableWidgetPoints.rowCount() >= 2):
-            self.pointCombo.setCurrentIndex(parent.tableWidgetPoints.rowCount()-2)
-            self.pointCombo2.setCurrentIndex(parent.tableWidgetPoints.rowCount()-1)
+        # Default indices are the last 2 points.
+        if(pd.points.size >= 2):
+            self.pointCombo.setCurrentIndex(pd.points.size - 2)
+            self.pointCombo2.setCurrentIndex(pd.points.size - 1)
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
-        self.message = QLabel("Enter information about the new point below.")
-        self.layout.addRow(self.message)
-        self.nameBox = QLineEdit(self)
+        self.layout.addRow(self.message)  
         self.layout.addRow("Name:", self.nameBox)
         self.layout.addRow("Starting Point:", self.pointCombo)
         self.layout.addRow("Ending Point:", self.pointCombo2)
@@ -44,21 +49,38 @@ class vectorDialog(QDialog):
 
     # Adds new vector to table and lists through photoDisplayer.
     def addVector(self, pd):
-        vName = self.nameBox.text()
+        # Get chosen indexes of combo boxes.
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
-        
-        if vName == "":
-            vName = pd.points[p1Index].name + "-" + pd.points[p2Index].name
 
-        v = Vector(pd.points[p1Index], pd.points[p2Index])
-        v.name = vName
+        # If both indexes are valid, i.e. there are actually points.
+        if p1Index >= 0 and p2Index >= 0:
+            # Create new vector with points and name.
+            vName = self.nameBox.text()     
+            vec = Vector(pd.points[p1Index], pd.points[p2Index], vName)
 
-        if p1Index == p2Index:
-            self.message.setText("You need to enter two distinct points!")
+            # If same point selected twice, don't accept.            
+            if p1Index == p2Index:
+                self.message.setText("You need to enter two distinct points!")
+
+            # If equivalent vector already exists, don't accept.
+            elif self.vectorExists(pd.vectors, vec):
+                self.message.setText("Vector already exists!")
+
+            # No errors, then accept.
+            else:
+                pd.vectors = np.append(pd.vectors, vec)
+                pd.updateVectorTable()
+                pd.update()
+                self.close()
+
+        # If no valid points to choose, just close on attempted accept.
         else:
-            pd.updateVectorTable(v)
-            pd.update()
             self.close()
-        
 
+    # Checks if vector exists in pd's vector list.
+    def vectorExists(self, vectors, vec):
+        for v in vectors:
+            if v.getPixelCoordinatesStr() == vec.getPixelCoordinatesStr():
+                return True
+        return False
