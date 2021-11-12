@@ -97,17 +97,16 @@ class PhotoDisplayer(QWidget):
 
     def setNewReal(self, real):
         self.real = real
-        for i,p in enumerate(self.points):
-            # Calculate the new real coordinates
+
+        for p in self.points:
             p.updateReal(real)
 
-            if self.pTable is not None:
-                # Update the table
-                item = QTableWidgetItem()
-                item.setText(p.getRealCoordinatesStr())
-                item.setTextAlignment(Qt.AlignCenter)
-                self.pTable.setItem(i, 2, item)
-            
+        for v in self.vectors:
+            v.update()
+
+        self.updatePointTable()
+        self.updateVectorTable()
+
 
     def drawVectors(self, painter):
         painter.setPen(self.vectorPen)
