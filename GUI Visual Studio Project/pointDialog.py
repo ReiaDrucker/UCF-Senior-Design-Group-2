@@ -53,18 +53,27 @@ class pointDialog(QDialog):
             pName = pd.getAutoName()
 
         # TODO: Checks on whether input is valid.
+        try:
+            # Convert text input into ints.
+            realX = int(self.realXBox.text())
+            realY = int(self.realYBox.text())
+            realZ = int(self.realZBox.text())
+            pixelX = int(self.pixelXBox.text())
+            pixelY = int(self.pixelYBox.text())
+            # Create new point and add to list and table.
+            #if(pd.inBounds(pixelX, pixelY) == True):
+            p = Point(pName, realX, realY, realZ, pixelX, pixelY)
+            pd.points = np.append(pd.points, p)
+            pd.updatePointTable()
+            pd.update()
 
-        # Convert text input into ints.
-        realX = int(self.realXBox.text())
-        realY = int(self.realYBox.text())
-        realZ = int(self.realZBox.text())
-        pixelX = int(self.pixelXBox.text())
-        pixelY = int(self.pixelYBox.text())
+            self.close()
+        except:
+            #message.setText("Please fill fields with integers only")
+            self.update()
 
-        # Create new point and add to list and table.
-        p = Point(pName, realX, realY, realZ, pixelX, pixelY)
-        pd.points = np.append(pd.points, p)
-        pd.updatePointTable()
-        pd.update()
-
-        self.close()
+        
+        #else:
+            #print("not in bounds")
+           # message.setText("Point is out of Bounds!")
+           # self.update()

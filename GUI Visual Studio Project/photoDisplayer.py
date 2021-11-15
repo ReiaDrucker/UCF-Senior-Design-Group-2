@@ -35,9 +35,10 @@ class PhotoDisplayer(QWidget):
 
     def toggleDraw(self):
        self.drawStuff = not(self.drawStuff)
-       print(self.drawStuff)
        self.update()
 
+    def inBounds(self, xVal, yVal):
+        return xVal >= 0 and yVal >= 0 and xVal <= self.width() and yVal <= self.height()
 
     def paintEvent(self, event):
         painter = QPainter()
@@ -88,7 +89,6 @@ class PhotoDisplayer(QWidget):
 
 
     def setNewPixmap(self, new):
-
         # When you get a new image resize the pixmap to fit it
         self.pix = new
         self.resize(self.pix.width(), self.pix.height())

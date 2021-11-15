@@ -113,21 +113,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.actionOpen = QtWidgets.QAction("Open", MainWindow)
-        self.actionOpen.setStatusTip("Open a file")
-        self.actionOpen.triggered.connect(self.loadGUIFromFile)
-
-        # TODO: Action button not connected to anything yet.
-        self.actionSave = QtWidgets.QAction("Save", MainWindow)
-        self.actionSave.setStatusTip("Save a file")
-        self.actionSave.setShortcut("Ctrl+S")
-
-        self.actionSaveAs = QtWidgets.QAction("Save As", MainWindow)
-        self.actionSaveAs.setStatusTip("Save this file as a new file")
-        self.actionSaveAs.triggered.connect(self.saveGUIToFile)
+        self.actionLoadData = QtWidgets.QAction("Load Data", MainWindow)
+        self.actionLoadData.setStatusTip("Load Data from SDFDATA File")
+        self.actionLoadData.triggered.connect(self.loadGUIFromFile)
 
         self.actionExportData = QtWidgets.QAction("Export Data", MainWindow)
         self.actionExportData.setStatusTip("Exports the data")
+        self.actionExportData.triggered.connect(self.saveGUIToFile)
+        self.actionExportData.setShortcut("Ctrl+S")
 
         self.actionUploadLeft = QtWidgets.QAction("Upload Left", MainWindow)
         self.actionUploadLeft.setStatusTip("Upload left half of a stereogram pair")
@@ -153,9 +146,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShowInterpolatedImage = QtWidgets.QAction("Show Interpolated Image", MainWindow)
         
         # Add actions to menus.
-        self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addAction(self.actionSave)
-        self.menuFile.addAction(self.actionSaveAs)
+        self.menuFile.addAction(self.actionLoadData)
         self.menuFile.addAction(self.actionExportData)
 
         self.menuUploadImages.addAction(self.actionUploadLeft)
