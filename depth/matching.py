@@ -3,6 +3,16 @@ import cv2 as cv
 import numpy as np
 import math
 
+def _lerp(a, b, x):
+    return np.add(np.multiply(a, x), np.multiply(b, 1 - x))
+
+def _sigmoid(x):
+    return 1 / (1 + math.exp(-x))
+
+def _length(a, b):
+    x = np.add(a, np.multiply(b, -1))
+    return (x.dot(x)) ** 0.5
+
 class ImageWithFeatures:
     def __init__(self, img, target_size, tx = 0, ty = 0):
         scale = max(img.shape[0] / target_size, img.shape[1] / target_size)
@@ -45,25 +55,28 @@ class ImageWithFeatures:
         ret = [self.__pts_from_match(match, self.kp, o.kp) for match in ret]
         return ret
 
-def __lerp(a, b, x):
-    return np.add(np.multiply(a, x), np.multiply(b, 1 - x))
+    def debug_frame(self, matches, z = 0):
+        norm_dx = sorted([abs(u[0] - v[0]) for u, v in matches])[-1]
+        print(norm_dx)
 
-def __sigmoid(x):
-    return 1 / (1 + math.exp(-x))
+        frame = self.img.copy()
+        for u,v in matches:
+            color = (0, 255, 0)
+            color = _lerp((255, 0, 0), (0, 0, 255), _sigmoid((u[0] - v[0]) / norm_dx))
 
-def __length(a, b):
-    x = np.add(a, np.multiply(b, -1))
-    return (x.dot(x)) ** 0.5
+            # cv.circle(frame, np.int0(_lerp(u, v, z)), 2, color, -1)
+            cv.line(frame, u, v, color, 2)
+        return frame
 
 def remove_match_outliers(pts):
-    pts = sorted(pts, key = lambda x: __length(*x))
+    pts = sorted(pts, key = lambda x: _length(*x))
     n = len(pts)
 
-    q = [__length(*pts[i]) for i in [(n * x) // 4 for x in range(4)]]
+    q = [_length(*pts[i]) for i in [(n * x) // 4 for x in range(4)]]
     iqr = q[3] - q[1]
 
     def good(x):
-       dist = __length(*x)
+       dist = _length(*x)
        return dist >= q[1] - 1.5 * iqr and dist <= q[3] + 1.5 * iqr
 
     return [x for x in pts if good(x)]
@@ -113,13 +126,13 @@ def __main():
         for u,v in to_draw:
             color = (0, 255, 0)
             if sample_colors:
-                color = __lerp(sample_colors[0][u[1]][u[0]],
+                color = _lerp(sample_colors[0][u[1]][u[0]],
                             sample_colors[1][v[1]][v[0]],
-                            __sigmoid((u[0] - v[0]) / norm_dx))
+                            _sigmoid((u[0] - v[0]) / norm_dx))
             else:
-                color = __lerp((255, 0, 0), (0, 0, 255), __sigmoid((u[0] - v[0]) / norm_dx))
+                color = _lerp((255, 0, 0), (0, 0, 255), _sigmoid((u[0] - v[0]) / norm_dx))
 
-            cv.circle(frame, np.int0(__lerp(u, v, z)), 2, color, -1)
+            cv.circle(frame, np.int0(_lerp(u, v, z)), 2, color, -1)
 
     example = left.img.copy()
     draw_frame(example, 1)

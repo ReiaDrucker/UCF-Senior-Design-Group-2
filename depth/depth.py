@@ -30,7 +30,6 @@ def make_xyz(disparity, f, b):
     x, y, z = uvd_to_xyz(uvd, f, b)
     return np.stack((x, y, z), -1)
 
-
 if __name__ == '__main__':
     from matching import ImageWithFeatures, remove_match_outliers
     from disparity import disparity_uncalibrated

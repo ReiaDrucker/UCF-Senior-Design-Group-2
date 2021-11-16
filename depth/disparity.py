@@ -3,6 +3,8 @@ import numpy as np
 import random
 import math
 
+from matplotlib import pyplot as plt
+
 def __h2e(X):
     return (X / X[-1])[:-1]
 
@@ -117,15 +119,22 @@ def disparity_uncalibrated(left, right, verbose = False):
         print('F:', F)
         print('Inlier points:', len(x1))
 
+        matches = [ (u, v) for u, v in zip(x1, x2) ]
+        plt.imshow(left.debug_frame(matches))
+        plt.show()
+
     ret, h1, h2 = cv.stereoRectifyUncalibrated(x1, x2, F, (left.img.shape[1], left.img.shape[0]), threshold = 0)
     if not ret:
-        print('Failed to rectify')
-        return None
+        raise RuntimeError('Failed to rectify')
 
-    s1 = __rectify_shearing(h1, left.img.shape[1], left.img.shape[0])
-    s2 = __rectify_shearing(h2, right.img.shape[1], right.img.shape[0])
-    h1 = np.matmul(s1, h1)
-    h2 = np.matmul(s2, h2)
+    h1 = np.identity(3)
+    h2 = np.identity(3)
+
+    # FIXME: Shearing appears to be broken for Tsukuba
+    # s1 = __rectify_shearing(h1, left.img.shape[1], left.img.shape[0])
+    # s2 = __rectify_shearing(h2, right.img.shape[1], right.img.shape[0])
+    # h1 = np.matmul(s1, h1)
+    # h2 = np.matmul(s2, h2)
 
     n = len(x1)
     x1_ = np.vstack((x1.transpose(), np.ones(n)))
@@ -184,17 +193,31 @@ def disparity_uncalibrated(left, right, verbose = False):
         dx = u[0] - v[0]
         dxs += [dx]
 
-        if verbose:
+        if False:
             cv.line(frame, u, v, (255, 0, 0), 2)
 
     if verbose:
-        cv.imshow('warped', frame)
+        plt.imshow(frame)
+        plt.show()
 
     win_size = 0
-    min_disp = min(dxs)
-    max_disp = max(dxs) #min_disp * 9
-    num_disp = max_disp - min_disp # Needs to be divisible by 16
-    num_disp = ((max_disp + 15) // 16) * 16
+
+    # exclude outliers
+    iqr = np.quantile(dxs, .75) - np.quantile(dxs, .25)
+    min_disp = math.floor(max(min(dxs), np.quantile(dxs, .25) - 1.5 * iqr))
+    max_disp = math.ceil(min(max(dxs), np.quantile(dxs, .75) + 1.5 * iqr))
+
+    swapped = False
+    if max_disp < 0 or (min_disp < 0 and max_disp < -min_disp):
+        if verbose:
+            print('Negative disparity, swapping images')
+
+        swapped = True
+        min_disp, max_disp = -max_disp, -min_disp
+        left_w, right_w = right_w, left_w
+
+    num_disp = max_disp - min_disp + 1
+    num_disp = ((num_disp + 15) // 16) * 16 # Needs to be divisible by 16
 
     if verbose:
       print('min disp:', min_disp)
@@ -203,24 +226,27 @@ def disparity_uncalibrated(left, right, verbose = False):
     #Create Block matching object.
     stereo = cv.StereoSGBM_create(minDisparity = min_disp,
                                   numDisparities = num_disp,
-                                  blockSize = 1,
+                                  blockSize = 3,
                                   uniquenessRatio = 5,
                                   speckleWindowSize = 5,
                                   speckleRange = 5,
                                   disp12MaxDiff = 0,
-                                  P1 = 8*3*win_size**2,#8*3*win_size**2,
-                                  P2 =32*3*win_size**2) #32*3*win_size**2)
+                                  P1 = 8*3*win_size**2,
+                                  P2 = 32*3*win_size**2)
 
     disparity = stereo.compute(left_w, right_w)
 
     if verbose:
-      frame = np.ones(disparity.shape) / disparity * 50000
-      frame = frame.clip(None, 255)
-      frame = cv.resize(frame, (1000, 1000))
-      cv.imshow('disparity, warped', frame)
+      plt.imshow(disparity)
+      plt.show()
 
     right_stereo = cv.ximgproc.createRightMatcher(stereo)
     right_disparity = right_stereo.compute(right_w, left_w)
+
+    if swapped:
+        left_w, right_w = right_w, left_w
+        disparity, right_disparity = right_disparity, disparity
+        stereo, right_stereo = right_stereo, stereo
 
     wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo)
     wls_filter.setLambda(8000)
@@ -242,14 +268,8 @@ if __name__ == '__main__':
     right = ImageWithFeatures(cv.imread('../data/right.tif', cv.IMREAD_GRAYSCALE), 1024)
 
     disparity = disparity_uncalibrated(left, right, verbose=True)
-    disparity = np.ones(disparity.shape) / disparity * 50000
 
-    disparity = disparity.clip(None, 255)
-
-    # disparity = cv.normalize(disparity, disparity, alpha=255, beta=0, norm_type=cv.NORM_MINMAX)
-    disparity = np.uint8(disparity)
-
-    cv.imshow('disparity', disparity)
-    cv.waitKey(0)
+    plt.imshow(disparity)
+    plt.show()
 
     cv.imwrite('disparity.png', disparity)
