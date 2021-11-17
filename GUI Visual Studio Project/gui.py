@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
+from pdwithzoom import *
 from pointDialog import *
 from vectorDialog import *
 from deleteVectorDialog import *
@@ -58,7 +59,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable.horizontalHeaderItem(3).setText("Magnitude")
 
         # Uploading and drawing image onto interface.
-        self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.centralwidget)
+        #self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.centralwidget)
+        #self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
+        #self.pd.setObjectName("photoDisplay")
+
+         # Uploading and drawing image onto interface.
+        self.pd = ZoomyPhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.centralwidget)
         self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
         self.pd.setObjectName("photoDisplay")
 
@@ -107,11 +113,27 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuFile = QtWidgets.QMenu("File", self.menubar)
         self.menuUploadImages = QtWidgets.QMenu("Upload Images", self.menubar)
         self.menuToggleDisplayOptions = QtWidgets.QMenu("Toggle Display Options", self.menubar)
+        self.menuZoomOptions = QtWidgets.QMenu("Zoom Options", self.menubar)
         
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
+        self.actionZoomIn = QtWidgets.QAction("Zoom In 25%", MainWindow)
+        self.actionZoomIn.setStatusTip("Zoom in on the image")
+        self.actionZoomIn.triggered.connect(self.pd.zoomIn)
+        self.actionZoomIn.setShortcut("Ctrl+=")
+
+        self.actionZoomOut = QtWidgets.QAction("Zoom Out 25%", MainWindow)
+        self.actionZoomOut.setStatusTip("Zoom out on the image")
+        self.actionZoomOut.triggered.connect(self.pd.zoomOut)
+        self.actionZoomOut.setShortcut("Ctrl+-")
+
+        self.actionZoomReset = QtWidgets.QAction("Reset Zoom", MainWindow)
+        self.actionZoomReset.setStatusTip("Restore Image to Normal Size")
+        self.actionZoomReset.triggered.connect(self.pd.resetZoom)
+        self.actionZoomReset.setShortcut("Ctrl+r")
 
         self.actionLoadData = QtWidgets.QAction("Load Data", MainWindow)
         self.actionLoadData.setStatusTip("Load Data from SDFDATA File")
@@ -156,11 +178,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuToggleDisplayOptions.addAction(self.actionShowLeftImage)
         self.menuToggleDisplayOptions.addAction(self.actionShowRightImage)
         self.menuToggleDisplayOptions.addAction(self.actionShowInterpolatedImage)
+
+        self.menuZoomOptions.addAction(self.actionZoomIn)
+        self.menuZoomOptions.addAction(self.actionZoomOut)
+        self.menuZoomOptions.addAction(self.actionZoomReset)
+
+
         
         # Add menus to menu bar.
         self.menubar.addMenu(self.menuFile)
         self.menubar.addMenu(self.menuUploadImages)
         self.menubar.addMenu(self.menuToggleDisplayOptions)
+        self.menubar.addMenu(self.menuZoomOptions)
 
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
