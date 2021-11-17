@@ -19,8 +19,11 @@ def qToCv(q):
 def getRealFromImages(left, right):
     left = matching.ImageWithFeatures(qToCv(left), 1024)
     right = matching.ImageWithFeatures(qToCv(right), 1024)
+    matches = np.array(left.match(right))
 
-    disp = disparity.disparity_uncalibrated(left, right, verbose=False)
+    rectified = disparity.rectify(left.img, right.img, matches)
+    disparity_w = disparity.disparity(rectified.left, rectified.right, rectified.matches)
+    disp = disparity.unrectify(disparity_w, rectified.h1, left.img.shape)
 
     # TODO: wire the focal length estimator here instead of guessing
     baseline = .55
