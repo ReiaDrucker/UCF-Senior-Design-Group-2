@@ -25,23 +25,22 @@ def grab_data(base, pattern, idx):
     return cv.imread(fname)
 
 def calc_disparity(left, right, verbose=False):
-    from depth.matching import ImageWithFeatures
+    from depth.matching import make_stereo_pair, fill_matches
     from depth.disparity import rectify, disparity, unrectify
 
     left = cv.cvtColor(left, cv.COLOR_BGR2GRAY)
     right = cv.cvtColor(right, cv.COLOR_BGR2GRAY)
 
-    left = ImageWithFeatures(left, 640)
-    right = ImageWithFeatures(right, 640)
-    matches = np.array(left.match(right))
+    stereo = make_stereo_pair(left, right, None)
+    stereo = fill_matches(stereo)
 
     # Tsukuba images appear to already be rectified
     # TODO: we should be able to detect if images are already rectified
-    rectified = rectify(left.img, right.img, matches, H=(np.identity(3), np.identity(3)))
+    rectified = rectify(*stereo, H=(np.identity(3), np.identity(3)))
 
-    disparity_w = disparity(rectified.left, rectified.right, rectified.matches)
+    disparity_w = disparity(*rectified[:3])
 
-    return unrectify(disparity_w, rectified.h1, left.img.shape)
+    return unrectify(disparity_w, rectified.h1, stereo.left.shape)
 
 def grab_all_data(idx):
     left = grab_data(LEFT_DIR, 'daylight_L', idx)

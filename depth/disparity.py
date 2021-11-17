@@ -93,7 +93,7 @@ def _correct_rectification(h1, h2, shape1, shape2):
 
     return h1, h2
 
-Rectified = namedtuple('Rectified', 'left, right, matches, h1, h2')
+RectifiedPair = namedtuple('RectifiedPair', 'left, right, matches, h1, h2')
 def rectify(left, right, matches, H = None, verbose = False):
     '''
     Rectify a stereo pair and matches by estimating the fundamental matrix,
@@ -138,7 +138,7 @@ def rectify(left, right, matches, H = None, verbose = False):
     matches_w = np.c_[x1, x2]
     matches_w = matches_w.reshape(matches_w.shape[0], 2, 2)
 
-    return Rectified(left_w, right_w, matches_w, h1, h2)
+    return RectifiedPair(left_w, right_w, matches_w, h1, h2)
 
 def _measure_disparity(matches):
     '''
@@ -212,18 +212,17 @@ def unrectify(disparity, h, shape):
     return cv.warpPerspective(disparity, np.linalg.inv(h), (shape[1], shape[0]))
 
 if __name__ == '__main__':
-    from matching import ImageWithFeatures
+    from matching import make_stereo_pair, fill_matches
 
     # Still no good way to find ty besides manual tuning,
     # but it is very important to get it right to avoid distortion during rectification
     # 3.5 pixels seems OK
-    left = ImageWithFeatures(cv.imread('../data/left.tif', cv.IMREAD_GRAYSCALE), 1024, 0, -3.5)
-    right = ImageWithFeatures(cv.imread('../data/right.tif', cv.IMREAD_GRAYSCALE), 1024)
-    matches = np.array(left.match(right))
+    stereo = make_stereo_pair(cv.imread('../data/left.tif'), cv.imread('../data/right.tif'), 1024)
+    stereo = fill_matches(stereo)
 
-    rectified = rectify(left.img, right.img, matches, verbose=True)
-    disparity_w = disparity(rectified.left, rectified.right, rectified.matches, verbose=True)
-    disparity = unrectify(disparity_w, rectified.h1, left.img.shape)
+    rectified = rectify(*stereo, verbose=True)
+    disparity_w = disparity(*rectified[:3], verbose=True)
+    disparity = unrectify(disparity_w, rectified.h1, stereo.left.shape)
 
     plt.imshow(disparity)
     plt.show()
