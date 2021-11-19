@@ -1,6 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
-from pdwithzoom import *
 from pointDialog import *
 from vectorDialog import *
 from deleteVectorDialog import *
@@ -8,6 +7,7 @@ from deletePointDialog import *
 from editPointDialog import *
 from editVectorDialog import *
 from changeColorDialog import *
+from photoDisplayerContainer import *
 import pickle
 import os
 
@@ -58,15 +58,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable.horizontalHeaderItem(2).setText("Real Coordinates")
         self.vectorTable.horizontalHeaderItem(3).setText("Magnitude")
 
-        # Uploading and drawing image onto interface.
-        #self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.centralwidget)
-        #self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
-        #self.pd.setObjectName("photoDisplay")
-
-         # Uploading and drawing image onto interface.
-        self.pd = ZoomyPhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.centralwidget)
-        self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
+        # Handles drawing of points and vectors along with zoom
+        self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable)
         self.pd.setObjectName("photoDisplay")
+        self.pdContainer = photoDisplayerContainer(self.centralwidget, self.pd)
+        self.pdContainer.setObjectName("pdContainer")
+        self.pdContainer.setGeometry(QtCore.QRect(10, 10, 960, 540))
 
         self.pushButtonChangeVectorColor = QtWidgets.QPushButton("Select Vector Color", self.centralwidget)
         self.pushButtonChangeVectorColor.setGeometry(QtCore.QRect(1000, 10, 150, 30))
@@ -122,17 +119,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.actionZoomIn = QtWidgets.QAction("Zoom In 25%", MainWindow)
         self.actionZoomIn.setStatusTip("Zoom in on the image")
-        self.actionZoomIn.triggered.connect(self.pd.zoomIn)
+        self.actionZoomIn.triggered.connect(self.pdContainer.zoomIn)
         self.actionZoomIn.setShortcut("Ctrl+=")
 
         self.actionZoomOut = QtWidgets.QAction("Zoom Out 25%", MainWindow)
         self.actionZoomOut.setStatusTip("Zoom out on the image")
-        self.actionZoomOut.triggered.connect(self.pd.zoomOut)
+        self.actionZoomOut.triggered.connect(self.pdContainer.zoomOut)
         self.actionZoomOut.setShortcut("Ctrl+-")
 
         self.actionZoomReset = QtWidgets.QAction("Reset Zoom", MainWindow)
         self.actionZoomReset.setStatusTip("Restore Image to Normal Size")
-        self.actionZoomReset.triggered.connect(self.pd.resetZoom)
+        self.actionZoomReset.triggered.connect(self.pdContainer.resetZoom)
         self.actionZoomReset.setShortcut("Ctrl+r")
 
         self.actionLoadData = QtWidgets.QAction("Load Data", MainWindow)
