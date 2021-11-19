@@ -10,7 +10,7 @@ class editPointDialog(QDialog):
     def __init__(self, pd):
         # Initialize dialog window.
         super().__init__()
-        self.setWindowTitle("Edit Vector")
+        self.setWindowTitle("Edit Point")
         self.createLayout(pd)
 
     # Create form layout for dialog window.

@@ -21,7 +21,7 @@ class pointDialog(QDialog):
         self.buttonBox.rejected.connect(self.reject)
 
         # First mesage.
-        message = QLabel("Enter information about the new point below.")
+        self.message = QLabel("Enter information about the new point below.")
 
         # Text input boxes.
         self.nameBox = QLineEdit(self)
@@ -35,7 +35,7 @@ class pointDialog(QDialog):
         
         # Create layout and add everything to it.
         self.layout = QFormLayout()
-        self.layout.addRow(message)
+        self.layout.addRow(self.message)
         self.layout.addRow("Name:", self.nameBox)
         self.layout.addRow("Pixel X:", self.pixelXBox)
         self.layout.addRow("Pixel Y:", self.pixelYBox)
@@ -63,11 +63,15 @@ class pointDialog(QDialog):
             # Create new point and add to list and table.
             #if(pd.inBounds(pixelX, pixelY) == True):
             p = Point(pName, realX, realY, realZ, pixelX, pixelY)
-            pd.points = np.append(pd.points, p)
-            pd.updatePointTable()
-            pd.update()
 
-            self.close()
+            if pd.drawStuff == False:
+                self.message.setText("Cannot add point when display is turned off!")
+            else:
+                pd.points = np.append(pd.points, p)
+                pd.updatePointTable()
+                pd.update()
+
+                self.close()
         except:
             #message.setText("Please fill fields with integers only")
             self.update()
