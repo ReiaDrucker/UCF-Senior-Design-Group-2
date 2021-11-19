@@ -97,9 +97,10 @@ class ZoomyPhotoDisplayer(QGraphicsView):
                 self.scene.removeItem(item)
 
         # Draw the new ones
-        self.drawPoints()
-        self.drawVectors()
-
+        if self.drawStuff:
+            self.drawPoints()
+            self.drawVectors()
+        self.update()
         #print("updating")
         #super().update()
 
@@ -190,7 +191,7 @@ class ZoomyPhotoDisplayer(QGraphicsView):
                 self.vTable.setItem(count, 2, item)
 
                 # Set magnitude column.
-                item = QTableWidgetItem(str(np.linalg.norm(curVector.getPixelCoordinates())))
+                item = QTableWidgetItem("{:.3f}".format(np.linalg.norm(curVector.getPixelCoordinates())))
                 item.setTextAlignment(Qt.AlignCenter)
                 self.vTable.setItem(count, 3, item)
             if (self.drawStuff):
