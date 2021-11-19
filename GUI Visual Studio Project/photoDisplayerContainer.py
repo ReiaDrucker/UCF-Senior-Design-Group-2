@@ -29,7 +29,7 @@ class photoDisplayerContainer(QtWidgets.QGraphicsView):
         if event.button() == Qt.LeftButton:
             x = self.mapToScene(event.pos()).x()
             y = self.mapToScene(event.pos()).y() 
-            self.pd.addPoint(x,y)
+            self.pd.addPoint(int(x),int(y))
 
     def zoomIn(self):
         self.zoom(self.factor)
