@@ -296,7 +296,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         fname = "SDFDATA File (*.SDFDATA)"
         filePath = QtWidgets.QFileDialog.getSaveFileName(self, "Select Directory To Save To", os.getcwd(), fname, fname)
 
-        objectToSave = [self.pd.points, self.pd.vectors, self.leftImagePath, self.rightImagePath]
+        objectToSave = [self.pd.points, self.pd.vectors, self.leftImagePath, self.rightImagePath, self.pd.pointPen.color(), self.pd.vectorPen.color()]
 
         # If path is valid serialize the data into the file
         if(filePath[0] != ""):
@@ -320,6 +320,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 # Load point and vecotr data
                 self.pd.points = data[0]
                 self.pd.vectors = data[1]
+                self.pd.pointPen.setColor(data[4])
+                self.pd.vectorPen.setColor(data[5])
                 self.pd.updatePointTable()
                 self.pd.updateVectorTable()
 
