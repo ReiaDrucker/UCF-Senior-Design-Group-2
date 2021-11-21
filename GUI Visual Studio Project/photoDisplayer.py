@@ -4,13 +4,14 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from point import *
 from vector import *
+from angle import *
 import numpy as np
 import os
 
 class PhotoDisplayer(QWidget):
 
-    def __init__(self, width, height, pTable=None, vTable=None, parent=None):
-        super(PhotoDisplayer, self).__init__(parent)
+    def __init__(self, width, height, pTable=None, vTable=None, aTable=None):
+        super(PhotoDisplayer, self).__init__()
         self.setMaximumWidth(width)
         self.setMaximumHeight(height)
         self.resize(width, height)
@@ -22,6 +23,7 @@ class PhotoDisplayer(QWidget):
 
         self.pTable = pTable
         self.vTable = vTable
+        self.aTable = aTable
 
         # Different pen styles for points and vectors
         self.pointPen = QPen(Qt.red, 5)
@@ -30,6 +32,7 @@ class PhotoDisplayer(QWidget):
         # Initialize point/vector arrays for tables.
         self.points = np.array([])
         self.vectors = np.array([])
+        self.angles = np.array([])
 
         self.drawStuff = True
 
@@ -165,10 +168,39 @@ class PhotoDisplayer(QWidget):
                 self.vTable.setItem(count, 2, item)
 
                 # Set magnitude column.
-                item = QTableWidgetItem(str(np.linalg.norm(curVector.getPixelCoordinates())))
+                item = QTableWidgetItem("{:.2f}".format(np.linalg.norm(curVector.getPixelCoordinates())))
                 item.setTextAlignment(Qt.AlignCenter)
                 self.vTable.setItem(count, 3, item)
 
+    def updateAngleTable(self):
+        if self.aTable != None:
+            self.aTable.clearContents()
+            self.aTable.setRowCount(0)
+            for count in range(self.angles.size):
+                curAngle = self.angles[count]
+
+                self.aTable.insertRow(count)
+
+                item = QTableWidgetItem("Angle " + str(count + 1))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.aTable.setVerticalHeaderItem(count, item)
+
+                # Set name column.
+                item = QTableWidgetItem(curAngle.name)
+                item.setTextAlignment(Qt.AlignCenter)
+                self.aTable.setItem(count, 0, item)
+
+                item = QTableWidgetItem(curAngle.vector1Ref.name)
+                item.setTextAlignment(Qt.AlignCenter)
+                self.aTable.setItem(count, 1, item)
+
+                item = QTableWidgetItem(curAngle.vector2Ref.name)
+                item.setTextAlignment(Qt.AlignCenter)
+                self.aTable.setItem(count, 2, item)
+                
+                item = QTableWidgetItem("{:.2f}".format(curAngle.value))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.aTable.setItem(count, 3, item)
    
 
 if __name__ == '__main__':

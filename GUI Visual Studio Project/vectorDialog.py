@@ -14,7 +14,7 @@ class vectorDialog(QDialog):
         
     # Create form layout of dialog window.
     def createLayout(self, pd):
-        self.message = QLabel("Enter information about the new point below.")
+        self.message = QLabel("Enter information about the new vector below.")
 
         # Create button box.
         buttonOptions = QDialogButtonBox.Ok | QDialogButtonBox.Cancel

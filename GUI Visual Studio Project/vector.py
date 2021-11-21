@@ -33,8 +33,3 @@ class Vector(object):
 
     def getReferencePoints(self):
         return [self.point1Ref, self.point2Ref]
-
-
-
-
-

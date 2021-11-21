@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
 from pointDialog import *
 from vectorDialog import *
+from angleDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
 from editPointDialog import *
@@ -28,7 +29,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Set up point table.
         self.pointTable = QtWidgets.QTableWidget(self.centralwidget)
         self.pointTable.setGeometry(QtCore.QRect(1000, 70, 580, 300))
-        self.pointTable.setObjectName("pointTable")
         self.pointTable.setColumnCount(3)
         self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
@@ -44,7 +44,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Set up vector tables.
         self.vectorTable = QtWidgets.QTableWidget(self.centralwidget)
         self.vectorTable.setGeometry(QtCore.QRect(1000, 500, 580, 300))
-        self.vectorTable.setObjectName("vectorTable")
         self.vectorTable.setColumnCount(4)
         self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         
@@ -58,9 +57,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable.horizontalHeaderItem(2).setText("Real Coordinates")
         self.vectorTable.horizontalHeaderItem(3).setText("Magnitude")
 
+        # Set up angle table.
+        self.angleTable = QtWidgets.QTableWidget(self.centralwidget)
+        self.angleTable.setGeometry(QtCore.QRect(10, 560, 580, 300))
+        self.angleTable.setColumnCount(4)
+        self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        # Set up columns for angle table.
+        for i in range(4):
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.angleTable.setHorizontalHeaderItem(i, item)
+        self.angleTable.horizontalHeaderItem(0).setText("Name")
+        self.angleTable.horizontalHeaderItem(1).setText("Vector 1")
+        self.angleTable.horizontalHeaderItem(2).setText("Vector 2")
+        self.angleTable.horizontalHeaderItem(3).setText("Angle")
+
         # Handles drawing of points and vectors along with zoom
-        self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable)
-        self.pd.setObjectName("photoDisplay")
+        self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.angleTable)
         self.pdContainer = photoDisplayerContainer(self.centralwidget, self.pd)
         self.pdContainer.setObjectName("pdContainer")
         self.pdContainer.setGeometry(QtCore.QRect(10, 10, 960, 540))
@@ -98,6 +112,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.buttonAddVector.clicked.connect(self.addVector)      
         self.buttonDeleteVector.clicked.connect(self.deleteVector)
         self.buttonEditVector.clicked.connect(self.editVector)
+
+        # Buttons for angles.
+        self.buttonAddAngle = QtWidgets.QPushButton("Add Angle", self.centralwidget)
+        self.buttonDeleteAngle = QtWidgets.QPushButton("Delete Angle", self.centralwidget)
+        self.buttonEditAngle = QtWidgets.QPushButton("Edit Angle", self.centralwidget)
+
+        self.buttonAddAngle.setGeometry(QtCore.QRect(10, 880, 150, 30))
+        self.buttonDeleteAngle.setGeometry(QtCore.QRect(210, 880, 150, 30))
+        self.buttonEditAngle.setGeometry(QtCore.QRect(410, 880, 150, 30))
+
+        self.buttonAddAngle.clicked.connect(self.addAngle)
+        
 
         # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
@@ -229,6 +255,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def addVector(self):
         dialog = vectorDialog(self.pd)
         dialog.exec()
+
+    # Adds angle row to angle table widget.
+    def addAngle(self):
+        if self.pd.vectors.size >= 2:
+            dialog = angleDialog(self.pd)
+            dialog.exec()
     
     # Deletes vector from vector table.
     def deleteVector(self):
