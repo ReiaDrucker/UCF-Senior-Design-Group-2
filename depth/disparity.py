@@ -12,8 +12,12 @@ import numpy as np
 import random
 import math
 from collections import namedtuple
-
 from matplotlib import pyplot as plt
+
+if __package__ is not None:
+    from . import util
+else:
+    import util
 
 def _h2e(X):
     return (X / X[-1])[:-1]
@@ -46,10 +50,11 @@ def _rectify_shearing(H1, shape):
         k1 *= -1
         k2 *= -1
 
-    return np.float32([
+    S = np.float32([
         [k1, k2, 0],
         [0, 1, 0],
         [0, 0, 1]])
+    return S * H1
 
 def _correct_rectification(h1, h2, shape1, shape2):
     '''
@@ -58,40 +63,10 @@ def _correct_rectification(h1, h2, shape1, shape2):
     '''
     L = np.max(shape1[:2])
 
-    s1 = _rectify_shearing(h1, shape1)
-    s2 = _rectify_shearing(h2, shape2)
-    h1 = np.matmul(s1, h1)
-    h2 = np.matmul(s2, h2)
+    h1 = _rectify_shearing(h1, shape1)
+    h2 = _rectify_shearing(h2, shape2)
 
-    h, w = shape1[:2]
-    x1_ = [[0, 0, 1],
-           [w, 0, 1],
-           [0, h, 1],
-           [w, h, 1]]
-    x1_ = np.transpose(x1_)
-
-    x1_ = np.matmul(h1, x1_)
-    x1_[0] /= x1_[-1]
-    x1_[1] /= x1_[-1]
-    lx = x1_[0].min()
-    ly = x1_[1].min()
-    hx = x1_[0].max()
-    hy = x1_[1].max()
-
-    T = [[1, 0, -lx],
-         [0, 1, -ly],
-         [0, 0, 1]]
-
-    sx = L / (hx - lx)
-    sy = L / (hy - ly)
-    S = [[sx, 0, 0],
-         [0, sy, 0],
-         [0, 0, 1]]
-
-    h1 = np.matmul(np.matmul(S, T), h1)
-    h2 = np.matmul(np.matmul(S, T), h2)
-
-    return h1, h2
+    return util.correct_homographies((h1, h2), (shape1, shape2), (L, L))
 
 RectifiedPair = namedtuple('RectifiedPair', 'left, right, matches, h1, h2')
 def rectify(left, right, matches, H = None, verbose = False):
@@ -122,18 +97,11 @@ def rectify(left, right, matches, H = None, verbose = False):
 
     h1, h2 = _correct_rectification(h1, h2, left.shape, right.shape)
 
-    left_w = cv.warpPerspective(left, h1, (L, L))
-    right_w = cv.warpPerspective(right, h2, (L, L))
+    left_w = cv.warpPerspective(left, h1, (L, L), flags=cv.INTER_CUBIC)
+    right_w = cv.warpPerspective(right, h2, (L, L), flags=cv.INTER_CUBIC)
 
-    n = len(x1)
-    x1 = np.vstack((x1.transpose(), np.ones(n)))
-    x1 = np.matmul(h1, x1).transpose()
-
-    x2 = np.vstack((x2.transpose(), np.ones(n)))
-    x2 = np.matmul(h2, x2).transpose()
-
-    x1 = cv.convertPointsFromHomogeneous(x1)[:,0]
-    x2 = cv.convertPointsFromHomogeneous(x2)[:,0]
+    x1 = util.warp_points(x1, h1)
+    x2 = util.warp_points(x2, h2)
 
     matches_w = np.c_[x1, x2]
     matches_w = matches_w.reshape(matches_w.shape[0], 2, 2)
@@ -144,13 +112,15 @@ def _measure_disparity(matches):
     '''
     Approximate minimum and maximum disparity to set window sizes for SGBM
     '''
-    dxs = [matches[i,0,0] - matches[i,1,0] for i in range(len(matches))]
-    iqr = np.quantile(dxs, .75) - np.quantile(dxs, .25)
-    min_disp = math.floor(max(min(dxs), np.quantile(dxs, .25) - 1.5 * iqr))
-    max_disp = math.ceil(min(max(dxs), np.quantile(dxs, .75) + 1.5 * iqr))
+    dxs = np.int0([matches[i,0,0] - matches[i,1,0] for i in range(len(matches))])
+    q1 = np.quantile(dxs, .25)
+    q3 = np.quantile(dxs, .75)
+    iqr = q3 - q1
+    min_disp = math.floor(q1 - 1.5 * iqr)
+    max_disp = math.ceil(q3 + 1.5 * iqr)
     return min_disp, max_disp
 
-def disparity(left, right, matches, verbose = False):
+def disparity(left, right, matches, filter = True, verbose = False):
     '''
     Calculate the disparity from a pair of (rectified) images and matches
     '''
@@ -167,7 +137,7 @@ def disparity(left, right, matches, verbose = False):
 
     num_disp = max_disp - min_disp + 1
     num_disp = ((num_disp + 15) // 16) * 16 # Needs to be divisible by 16
-    win_size = 0
+    win_size = 1
 
     if verbose:
         print('min disp:', min_disp)
@@ -177,7 +147,7 @@ def disparity(left, right, matches, verbose = False):
     #Create Block matching object.
     stereo = cv.StereoSGBM_create(minDisparity = min_disp,
                                   numDisparities = num_disp,
-                                  blockSize = 3,
+                                  blockSize = 1,
                                   uniquenessRatio = 5,
                                   speckleWindowSize = 5,
                                   speckleRange = 5,
@@ -199,6 +169,9 @@ def disparity(left, right, matches, verbose = False):
         disparity, right_disparity = right_disparity, disparity
         stereo, right_stereo = right_stereo, stereo
 
+    if not filter:
+        return disparity
+
     wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo)
     wls_filter.setLambda(8000)
     wls_filter.setSigmaColor(1.5)
@@ -209,19 +182,22 @@ def unrectify(disparity, h, shape):
     '''
     Apply inverse rectification homography for an image
     '''
-    return cv.warpPerspective(disparity, np.linalg.inv(h), (shape[1], shape[0]))
+    return cv.warpPerspective(disparity, np.linalg.inv(h), (shape[1], shape[0]), flags=cv.INTER_CUBIC)
 
 if __name__ == '__main__':
-    from matching import make_stereo_pair, fill_matches
+    from matching import make_stereo_pair, fill_matches, adjust_scale, debug_frame
 
-    # Still no good way to find ty besides manual tuning,
-    # but it is very important to get it right to avoid distortion during rectification
-    # 3.5 pixels seems OK
-    stereo = make_stereo_pair(cv.imread('../data/left.tif'), cv.imread('../data/right.tif'), 1024)
+    stereo = make_stereo_pair(cv.imread('../data/left.tif'), cv.imread('../data/right.tif'))
     stereo = fill_matches(stereo)
+    stereo = adjust_scale(stereo, 1000)
+    stereo = fill_matches(stereo)
+    stereo = adjust_scale(stereo, 1000)
+
+    plt.imshow(debug_frame(stereo, .5))
+    plt.show()
 
     rectified = rectify(*stereo, verbose=True)
-    disparity_w = disparity(*rectified[:3], verbose=True)
+    disparity_w = disparity(*rectified[:3], filter=False, verbose=True)
     disparity = unrectify(disparity_w, rectified.h1, stereo.left.shape)
 
     plt.imshow(disparity)

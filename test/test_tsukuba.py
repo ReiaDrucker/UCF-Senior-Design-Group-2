@@ -25,7 +25,7 @@ def grab_data(base, pattern, idx):
     return cv.imread(fname)
 
 def calc_disparity(left, right, verbose=False):
-    from depth.matching import make_stereo_pair, fill_matches
+    from depth.matching import make_stereo_pair, fill_matches, adjust_scale
     from depth.disparity import rectify, disparity, unrectify
 
     left = cv.cvtColor(left, cv.COLOR_BGR2GRAY)

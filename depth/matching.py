@@ -1,16 +1,21 @@
-import os
+import os, sys
 import cv2 as cv
 import numpy as np
 import math
 from collections import namedtuple
 from matplotlib import pyplot as plt
 
+if __package__:
+    from . import util
+else:
+    import util
+
 def _rescale(img, L):
     '''
     Resize the image to fit in an LxL box
     '''
     s = min(L / img.shape[0], L / img.shape[1])
-    return cv.resize(img, np.int0((img.shape[0] * s, img.shape[1] * s)))
+    return cv.resize(img, np.int0((img.shape[1] * s, img.shape[0] * s)))
 
 StereoPair = namedtuple('StereoPair', 'left, right, matches')
 def make_stereo_pair(left, right, L = None):
@@ -20,6 +25,7 @@ def make_stereo_pair(left, right, L = None):
     if L is not None:
         left = _rescale(left, L)
         right = _rescale(right, L)
+
     return StereoPair(left, right, None)
 
 ImageFeatures = namedtuple('ImageFeatures', 'kp, des')
@@ -79,6 +85,43 @@ def remove_match_outliers(matches):
     v = v[mask == 1]
     return np.c_[u, v].reshape(u.shape[0], 2, 2)
 
+def adjust_scale(stereo, L):
+    assert stereo.matches is not None
+
+    u = stereo.matches[:,0]
+    v = stereo.matches[:,1]
+
+    c1 = np.mean(u, axis=0)
+    c2 = np.mean(v, axis=0)
+
+    d1 = np.mean(np.linalg.norm(u - c1, axis=1) ** 2) ** .5
+    d2 = np.mean(np.linalg.norm(v - c2, axis=1) ** 2) ** .5
+
+    h1 = np.array([
+        [1, 0, -c1[0]],
+        [0, 1, -c1[1]],
+        [0, 0, d1]
+    ])
+
+    h2 = np.array([
+        [1, 0, -c2[0]],
+        [0, 1, -c2[1]],
+        [0, 0, d2]
+    ])
+
+    h1, h2 = util.correct_homographies((h1, h2), (stereo.left.shape, stereo.right.shape), (L, L))
+
+    left = cv.warpPerspective(stereo.left, h1, (L, L), flags=cv.INTER_CUBIC)
+    right = cv.warpPerspective(stereo.right, h2, (L, L), flags=cv.INTER_CUBIC)
+
+    u = util.warp_points(u, h1)
+    v = util.warp_points(v, h2)
+
+    c1 = np.mean(u, axis=0)
+    c2 = np.mean(v, axis=0)
+
+    return StereoPair(left, right, np.c_[u, v].reshape((u.shape[0], 2, 2)))
+
 def _lerp(a, b, x):
     return np.add(np.multiply(a, x), np.multiply(b, 1 - x))
 
@@ -97,8 +140,8 @@ def debug_frame(stereo, z, lines = False):
         min(stereo.left.shape[1], stereo.right.shape[1])
     )
 
-    frame = stereo.left[:shape[0], :shape[1]] * (1 - z)
-    frame = frame + stereo.right[:shape[0], :shape[1]] * z
+    frame = stereo.left[:shape[0], :shape[1]] * z
+    frame = frame + stereo.right[:shape[0], :shape[1]] * (1 - z)
     frame[frame > 255] = 255
     frame = frame.astype('uint8')
 
@@ -110,9 +153,9 @@ def debug_frame(stereo, z, lines = False):
         color = _lerp((255, 0, 0), (0, 0, 255), _sigmoid((u[0] - v[0]) / norm_dx))
 
         if lines:
-            cv.line(frame, u, v, color, 2)
+            cv.line(frame, u.astype(int), v.astype(int), color, 2)
         else:
-            cv.circle(frame, np.int0(_lerp(u, v, z)), 2, color, -1)
+            cv.circle(frame, _lerp(u, v, z).astype(int), 1, color, -1)
 
     return frame
 
@@ -144,12 +187,17 @@ if __name__ == '__main__':
     left = cv.imread('../data/left.tif')
     right = cv.imread('../data/right.tif')
 
-    stereo = make_stereo_pair(left, right, 1000)
+    stereo = make_stereo_pair(left, right)
+    stereo = fill_matches(stereo)
+    stereo = adjust_scale(stereo, 1000)
     stereo = fill_matches(stereo)
     stereo = stereo._replace(matches=remove_match_outliers(stereo.matches))
+    stereo = adjust_scale(stereo, 1000)
 
-    frame = debug_frame(stereo, .5)
+    frame = debug_frame(stereo, .5, lines=True)
     plt.imshow(frame)
     plt.show()
 
-    debug_video(stereo, 'feature_matching.avi', 24, 10)
+    if len(sys.argv) > 1:
+        assert '.avi' in sys.argv[1]
+        debug_video(stereo, sys.argv[1], 24, 10)
