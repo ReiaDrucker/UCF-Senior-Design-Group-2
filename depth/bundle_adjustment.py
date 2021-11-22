@@ -32,7 +32,10 @@ def estimate_pose(stereo, f):
     matches = matches[mask == 1]
 
     _, R, t, mask = cv.recoverPose(E, matches[:,0], matches[:,1])
-    print(mask)
+    mask = mask.ravel()
+    assert len(mask[mask == 255]) > 0
+
+    matches = matches[mask == 255]
 
     matches[:,0] += np.array([stereo.left.shape[1] / 2, stereo.left.shape[0] / 2])
     matches[:,1] += np.array([stereo.right.shape[1] / 2, stereo.right.shape[0] / 2])
@@ -47,10 +50,11 @@ def triangulate(matches, pose):
         [0, 0, 1]
     ])
 
-    RT = np.c_[pose.R[:, 0], pose.R[:, 1], pose.R[:, 2], pose.t]
+    T0 = np.hstack((pose.R, pose.t.reshape(3, 1)))
+    T1 = np.hstack((np.identity(3), np.zeros((3, 1))))
 
-    P0 = np.c_[K[:, 0], K[:, 1], K[:, 2], np.zeros(3)]
-    P1 = np.matmul(K, RT)
+    P0 = np.matmul(K, T0)
+    P1 = np.matmul(K, T1)
 
     points = cv.triangulatePoints(P0, P1, matches[:, 0].transpose(), matches[:, 1].transpose())
     return cv.convertPointsFromHomogeneous(points.transpose())
@@ -63,6 +67,27 @@ def undistort(img, pose, k0, k1):
     ], dtype=np.float64)
 
     return cv.undistort(img, K, np.array([k0, k1, 0, 0, 0]))
+
+def plot_pose(pose, points_3d):
+    ax = plt.axes(projection='3d')
+
+
+    ax.scatter3D(0, 0, 0, s=100)
+
+    ax.scatter3D(points_3d[:,0], points_3d[:,1], points_3d[:,2])
+
+    ax.quiver(0, 0, 0, 0, 0, 1,
+              length=200000, arrow_length_ratio=.005, color='red')
+
+    ax.quiver(0, 0, 0, pose.t[0], pose.t[1], pose.t[2], arrow_length_ratio=.005)
+
+    v = -np.matmul(pose.R, np.array([0, 0, 1]))
+    print(v, np.linalg.norm(v))
+    ax.quiver(pose.t[0], pose.t[1], pose.t[2], v[0], v[1], v[2],
+              length=200000, arrow_length_ratio=.005, normalize=True, color='green')
+
+    plt.show()
+
 
 def improve_pose(stereo, pose):
     assert stereo.matches is not None
@@ -92,7 +117,7 @@ def improve_pose(stereo, pose):
             ])
 
             # TODO: this function returns the Jacobian,
-            # so we might be able to avoid use finite difference
+            # so we might be able to avoid finite difference
             points_proj, J = cv.projectPoints(points_3d,
                                               camera_params[cam][:3],
                                               camera_params[cam][3:6],
@@ -102,8 +127,15 @@ def improve_pose(stereo, pose):
 
         return ret.ravel()
 
-    points_3d = triangulate(matches, pose)
-    print(points_3d)
+    points_3d = triangulate(matches, pose).reshape((n, 3))
+
+    mask = points_3d[:,2] >= 0
+    points_3d = points_3d[mask]
+    matches = matches[mask]
+
+    n = matches.shape[0]
+
+    plot_pose(pose, points_3d)
 
     x0 = np.array([
         0, 0, 0,
@@ -140,6 +172,9 @@ def improve_pose(stereo, pose):
         [res.x[16], res.x[17], 0, 0, 0]
     ])
 
+    points_3d = res.x[2 * 9:].reshape((n, 3))
+    plot_pose(pose, points_3d)
+
     return pose, distortion
 
 def try_loading(path):
@@ -173,14 +208,16 @@ if __name__ == '__main__':
     print(pose)
 
     pose, distortion = improve_pose(stereo, pose)
+    print(pose)
+
     stereo = rectify_calibrated(stereo, pose, distortion)
 
-    test = debug_frame(stereo, .5, True)
-    plt.imshow(test)
-    plt.show()
+    # test = debug_frame(stereo, .5, True)
+    # plt.imshow(test)
+    # plt.show()
 
-    disparity = disparity(*stereo, filter=False, verbose=True)
+    # disparity = disparity(*stereo, filter=False, verbose=True)
 
-    plt.imshow(disparity)
-    plt.show()
+    # plt.imshow(disparity)
+    # plt.show()
     
