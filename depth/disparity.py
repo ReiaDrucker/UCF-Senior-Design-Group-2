@@ -14,7 +14,7 @@ import math
 from collections import namedtuple
 from matplotlib import pyplot as plt
 
-if __package__ is not None:
+if __package__:
     from . import util
 else:
     import util
@@ -107,6 +107,33 @@ def rectify(left, right, matches, H = None, verbose = False):
     matches_w = matches_w.reshape(matches_w.shape[0], 2, 2)
 
     return RectifiedPair(left_w, right_w, matches_w, h1, h2)
+
+def intrinsic_mat(f, cx, cy):
+    return np.array([
+        [f, 0, cx],
+        [0, f, cy],
+        [0, 0, 1]
+    ])
+
+def rectify_calibrated(stereo, pose, distortion):
+    K0 = intrinsic_mat(pose.f, stereo.left.shape[1] / 2, stereo.left.shape[0] / 2)
+    K1 = intrinsic_mat(pose.f, stereo.right.shape[1] / 2, stereo.right.shape[0] / 2)
+    size = (stereo.left.shape[1], stereo.left.shape[0])
+    r0, r1, p0, p1, q = cv.stereoRectify(K0, distortion[0],
+                                         K1, distortion[1],
+                                         size,
+                                         pose.R, pose.t,
+                                         flags=cv.CALIB_ZERO_DISPARITY)[:5]
+
+    lx, ly = cv.initUndistortRectifyMap(K0, distortion[0], r0, K0, size, cv.CV_32FC1)
+    left = cv.remap(stereo.left, lx, ly, cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+
+    rx, ry = cv.initUndistortRectifyMap(K1, distortion[1], r1, K1, size, cv.CV_32FC1)
+    right = cv.remap(stereo.right, rx, ry, cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+
+    print(np.max(left), left.dtype)
+
+    return stereo._replace(left=left, right=right)
 
 def _measure_disparity(matches):
     '''
