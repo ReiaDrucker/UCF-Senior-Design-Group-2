@@ -5,6 +5,7 @@ from vectorDialog import *
 from angleDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
+from deleteAngleDialog import *
 from editPointDialog import *
 from editVectorDialog import *
 from changeColorDialog import *
@@ -123,6 +124,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.buttonEditAngle.setGeometry(QtCore.QRect(410, 880, 150, 30))
 
         self.buttonAddAngle.clicked.connect(self.addAngle)
+        self.buttonDeleteAngle.clicked.connect(self.deleteAngle)
         
 
         # Sets the widget in the center
@@ -272,6 +274,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def deletePoint(self):
         if self.pd.points.size > 0:
             dialog = deletePointDialog(self.pd)
+            dialog.exec()
+
+    # Deletes angle from angle table.
+    def deleteAngle(self):
+        if self.pd.angles.size > 0:
+            dialog = deleteAngleDialog(self.pd)
             dialog.exec()
 
     # Edits point in point table.

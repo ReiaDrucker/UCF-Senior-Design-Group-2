@@ -26,3 +26,9 @@ class Angle(object):
         uv1 = v1.getPixelCoordinates() / np.linalg.norm(v1.getPixelCoordinates())
         uv2 = v2.getPixelCoordinates() / np.linalg.norm(v2.getPixelCoordinates())
         return np.arccos(np.dot(uv1, uv2))
+
+    def getAngleStr(self):
+        return "{:.2f}".format(self.value)
+
+    def getComboStr(self):
+        return self.name + ": " + self.getAngleStr()

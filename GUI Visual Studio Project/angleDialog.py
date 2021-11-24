@@ -48,6 +48,7 @@ class angleDialog(QDialog):
         self.layout.addRow(self.buttonBox)
         self.setLayout(self.layout)
 
+    # TODO: Check if angle already exists in table.
     def addAngle(self, pd):
         v1Index = self.vectorCombo.currentIndex()
         v2Index = self.vectorCombo2.currentIndex()
