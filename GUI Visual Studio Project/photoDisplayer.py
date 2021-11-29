@@ -12,8 +12,6 @@ class PhotoDisplayer(QWidget):
 
     def __init__(self, width, height, pTable=None, vTable=None, aTable=None):
         super(PhotoDisplayer, self).__init__()
-        self.setMaximumWidth(width)
-        self.setMaximumHeight(height)
         self.resize(width, height)
 
         self.pix = QPixmap(self.rect().size())
