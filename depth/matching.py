@@ -2,8 +2,10 @@ import os, sys
 import cv2 as cv
 import numpy as np
 import math
+import random
 from collections import namedtuple
 from matplotlib import pyplot as plt
+import matplotlib
 
 if __package__:
     from . import util
@@ -183,6 +185,43 @@ def debug_video(stereo, video_path, fps, seconds):
         video.write(frame)
     video.release()
 
+def alt_debug_frame(stereo):
+    fig = plt.figure(figsize=(10,5))
+    L = fig.add_subplot(121)
+    R = fig.add_subplot(122)
+    L.imshow(stereo.left)
+    L.axis('off')
+    R.imshow(stereo.right)
+    R.axis('off')
+
+    matches = stereo.matches
+    print(matches.shape)
+
+    fig.canvas.draw()
+    transFig = fig.transFigure.inverted()
+    for i in random.sample(range(matches.shape[0]), 100):
+        u = matches[i][0]
+        v = matches[i][1]
+
+        r = random.random()
+        b = random.random()
+        g = random.random()
+        color = (r, g, b)
+
+        L.scatter(u[0], u[1], s=20, color=color)
+        R.scatter(v[0], v[1], s=20, color=color)
+
+        u2 = transFig.transform(L.transData.transform(u))
+        v2 = transFig.transform(R.transData.transform(v))
+
+        line = matplotlib.lines.Line2D((u2[0], v2[0]),
+                                       (u2[1], v2[1]),
+                                       transform=fig.transFigure,
+                                       color=color)
+        fig.lines.append(line)
+
+    plt.show()
+
 if __name__ == '__main__':
     left = cv.imread('../data/left.tif')
     right = cv.imread('../data/right.tif')
@@ -193,6 +232,8 @@ if __name__ == '__main__':
     stereo = fill_matches(stereo)
     stereo = stereo._replace(matches=remove_match_outliers(stereo.matches))
     stereo = adjust_scale(stereo, 1000)
+
+    alt_debug_frame(stereo)
 
     frame = debug_frame(stereo, .5, lines=True)
     plt.imshow(frame)

@@ -3,6 +3,7 @@
 from matplotlib import pyplot as plt
 import cv2 as cv
 import numpy as np
+import random
 
 from multiprocessing import Pool
 
@@ -73,6 +74,9 @@ def check_accuracy(idx, center = 16, thresh = 0.2, verbose=False):
         axarr[1,2].imshow(filtered)
         plt.show()
 
+        plt.imshow(d_est)
+        plt.show()
+
     return len(filtered[filtered == True]) / len(filtered.flatten())
 
 if __name__ == '__main__':
@@ -84,11 +88,18 @@ if __name__ == '__main__':
     plt.hist(acc, bins=20)
     plt.show()
 
+    acc = sorted(enumerate(acc), key = lambda x: x[1])
+
     print('accuracy:', np.mean(acc))
-    worst = sorted(enumerate(acc), key = lambda x: x[1])[:10]
+    worst = acc[:10]
     print('bottom', len(worst))
-    for idx, acc in worst:
-        print(idx, acc)
+    for idx, accu in worst:
+        print(idx, accu)
 
     print(check_accuracy(worst[0][0], verbose=True))
+
+    while True:
+        idx = random.randint(0, 1799)
+        print(idx)
+        print(check_accuracy(acc[idx][0], verbose=True))
     
