@@ -20,25 +20,16 @@ class Vector(object):
         return self.realCoordinates
 
     def getRealCoordinatesStr(self):
-        return "(" + str(self.realCoordinates[0]) + ", " + str(self.realCoordinates[1]) + ", " + str(self.realCoordinates[2]) + ")"
+        return "({:.2f}, {:.2f}, {:.2f})".format(self.realCoordinates[0], self.realCoordinates[1], self.realCoordinates[2])
 
     def getPixelCoordinates(self):
         return self.pixelCoordinates
 
     def getPixelCoordinatesStr(self):
-        return "(" + str(self.pixelCoordinates[0]) + ", " + str(self.pixelCoordinates[1]) + ")"
+        return "({:.2f}, {:.2f})".format(self.pixelCoordinates[0], self.pixelCoordinates[1])
 
     def getComboStr(self):
         return self.name + ": " + self.getPixelCoordinatesStr() + "; " + self.getRealCoordinatesStr()
 
     def getReferencePoints(self):
         return [self.point1Ref, self.point2Ref]
-
-    def update(self):
-        self.realCoordinates = np.subtract(self.point2Ref.getRealCoordinates(),self.point1Ref.getRealCoordinates())
-        self.pixelCoordinates = np.subtract(self.point2Ref.getPixelCoordinates(),self.point1Ref.getPixelCoordinates())
-
-
-
-
-

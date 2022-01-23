@@ -5,13 +5,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
 from pointDialog import *
 from vectorDialog import *
-from real import *
-
+from angleDialog import *
 from deleteVectorDialog import *
 from deletePointDialog import *
+from deleteAngleDialog import *
 from editPointDialog import *
 from editVectorDialog import *
 from changeColorDialog import *
+from photoDisplayerContainer import *
 import pickle
 import os
 
@@ -31,7 +32,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Set up point table.
         self.pointTable = QtWidgets.QTableWidget(self.centralwidget)
         self.pointTable.setGeometry(QtCore.QRect(1000, 70, 580, 300))
-        self.pointTable.setObjectName("pointTable")
         self.pointTable.setColumnCount(3)
         self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
@@ -47,7 +47,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Set up vector tables.
         self.vectorTable = QtWidgets.QTableWidget(self.centralwidget)
         self.vectorTable.setGeometry(QtCore.QRect(1000, 500, 580, 300))
-        self.vectorTable.setObjectName("vectorTable")
         self.vectorTable.setColumnCount(4)
         self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         
@@ -61,10 +60,27 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable.horizontalHeaderItem(2).setText("Real Coordinates")
         self.vectorTable.horizontalHeaderItem(3).setText("Magnitude")
 
-        # Uploading and drawing image onto interface.
-        self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.centralwidget)
-        self.pd.setGeometry(QtCore.QRect(20, 10, 960, 540))
-        self.pd.setObjectName("photoDisplay")
+        # Set up angle table.
+        self.angleTable = QtWidgets.QTableWidget(self.centralwidget)
+        self.angleTable.setGeometry(QtCore.QRect(10, 560, 580, 300))
+        self.angleTable.setColumnCount(4)
+        self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        # Set up columns for angle table.
+        for i in range(4):
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.angleTable.setHorizontalHeaderItem(i, item)
+        self.angleTable.horizontalHeaderItem(0).setText("Name")
+        self.angleTable.horizontalHeaderItem(1).setText("Vector 1")
+        self.angleTable.horizontalHeaderItem(2).setText("Vector 2")
+        self.angleTable.horizontalHeaderItem(3).setText("Angle")
+
+        # Handles drawing of points and vectors along with zoom
+        self.pd = PhotoDisplayer(960, 540, self.pointTable, self.vectorTable, self.angleTable)
+        self.pdContainer = photoDisplayerContainer(self.centralwidget, self.pd)
+        self.pdContainer.setObjectName("pdContainer")
+        self.pdContainer.setGeometry(QtCore.QRect(10, 10, 960, 540))
 
         self.pushButtonChangeVectorColor = QtWidgets.QPushButton("Select Vector Color", self.centralwidget)
         self.pushButtonChangeVectorColor.setGeometry(QtCore.QRect(1000, 10, 150, 30))
@@ -100,6 +116,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.buttonDeleteVector.clicked.connect(self.deleteVector)
         self.buttonEditVector.clicked.connect(self.editVector)
 
+        # Buttons for angles.
+        self.buttonAddAngle = QtWidgets.QPushButton("Add Angle", self.centralwidget)
+        self.buttonDeleteAngle = QtWidgets.QPushButton("Delete Angle", self.centralwidget)
+        self.buttonEditAngle = QtWidgets.QPushButton("Edit Angle", self.centralwidget)
+
+        self.buttonAddAngle.setGeometry(QtCore.QRect(10, 880, 150, 30))
+        self.buttonDeleteAngle.setGeometry(QtCore.QRect(210, 880, 150, 30))
+        self.buttonEditAngle.setGeometry(QtCore.QRect(410, 880, 150, 30))
+
+        self.buttonAddAngle.clicked.connect(self.addAngle)
+        self.buttonDeleteAngle.clicked.connect(self.deleteAngle)
+        
+
         # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -111,27 +140,36 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuFile = QtWidgets.QMenu("File", self.menubar)
         self.menuUploadImages = QtWidgets.QMenu("Upload Images", self.menubar)
         self.menuToggleDisplayOptions = QtWidgets.QMenu("Toggle Display Options", self.menubar)
+        self.menuZoomOptions = QtWidgets.QMenu("Zoom Options", self.menubar)
         
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.actionOpen = QtWidgets.QAction("Open", MainWindow)
-        self.actionOpen.setStatusTip("Open a file")
-        self.actionOpen.triggered.connect(self.loadGUIFromFile)
+        self.actionZoomIn = QtWidgets.QAction("Zoom In 25%", MainWindow)
+        self.actionZoomIn.setStatusTip("Zoom in on the image")
+        self.actionZoomIn.triggered.connect(self.pdContainer.zoomIn)
+        self.actionZoomIn.setShortcut("Ctrl+=")
 
-        # TODO: Action button not connected to anything yet.
-        self.actionSave = QtWidgets.QAction("Save", MainWindow)
-        self.actionSave.setStatusTip("Save a file")
-        self.actionSave.setShortcut("Ctrl+S")
+        self.actionZoomOut = QtWidgets.QAction("Zoom Out 25%", MainWindow)
+        self.actionZoomOut.setStatusTip("Zoom out on the image")
+        self.actionZoomOut.triggered.connect(self.pdContainer.zoomOut)
+        self.actionZoomOut.setShortcut("Ctrl+-")
 
-        self.actionSaveAs = QtWidgets.QAction("Save As", MainWindow)
-        self.actionSaveAs.setStatusTip("Save this file as a new file")
-        self.actionSaveAs.triggered.connect(self.saveGUIToFile)
+        self.actionZoomReset = QtWidgets.QAction("Reset Zoom", MainWindow)
+        self.actionZoomReset.setStatusTip("Restore Image to Normal Size")
+        self.actionZoomReset.triggered.connect(self.pdContainer.resetZoom)
+        self.actionZoomReset.setShortcut("Ctrl+r")
+
+        self.actionLoadData = QtWidgets.QAction("Load Data", MainWindow)
+        self.actionLoadData.setStatusTip("Load Data from SDFDATA File")
+        self.actionLoadData.triggered.connect(self.loadGUIFromFile)
 
         self.actionExportData = QtWidgets.QAction("Export Data", MainWindow)
         self.actionExportData.setStatusTip("Exports the data")
+        self.actionExportData.triggered.connect(self.saveGUIToFile)
+        self.actionExportData.setShortcut("Ctrl+S")
 
         self.actionUploadLeft = QtWidgets.QAction("Upload Left", MainWindow)
         self.actionUploadLeft.setStatusTip("Upload left half of a stereogram pair")
@@ -157,9 +195,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShowInterpolatedImage = QtWidgets.QAction("Show Interpolated Image", MainWindow)
         
         # Add actions to menus.
-        self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addAction(self.actionSave)
-        self.menuFile.addAction(self.actionSaveAs)
+        self.menuFile.addAction(self.actionLoadData)
         self.menuFile.addAction(self.actionExportData)
 
         self.menuUploadImages.addAction(self.actionUploadLeft)
@@ -169,11 +205,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuToggleDisplayOptions.addAction(self.actionShowLeftImage)
         self.menuToggleDisplayOptions.addAction(self.actionShowRightImage)
         self.menuToggleDisplayOptions.addAction(self.actionShowInterpolatedImage)
+
+        self.menuZoomOptions.addAction(self.actionZoomIn)
+        self.menuZoomOptions.addAction(self.actionZoomOut)
+        self.menuZoomOptions.addAction(self.actionZoomReset)
+
+
         
         # Add menus to menu bar.
         self.menubar.addMenu(self.menuFile)
         self.menubar.addMenu(self.menuUploadImages)
         self.menubar.addMenu(self.menuToggleDisplayOptions)
+        self.menubar.addMenu(self.menuZoomOptions)
 
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -232,6 +275,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def addVector(self):
         dialog = vectorDialog(self.pd)
         dialog.exec()
+
+    # Adds angle row to angle table widget.
+    def addAngle(self):
+        if self.pd.vectors.size >= 2:
+            dialog = angleDialog(self.pd)
+            dialog.exec()
     
     # Deletes vector from vector table.
     def deleteVector(self):
@@ -243,6 +292,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def deletePoint(self):
         if self.pd.points.size > 0:
             dialog = deletePointDialog(self.pd)
+            dialog.exec()
+
+    # Deletes angle from angle table.
+    def deleteAngle(self):
+        if self.pd.angles.size > 0:
+            dialog = deleteAngleDialog(self.pd)
             dialog.exec()
 
     # Edits point in point table.
@@ -267,7 +322,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         fname = "SDFDATA File (*.SDFDATA)"
         filePath = QtWidgets.QFileDialog.getSaveFileName(self, "Select Directory To Save To", os.getcwd(), fname, fname)
 
-        objectToSave = [self.pd.points, self.pd.vectors, self.leftImagePath, self.rightImagePath]
+        objectToSave = [self.pd.points, self.pd.vectors, self.leftImagePath, self.rightImagePath, self.pd.pointPen.color(), self.pd.vectorPen.color(), self.pd.angles]
 
         # If path is valid serialize the data into the file
         if(filePath[0] != ""):
@@ -291,8 +346,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 # Load point and vecotr data
                 self.pd.points = data[0]
                 self.pd.vectors = data[1]
+                self.pd.angles = data[6]
+                self.pd.pointPen.setColor(data[4])
+                self.pd.vectorPen.setColor(data[5])
                 self.pd.updatePointTable()
                 self.pd.updateVectorTable()
+                self.pd.updateAngleTable()
 
                 # Load image path data
                 self.leftImagePath = data[2]
@@ -310,11 +369,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             return None
 
-    def displayReal(self):
-        if self.leftImage and self.rightImage:
-            real = getRealFromImages(self.leftImage, self.rightImage)
-            self.pd.setNewReal(real)
+    
 
+        
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

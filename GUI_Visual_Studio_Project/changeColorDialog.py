@@ -46,8 +46,8 @@ class changeColorDialog(QDialog):
     def changeColor(self, parent, changeType):
         cIndex = self.colorCombo.currentIndex()
         if(self.changePoint == 1):
-            parent.pd.pointPen = QPen(self.colors[cIndex], 5)
+            parent.pd.pointPen.setColor(self.colors[cIndex])
         if(self.changePoint == 0):
-            parent.pd.vectorPen = QPen(self.colors[cIndex], 3)
+            parent.pd.vectorPen.setColor(self.colors[cIndex])
         parent.pd.update()
         self.close()

@@ -27,6 +27,9 @@
     <Compile Include="changeColorDialog.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="photoDisplayerContainer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="photoDisplayer.py">
       <SubType>Code</SubType>
     </Compile>

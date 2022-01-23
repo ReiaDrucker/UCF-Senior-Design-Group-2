@@ -14,7 +14,7 @@ class vectorDialog(QDialog):
         
     # Create form layout of dialog window.
     def createLayout(self, pd):
-        self.message = QLabel("Enter information about the new point below.")
+        self.message = QLabel("Enter information about the new vector below.")
 
         # Create button box.
         buttonOptions = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -63,8 +63,11 @@ class vectorDialog(QDialog):
             if p1Index == p2Index:
                 self.message.setText("You need to enter two distinct points!")
 
+            elif pd.drawStuff == False:
+                self.message.setText("You cannot add a vector when display is turned off!")
+
             # If equivalent vector already exists, don't accept.
-            elif self.vectorExists(pd.vectors, vec):
+            elif vectorDialog.vectorExists(pd.vectors, vec):
                 self.message.setText("Vector already exists!")
 
             # No errors, then accept.
@@ -79,7 +82,7 @@ class vectorDialog(QDialog):
             self.close()
 
     # Checks if vector exists in pd's vector list.
-    def vectorExists(self, vectors, vec):
+    def vectorExists(vectors, vec):
         for v in vectors:
             if v.getPixelCoordinatesStr() == vec.getPixelCoordinatesStr():
                 return True
