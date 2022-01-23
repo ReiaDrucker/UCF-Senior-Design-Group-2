@@ -1,7 +1,4 @@
-import os
-import cv2 as cv
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from photoDisplayer import *
 from pointDialog import *
 from vectorDialog import *
@@ -19,8 +16,9 @@ import os
 class Ui_MainWindow(QtWidgets.QWidget):
 
     def setupUi(self, MainWindow):
-        self.leftImage = None
-        self.rightImage = None
+        # Initialize image paths.
+        self.leftImagePath = ""
+        self.rightImagePath = ""
 
         # Window sizes should be based on the monitor resolution rather than a hard coded pixel value.
         MainWindow.resize(1600, 1000)
@@ -220,20 +218,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def loadImage(self, path):
-        img = cv.imread(path, cv.IMREAD_COLOR)
-
-        # Resize to fit in the photo viewer
-        # FIXME: this will break whenever resizing is implemented
-        #   Ideally the photo displayers coordinate system should be separate from our points
-        s = max(img.shape[1] / self.pd.geometry().width(), img.shape[0] / self.pd.geometry().height())
-        shape = np.int0([img.shape[1] / s, img.shape[0] / s])
-        img = cv.resize(img, shape)
-
-        print(img.shape)
-
-        return QtGui.QImage(img, img.shape[1], img.shape[0], img.shape[1] * 3, QtGui.QImage.Format_BGR888)
-
     def uploadLeftImage(self):
         fname = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
         newName = QtWidgets.QFileDialog.getOpenFileName(self, "Select an image file", os.getcwd(), fname, fname)
@@ -241,9 +225,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Don't update if they didn't select an image
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
-            self.leftImage = self.loadImage(newName[0])
-            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImage))
-            self.displayReal()
+            self.leftImagePath = newName[0]
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
             self.update()
 
     def uploadRightImage(self):
@@ -253,19 +236,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Don't update if they didn't select an image
         # Probably also don't want to update if they select the same image
         if(newName[0] != ""):
-            self.rightImage = self.loadImage(newName[0])
-            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImage))
-            self.displayReal()
+            self.rightImagePath = newName[0]
+            self.pd.setNewPixmap(QtGui.QPixmap(newName[0]))
             self.update()
 
     def displayImage(self, selection):
-        if(selection == 0 and self.leftImage != None):
-            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImage))
+        if(selection == 0 and self.leftImagePath != None and os.path.exists(self.leftImagePath)):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.leftImagePath))
             self.update()
-        if(selection == 1 and self.rightImage != None):
-            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImage))
+        if(selection == 1 and self.rightImagePath != None and os.path.exists(self.rightImagePath)):
+            self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
-            
+        
     # Adds point row to point table widget.
     def addPoint(self):
         dialog = pointDialog(self.pd)
@@ -374,6 +356,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
         
 
 if __name__ == "__main__":
+    import sys
+    import math
+    from point import *
+    from vector import *
+    import numpy as np
+
+    
+    #p1 = Point("A", 0, 0, 0, 0, 0)
+    p2 = Point("B", 0, 1, 4, 6, 7)
+    p3 = Point("C", 1, 2, 3, 4, 5)
+    #print(p2)
+ 
+    v1 = Vector(p3,p2)
+    #print(v1)
+    #v2 = Vector(p1, p3);
+
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()

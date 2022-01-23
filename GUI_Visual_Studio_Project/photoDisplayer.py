@@ -15,7 +15,6 @@ class PhotoDisplayer(QWidget):
         self.resize(width, height)
 
         self.pix = QPixmap(self.rect().size())
-        self.real = None
         
         #Should be filled blue to start
         self.pix.fill(Qt.blue)
@@ -86,19 +85,6 @@ class PhotoDisplayer(QWidget):
         self.pix = new
         self.resize(self.pix.width(), self.pix.height())
         self.update()
-
-    def setNewReal(self, real):
-        self.real = real
-
-        for p in self.points:
-            p.updateReal(real)
-
-        for v in self.vectors:
-            v.update()
-
-        self.updatePointTable()
-        self.updateVectorTable()
-
 
     def drawVectors(self, painter):
         painter.setPen(self.vectorPen)

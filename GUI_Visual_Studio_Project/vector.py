@@ -8,10 +8,10 @@ class Vector(object):
         self.name = p1.name + "-" + p2.name
         if name != "":
             self.name = name
+        self.realCoordinates = np.subtract(p2.getRealCoordinates(),p1.getRealCoordinates())
+        self.pixelCoordinates = np.subtract(p2.getPixelCoordinates(),p1.getPixelCoordinates())
         self.point1Ref = p1
         self.point2Ref = p2
-
-        self.update()
 
     def __str__(self):
         return "Point {0}:\nReal Coordinates: {1}\t Pixel Coordinates: {2}".format(self.name, self.getRealCoordinates(), self.getPixelCoordinates())
