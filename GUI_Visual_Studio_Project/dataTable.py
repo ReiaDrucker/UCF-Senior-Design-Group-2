@@ -3,73 +3,103 @@ import sys
 
 class DataTableItem(QtWidgets.QTableWidgetItem):
     class Signaller(QtCore.QObject):
-        signal = QtCore.pyqtSignal(object, str)
+        signal = QtCore.pyqtSignal(object)
 
-        def trigger(self, caller, value):
-            self.signal.emit(caller, value)
+        def trigger(self, caller):
+            self.signal.emit(caller)
 
-    def __init__(self):
+    def __init__(self, value, from_string, to_string):
         super().__init__()
+
+        self.from_string = from_string
+        self.to_string = to_string
         self.dataChanged = DataTableItem.Signaller()
+
+        self.setValue(value)
+
+    def setValue(self, value):
+        self.value = value
+        self.setText(self.to_string(value))
+        self.dataChanged.trigger(self)
 
     def setData(self, role, value):
         if role == QtCore.Qt.EditRole:
-            self.dataChanged.trigger(self, value)
+            try:
+                self.value = self.from_string(value)
+                self.dataChanged.trigger(self)
+                super().setData(role, value)
+            except:
+                pass
+
         else:
             super().setData(role, value)
 
 class DataTableRow(QtCore.QObject):
-    def __init__(self, n):
+    def __init__(self):
         super().__init__()
 
-        self.items = []
-        self.data = []
+        self.items = {}
+        self.keys = []
         self.name = None
-        for i in range(3):
-            item = DataTableItem()
-            item.setText(str(0))
-            item.setTextAlignment(QtCore.Qt.AlignRight)
-            item.dataChanged.signal.connect(self.item_modified)
-
-            self.items.append(item)
-            self.data.append(0)
-
-        item = QtWidgets.QPushButton('Delete')
-        item.clicked.connect(self.delete_clicked)
-        self.items.append(item)
 
     def set_name(self, val):
         self.name = val
 
-    @QtCore.pyqtSlot()
-    def delete_clicked(self):
-        if self.name is not None:
-            del self.parent()[self.name]
-
-    @QtCore.pyqtSlot(object, str)
-    def item_modified(self, item, value):
-        idx = self.items.index(item)
-        self.__setitem__(idx, value)
-
-    def get_row(self):
-        return self.items[0].row()
-
-    def get_items(self):
-        return self.items
-
     def __getitem__(self, key):
-        return self.data[key]
+        return self.items[key]
 
     def __setitem__(self, key, value):
+        # maintain order
+        if key not in self.items:
+            self.keys += [key]
+
+        self.items[key] = value
+
+    def __getattr__(self, key):
         try:
-            self.data[key] = float(value)
+            items = super().__dict__['items']
+            return items[key].value
         except:
             pass
 
-        self.items[key].setText(str(self.data[key]))
+        return super().__getattr__(key)
+
+    def __setattr__(self, key, value):
+        try:
+            items = super().__dict__['items']
+            items[key].setValue(value)
+            return
+        except:
+            pass
+
+        super().__setattr__(key, value)
+
+    def create_field(self, value='', from_string=lambda x: x, to_string=str, editable=True):
+        item = DataTableItem(value, from_string, to_string)
+
+        if not editable:
+            flags = item.flags()
+            item.setFlags(flags & ~QtCore.Qt.ItemIsEditable)
+
+        return item
+
+    def delete(self):
+        if self.name is not None:
+            del self.parent()[self.name]
+
+    def get_row(self):
+        if len(self.items) < 1:
+            return -1
+
+        first = next(iter(self.items.keys()))
+        return self.items[first].row()
+
+    def get_items(self):
+        for key in self.keys:
+            yield self.items[key]
 
     def __str__(self):
-        return str(self.data)
+        return str({k: v.value for k,v in self.items.items() if hasattr(v, 'value')})
 
 class DataTable(QtWidgets.QTableWidget):
     def __init__(self, parent = None):
@@ -96,10 +126,10 @@ class DataTable(QtWidgets.QTableWidget):
         table.setVerticalHeaderItem(row, header)
 
         for i,item in enumerate(row_data.get_items()):
-            if isinstance(item, QtWidgets.QWidget):
-                table.setCellWidget(row, i, item)
-            else:
+            if isinstance(item, QtWidgets.QTableWidgetItem):
                 table.setItem(row, i, item)
+            else:
+                table.setCellWidget(row, i, item)
 
         if name in self.rows.keys():
             self.__delitem__(name)
@@ -109,6 +139,7 @@ class DataTable(QtWidgets.QTableWidget):
     def __delitem__(self, name):
         if name in self.rows.keys():
             data = self.rows[name]
+
             self.removeRow(data.get_row())
             del self.rows[name]
 
@@ -116,6 +147,7 @@ class DataTable(QtWidgets.QTableWidget):
         for k, v in self.rows.items():
             yield k, v
 
+# test
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     win = QtWidgets.QMainWindow()
@@ -125,7 +157,7 @@ if __name__ == '__main__':
 
     table = DataTable(central)
     table.setGeometry(QtCore.QRect(0, 0, 580, 300))
-    table.setColumnCount(4)
+    table.setColumnCount(20)
     table.setShowGrid(False)
 
     for i,s in enumerate(['X', 'Y', 'Z']):
@@ -149,17 +181,25 @@ if __name__ == '__main__':
 
     class Point(DataTableRow):
         def __init__(self):
-            super().__init__(3)
+            super().__init__()
 
-            flags = self.items[2].flags() & ~QtCore.Qt.ItemIsEditable
-            self.items[2].setFlags(flags)
+            for field in 'xy':
+                self[field] = self.create_field(0, float)
+                self[field].dataChanged.signal.connect(self.recalc)
 
-            self.items[0].dataChanged.signal.connect(self.recalc)
-            self.items[1].dataChanged.signal.connect(self.recalc)
+            self['z'] = self.create_field(0, float, editable = False)
+            self['z'].dataChanged.signal.connect(self.panic)
 
-        @QtCore.pyqtSlot(object, str)
-        def recalc(self, item, val):
-            self.__setitem__(2, (self.data[0] ** 2 + self.data[1] ** 2) ** .5)
+            self['D'] = QtWidgets.QPushButton('Delete')
+            self['D'].clicked.connect(self.delete)
+
+        @QtCore.pyqtSlot(object)
+        def recalc(self, item):
+            self.z = (self.x ** 2 + self.y ** 2) ** .5
+
+        @QtCore.pyqtSlot(object)
+        def panic(self):
+            print('z changed')
 
     idx = 0
     def add_point():
@@ -171,11 +211,9 @@ if __name__ == '__main__':
     button.setGeometry(QtCore.QRect(0, 400, 100, 20))
     button.clicked.connect(add_point)
 
-    print(button.pos())
-
     win.show()
     rc = app.exec_()
-    
+
     for k, v in table:
         print(k, v)
 
