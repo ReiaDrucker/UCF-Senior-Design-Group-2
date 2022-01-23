@@ -35,6 +35,8 @@ class DataTableItem(QtWidgets.QTableWidgetItem):
             super().setData(role, value)
 
 class DataTableRow(QtCore.QObject):
+    deleted = QtCore.pyqtSignal()
+
     def __init__(self):
         super().__init__()
 
@@ -84,6 +86,7 @@ class DataTableRow(QtCore.QObject):
         return item
 
     def delete(self):
+        self.deleted.emit()
         if self.name is not None:
             del self.parent()[self.name]
 
@@ -109,12 +112,15 @@ class DataTable(QtWidgets.QTableWidget):
     def __len__(self):
         return len(self.rows)
 
+    def row_name(self, idx):
+        return self.verticalHeaderItem(idx).text()
+
     def __getitem__(self, key):
         return self.rows[key]
 
     def __setitem__(self, name, row_data):
-        row = table.rowCount()
-        table.insertRow(row)
+        row = self.rowCount()
+        self.insertRow(row)
 
         row_data.setParent(self)
         row_data.set_name(name)
@@ -123,13 +129,13 @@ class DataTable(QtWidgets.QTableWidget):
         header.setTextAlignment(QtCore.Qt.AlignLeft)
         header.setText(str(name))
 
-        table.setVerticalHeaderItem(row, header)
+        self.setVerticalHeaderItem(row, header)
 
         for i,item in enumerate(row_data.get_items()):
             if isinstance(item, QtWidgets.QTableWidgetItem):
-                table.setItem(row, i, item)
+                self.setItem(row, i, item)
             else:
-                table.setCellWidget(row, i, item)
+                self.setCellWidget(row, i, item)
 
         if name in self.rows.keys():
             self.__delitem__(name)
@@ -155,16 +161,21 @@ if __name__ == '__main__':
     central = QtWidgets.QWidget(win)
     win.setCentralWidget(central)
 
-    table = DataTable(central)
-    table.setGeometry(QtCore.QRect(0, 0, 580, 300))
-    table.setColumnCount(20)
-    table.setShowGrid(False)
+    def create_table(pos, n):
+        table = DataTable(central)
+        table.setGeometry(pos)
+        table.setColumnCount(n)
+        table.setShowGrid(False)
 
-    for i,s in enumerate(['X', 'Y', 'Z']):
-        item = QtWidgets.QTableWidgetItem()
-        item.setTextAlignment(QtCore.Qt.AlignCenter)
-        item.setText(s)
-        table.setHorizontalHeaderItem(i, item)
+        for i,s in enumerate(['X', 'Y']):
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setText(s)
+            table.setHorizontalHeaderItem(i, item)
+
+        return table
+
+    point_table = create_table(QtCore.QRect(0, 0, 580, 300), 3)
 
     def to_letter(x):
         ret = []
@@ -180,41 +191,75 @@ if __name__ == '__main__':
         return ''.join(ret[::-1])
 
     class Point(DataTableRow):
+        dataChanged = QtCore.pyqtSignal()
+
         def __init__(self):
             super().__init__()
 
             for field in 'xy':
                 self[field] = self.create_field(0, float)
-                self[field].dataChanged.signal.connect(self.recalc)
-
-            self['z'] = self.create_field(0, float, editable = False)
-            self['z'].dataChanged.signal.connect(self.panic)
+                self[field].dataChanged.signal.connect(self.dataChanged.emit)
 
             self['D'] = QtWidgets.QPushButton('Delete')
             self['D'].clicked.connect(self.delete)
 
-        @QtCore.pyqtSlot(object)
-        def recalc(self, item):
-            self.z = (self.x ** 2 + self.y ** 2) ** .5
-
-        @QtCore.pyqtSlot(object)
-        def panic(self):
-            print('z changed')
-
     idx = 0
     def add_point():
         global idx
-        table[to_letter(idx)] = Point()
+        point_table[to_letter(idx)] = Point()
         idx += 1
 
     button = QtWidgets.QPushButton('New', central)
-    button.setGeometry(QtCore.QRect(0, 400, 100, 20))
+    button.setGeometry(QtCore.QRect(0, 320, 100, 20))
     button.clicked.connect(add_point)
+
+    vector_table = create_table(QtCore.QRect(0, 360, 580, 300), 5)
+
+    class Vector(DataTableRow):
+        def __init__(self, s, t):
+            super().__init__()
+
+            def updater(key):
+                @QtCore.pyqtSlot()
+                def func():
+                    self.__setattr__(key, self.sender())
+                    self.dist = self.get_dist()
+                return func
+
+            self['s'] = self.create_field(s, editable=False)
+            s.dataChanged.connect(updater('s'))
+            s.deleted.connect(self.delete)
+
+            self['t'] = self.create_field(t, editable=False)
+            t.dataChanged.connect(updater('t'))
+            t.deleted.connect(self.delete)
+
+            self['dist'] = self.create_field(self.get_dist(), float, editable=False)
+
+        def get_dist(self):
+            dx = self.s.x - self.t.x
+            dy = self.s.y - self.t.y
+            return (dx ** 2 + dy ** 2) ** .5
+
+    idx2 = 0
+    def add_vector():
+        global idx2
+        selected = list(set(point_table.row_name(x.row()) for x in point_table.selectedItems()))
+        if len(selected) == 2:
+            vector_table[to_letter(idx2)] = Vector(point_table[selected[0]], point_table[selected[1]])
+            idx2 += 1
+
+    button = QtWidgets.QPushButton('New', central)
+    button.setGeometry(QtCore.QRect(0, 680, 100, 20))
+    button.clicked.connect(add_vector)
 
     win.show()
     rc = app.exec_()
 
-    for k, v in table:
+    for k, v in point_table:
+        print(k, v)
+
+    for k, v in vector_table:
         print(k, v)
 
     sys.exit(rc)
