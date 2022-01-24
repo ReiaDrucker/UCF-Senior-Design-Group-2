@@ -21,7 +21,13 @@ class DataTableItem(QtWidgets.QTableWidgetItem):
 
     def setValue(self, value):
         self.value = value
-        self.setText(self.to_string(value))
+
+        try:
+            self.setText(self.to_string(value))
+        except RuntimeError:
+            # Object deleted?
+            return
+
         self.dataChanged.trigger(self)
 
     def setData(self, role, value):
@@ -66,7 +72,7 @@ class DataTableRow(QtCore.QObject):
         except KeyError:
             pass
 
-        return super().__getattr__(key)
+        return super().__dict__[key]
 
     def __setattr__(self, key, value):
         try:
@@ -76,7 +82,7 @@ class DataTableRow(QtCore.QObject):
         except KeyError:
             pass
 
-        super().__setattr__(key, value)
+        super().__dict__[key] = value
 
     def create_field(self, value='', from_string=lambda x: x, to_string=str, editable=True):
         item = DataTableItem(value, from_string, to_string)
@@ -181,11 +187,10 @@ class DataTableWidget(QtWidgets.QWidget):
 
         hlayout = QtWidgets.QHBoxLayout()
 
-        hlayout.addStretch()
-
         self._button = QtWidgets.QPushButton('New')
         self._button.clicked.connect(self.onNew.emit)
         hlayout.addWidget(self._button)
+        hlayout.addStretch()
 
         layout.addLayout(hlayout)
 

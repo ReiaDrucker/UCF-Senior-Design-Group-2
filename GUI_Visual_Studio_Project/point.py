@@ -9,8 +9,11 @@ class Point(DataTableRow):
     dataChanged = QtCore.pyqtSignal()
     blocked = False
 
-    def __init__(self, u = 0, v = 0):
+    def __init__(self, depthProvider, u = 0, v = 0):
         super().__init__()
+
+        self.depthProvider = depthProvider
+        self.depthProvider.depthUpdated.connect(self.recast)
 
         for field in 'uv':
             self[field] = self.create_field(0, float)
@@ -48,10 +51,7 @@ class Point(DataTableRow):
             return
         self.blocked = True
 
-        # TODO: handle camera params (positon, rotation, focal length) and depth
-        f = 1
-        self.z = 1
-        self.x = self.u * self.z / f
-        self.y = self.v * self.z / f
+        # TODO: handle camera params (positon, rotation, focal length)
+        self.x, self.y, self.z = self.depthProvider.getXYZ(self.u, self.v)
 
         self.blocked = False

@@ -180,6 +180,7 @@ def disparity(left, right, matches, filter = True, verbose = False):
                                   disp12MaxDiff = 0,
                                   P1 = 8*3*win_size**2,
                                   P2 = 32*3*win_size**2)
+
     disparity = stereo.compute(left, right)
 
     if verbose:

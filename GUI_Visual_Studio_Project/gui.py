@@ -36,6 +36,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def addTable(self, columns, onNew, x, y, w, h):
         widget = DataTableWidget(columns, parent=self.centralwidget)
+        widget.get_table().setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.layout.addWidget(widget, y, x, h, w)
 
         widget.onNew.connect(onNew)
@@ -85,7 +86,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.addPointAtPixel()
 
     def addPointAtPixel(self, u = 0, v = 0):
-        self.pointTable[createLabel(self.pointIdx)] = Point(u, v)
+        self.pointTable[createLabel(self.pointIdx)] = Point(self.depthProvider, u, v)
         self.pointIdx += 1
 
     @QtCore.pyqtSlot()
@@ -141,7 +142,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionUploadRight = create_action("Upload Right", self.uploadImage(1), "Upload right half of a stereogram pair")
         self.actionShowVectors = create_action("Toggle Vector Display", self.pd.toggleDraw)
         self.actionShowLeftImage = create_action("Show Left Image", lambda: self.displayImage(0))
-        self.actionShowRightImage = create_action("Show Right Image", lambda: self.displayImage(0))
+        self.actionShowRightImage = create_action("Show Right Image", lambda: self.displayImage(1))
         self.actionShowInterpolatedImage = create_action("Show Interpolated Image", lambda: 0) # TODO
 
         def add_actions_to_menu(menu, actions):

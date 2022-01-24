@@ -40,4 +40,10 @@ def correct_homographies(H, S, L):
     ])
 
     return [np.matmul(correction, h) for h in H]
-        
+
+def lerp(x, y, a, b, c):
+    if a == b:
+        return (x + y) / 2
+
+    r = (c - a) / (b - a)
+    return x * (1 - r) + y * r
