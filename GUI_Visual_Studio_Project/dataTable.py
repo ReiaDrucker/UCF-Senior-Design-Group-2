@@ -153,6 +153,40 @@ class DataTable(QtWidgets.QTableWidget):
         for k, v in self.rows.items():
             yield k, v
 
+class DataTableWidget(QtWidgets.QWidget):
+    onNew = QtCore.pyqtSignal()
+
+    def __init__(self, columns, parent=None):
+        super().__init__(parent)
+
+        layout = QtWidgets.QVBoxLayout()
+
+        self.__table = DataTable(parent=self)
+        layout.addWidget(self.__table)
+
+        self.__table.setColumnCount(len(columns))
+        for i,column in enumerate(columns):
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setText(column)
+
+            self.__table.setHorizontalHeaderItem(i, item)
+
+        hlayout = QtWidgets.QHBoxLayout()
+
+        hlayout.addStretch()
+
+        self._button = QtWidgets.QPushButton('New')
+        self._button.clicked.connect(self.onNew.emit)
+        hlayout.addWidget(self._button)
+
+        layout.addLayout(hlayout)
+
+        self.setLayout(layout)
+
+    def get_table(self):
+        return self.__table
+
 # test
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
@@ -175,7 +209,11 @@ if __name__ == '__main__':
 
         return table
 
-    point_table = create_table(QtCore.QRect(0, 0, 580, 300), 3)
+    layout = QtWidgets.QVBoxLayout()
+
+    point_table_widget = DataTableWidget(['X', 'Y', ''], parent=central)
+    layout.addWidget(point_table_widget)
+    point_table = point_table_widget.get_table()
 
     def to_letter(x):
         ret = []
@@ -209,11 +247,11 @@ if __name__ == '__main__':
         point_table[to_letter(idx)] = Point()
         idx += 1
 
-    button = QtWidgets.QPushButton('New', central)
-    button.setGeometry(QtCore.QRect(0, 320, 100, 20))
-    button.clicked.connect(add_point)
+    point_table_widget.onNew.connect(add_point)
 
-    vector_table = create_table(QtCore.QRect(0, 360, 580, 300), 5)
+    vector_table_widget = DataTableWidget(['S', 'T', 'Dist', ''], parent=central)
+    layout.addWidget(vector_table_widget)
+    vector_table = vector_table_widget.get_table()
 
     class Vector(DataTableRow):
         def __init__(self, s, t):
@@ -249,10 +287,9 @@ if __name__ == '__main__':
             vector_table[to_letter(idx2)] = Vector(point_table[selected[0]], point_table[selected[1]])
             idx2 += 1
 
-    button = QtWidgets.QPushButton('New', central)
-    button.setGeometry(QtCore.QRect(0, 680, 100, 20))
-    button.clicked.connect(add_vector)
+    vector_table_widget.onNew.connect(add_vector)
 
+    central.setLayout(layout)
     win.show()
     rc = app.exec_()
 
