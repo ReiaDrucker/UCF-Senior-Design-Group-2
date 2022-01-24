@@ -139,9 +139,8 @@ def _measure_disparity(matches):
     '''
     Approximate minimum and maximum disparity to set window sizes for SGBM
     '''
-    dxs = np.int0([matches[i,0,0] - matches[i,1,0] for i in range(len(matches))])
-    q1 = np.quantile(dxs, .25)
-    q3 = np.quantile(dxs, .75)
+    dxs = np.int0([matches[i,1,0] - matches[i,0,0] for i in range(len(matches))])
+    q1, q3 = np.quantile(dxs, [.25, .75])
     iqr = q3 - q1
     min_disp = math.floor(q1 - 1.5 * iqr)
     max_disp = math.ceil(q3 + 1.5 * iqr)
@@ -181,7 +180,6 @@ def disparity(left, right, matches, filter = True, verbose = False):
                                   disp12MaxDiff = 0,
                                   P1 = 8*3*win_size**2,
                                   P2 = 32*3*win_size**2)
-
     disparity = stereo.compute(left, right)
 
     if verbose:

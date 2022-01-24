@@ -1,35 +1,43 @@
-import math
-import numpy as np
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Vector(object):
+from dataTable import DataTableRow
 
-    # This initialization gives a value equivalent to translating p1 to the origin and then translating p2 by the same amount
-    def __init__(self, p1, p2, name=""):
-        self.name = p1.name + "-" + p2.name
-        if name != "":
-            self.name = name
-        self.realCoordinates = np.subtract(p2.getRealCoordinates(),p1.getRealCoordinates())
-        self.pixelCoordinates = np.subtract(p2.getPixelCoordinates(),p1.getPixelCoordinates())
-        self.point1Ref = p1
-        self.point2Ref = p2
+class Vector(DataTableRow):
+    dataChanged = QtCore.pyqtSignal()
 
-    def __str__(self):
-        return "Point {0}:\nReal Coordinates: {1}\t Pixel Coordinates: {2}".format(self.name, self.getRealCoordinates(), self.getPixelCoordinates())
+    def __init__(self, s, t):
+        super().__init__()
 
-    def getRealCoordinates(self):
-        return self.realCoordinates
+        def updater(key):
+            @QtCore.pyqtSlot()
+            def func():
+                self.__setattr__(key, self.sender())
+                self.recalculate()
+            return func
 
-    def getRealCoordinatesStr(self):
-        return "({:.2f}, {:.2f}, {:.2f})".format(self.realCoordinates[0], self.realCoordinates[1], self.realCoordinates[2])
+        self['s'] = self.create_field(s, editable=False)
+        s.dataChanged.connect(updater('s'))
+        s.deleted.connect(self.delete)
 
-    def getPixelCoordinates(self):
-        return self.pixelCoordinates
+        self['t'] = self.create_field(t, editable=False)
+        t.dataChanged.connect(updater('t'))
+        t.deleted.connect(self.delete)
 
-    def getPixelCoordinatesStr(self):
-        return "({:.2f}, {:.2f})".format(self.pixelCoordinates[0], self.pixelCoordinates[1])
+        for field in ['dx', 'dy', 'dz', 'dist']:
+            self[field] = self.create_field(0, float, editable=False)
 
-    def getComboStr(self):
-        return self.name + ": " + self.getPixelCoordinatesStr() + "; " + self.getRealCoordinatesStr()
+        self.recalculate()
 
-    def getReferencePoints(self):
-        return [self.point1Ref, self.point2Ref]
+        self['D'] = QtWidgets.QPushButton('Delete')
+        self['D'].clicked.connect(self.delete)
+
+    def dot(self, o):
+        return self.dx * o.dx + self.dy * o.dy + self.dz * o.dz
+
+    def recalculate(self):
+        self.dx = self.t.x - self.s.y
+        self.dy = self.t.y - self.s.y
+        self.dz = self.t.z - self.s.z
+
+        dist = (self.dx ** 2 + self.dy ** 2 + self.dz ** 2) ** .5
+        self.dist = dist

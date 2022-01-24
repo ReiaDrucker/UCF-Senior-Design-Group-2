@@ -1,34 +1,34 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from dataTable import DataTableRow
 import math
-import numpy as np
 
-class Angle(object):
+class Angle(DataTableRow):
+    def __init__(self, a, b):
+        super().__init__()
 
-    # Initializes angle object.
-    def __init__(self, v1, v2, name=""):
-        self.name = v1.name + "/" + v2.name
-        if name != "":
-            self.name = name
-        self.vector1Ref = v1
-        self.vector2Ref = v2
-        self.value = math.degrees(Angle.calculateAngle(v1, v2))
+        def updater(key):
+            @QtCore.pyqtSlot()
+            def func():
+                self.__setattr__(key, self.sender())
+                self.recalculate()
+            return func
 
-    def calculateAngle(v1, v2):
-        # x1 = v1.getReferencePoints()[0].getPixelCoordinates()[0]
-        # x2 = v2.getReferencePoints()[0].getPixelCoordinates()[0]
-        # x3 = v1.getReferencePoints()[1].getPixelCoordinates()[0]
-        # x4 = v2.getReferencePoints()[1].getPixelCoordinates()[0]
+        self['a'] = self.create_field(a, editable=False)
+        a.dataChanged.connect(updater('a'))
+        a.deleted.connect(self.delete)
 
-        # y1 = v1.getReferencePoints()[0].getPixelCoordinates()[1]
-        # y2 = v2.getReferencePoints()[0].getPixelCoordinates()[1]
-        # y3 = v1.getReferencePoints()[1].getPixelCoordinates()[1]
-        # y4 = v2.getReferencePoints()[1].getPixelCoordinates()[1]
+        self['b'] = self.create_field(b, editable=False)
+        b.dataChanged.connect(updater('b'))
+        b.deleted.connect(self.delete)
 
-        uv1 = v1.getPixelCoordinates() / np.linalg.norm(v1.getPixelCoordinates())
-        uv2 = v2.getPixelCoordinates() / np.linalg.norm(v2.getPixelCoordinates())
-        return np.arccos(np.dot(uv1, uv2))
+        self['angle'] = self.create_field(0, float, editable=False)
 
-    def getAngleStr(self):
-        return "{:.2f}".format(self.value)
+        self.recalculate()
 
-    def getComboStr(self):
-        return self.name + ": " + self.getAngleStr()
+        self['D'] = QtWidgets.QPushButton('Delete')
+        self['D'].clicked.connect(self.delete)
+
+    def recalculate(self):
+        c = self.a.dot(self.b) / self.a.dist / self.b.dist
+        self.angle = math.acos(c) * 180 / math.pi

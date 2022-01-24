@@ -1,30 +1,57 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 import math
 import numpy as np
 
-class Point(object):
+from dataTable import DataTableRow
 
-    def __init__(self, name, x, y, z, length, width):
-        self.name = name
-        self.realCoordinates = np.array([x,y,z])
-        self.pixelCoordinates = np.array([length, width])
+class Point(DataTableRow):
+    dataChanged = QtCore.pyqtSignal()
+    blocked = False
 
-    def __str__(self):
-        return "Point {0}:\nReal Coordinates: {1}\t Pixel Coordinates: {2}".format(self.name, self.getRealCoordinates(), self.getPixelCoordinates())
+    def __init__(self, u = 0, v = 0):
+        super().__init__()
 
-    def getRealCoordinates(self):
-        return self.realCoordinates
+        for field in 'uv':
+            self[field] = self.create_field(0, float)
+            self[field].dataChanged.signal.connect(self.recast)
+            self[field].dataChanged.signal.connect(self.dataChanged.emit)
 
-    def getRealCoordinatesStr(self):
-        return "({:.2f}, {:.2f}, {:.2f})".format(self.realCoordinates[0], self.realCoordinates[1], self.realCoordinates[2])
+        for field in 'xyz':
+            self[field] = self.create_field(0, float)
+            self[field].dataChanged.signal.connect(self.reproject)
+            self[field].dataChanged.signal.connect(self.dataChanged.emit)
 
-    def getPixelCoordinates(self):
-        return self.pixelCoordinates
+        self.z = 1
+        self.u = u
+        self.v = v
 
-    def getPixelCoordinatesStr(self):
-        return "({:.2f}, {:.2f})".format(self.pixelCoordinates[0], self.pixelCoordinates[1])
+        self['D'] = QtWidgets.QPushButton('Delete')
+        self['D'].clicked.connect(self.delete)
 
-    def getComboStr(self):
-        return self.name + ": " + self.getPixelCoordinatesStr() + "; " + self.getRealCoordinatesStr()
+    @QtCore.pyqtSlot()
+    def reproject(self):
+        if self.blocked:
+            return
+        self.blocked = True
 
+        # TODO: handle camera params (position, rotation, focal length)
+        f = 1
+        self.u = self.x * f / self.z
+        self.v = self.y * f / self.z
 
+        self.blocked = False
 
+    @QtCore.pyqtSlot()
+    def recast(self):
+        if self.blocked:
+            return
+        self.blocked = True
+
+        # TODO: handle camera params (positon, rotation, focal length) and depth
+        f = 1
+        self.z = 1
+        self.x = self.u * self.z / f
+        self.y = self.v * self.z / f
+
+        self.blocked = False

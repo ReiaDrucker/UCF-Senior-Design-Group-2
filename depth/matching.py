@@ -93,28 +93,33 @@ def adjust_scale(stereo, L):
     u = stereo.matches[:,0]
     v = stereo.matches[:,1]
 
-    c1 = np.mean(u, axis=0)
-    c2 = np.mean(v, axis=0)
+    d = v[:,0] - u[:,0]
+    q = np.percentile(d, [.25, .75])
+
+    low_x = q[0] - (q[1] - q[0]) * 1.5
+
+    c1 = np.mean(u[:,1])
+    c2 = np.mean(v[:,1])
 
     d1 = np.mean(np.linalg.norm(u - c1, axis=1) ** 2) ** .5
     d2 = np.mean(np.linalg.norm(v - c2, axis=1) ** 2) ** .5
 
     h1 = np.array([
-        [1, 0, -c1[0]],
-        [0, 1, -c1[1]],
+        [1, 0, 0],
+        [0, 1, -c1],
         [0, 0, d1]
     ])
 
     h2 = np.array([
-        [1, 0, -c2[0]],
-        [0, 1, -c2[1]],
+        [1, 0, -low_x],
+        [0, 1, -c2],
         [0, 0, d2]
     ])
 
     h1, h2 = util.correct_homographies((h1, h2), (stereo.left.shape, stereo.right.shape), (L, L))
 
-    left = cv.warpPerspective(stereo.left, h1, (L, L), flags=cv.INTER_CUBIC)
-    right = cv.warpPerspective(stereo.right, h2, (L, L), flags=cv.INTER_CUBIC)
+    left = cv.warpPerspective(stereo.left, h1, (L, L), flags=cv.INTER_NEAREST)
+    right = cv.warpPerspective(stereo.right, h2, (L, L), flags=cv.INTER_NEAREST)
 
     u = util.warp_points(u, h1)
     v = util.warp_points(v, h2)
@@ -123,6 +128,11 @@ def adjust_scale(stereo, L):
     c2 = np.mean(v, axis=0)
 
     return StereoPair(left, right, np.c_[u, v].reshape((u.shape[0], 2, 2)))
+
+def surface_blur(stereo, sigma):
+    stereo = stereo._replace(left = cv.bilateralFilter(stereo.left, -1, sigma, sigma))
+    stereo = stereo._replace(right = cv.bilateralFilter(stereo.right, -1, sigma, sigma))
+    return stereo
 
 def _lerp(a, b, x):
     return np.add(np.multiply(a, x), np.multiply(b, 1 - x))

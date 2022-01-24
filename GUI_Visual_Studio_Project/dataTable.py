@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
+import traceback
+
 class DataTableItem(QtWidgets.QTableWidgetItem):
     class Signaller(QtCore.QObject):
         signal = QtCore.pyqtSignal(object)
@@ -61,7 +63,7 @@ class DataTableRow(QtCore.QObject):
         try:
             items = super().__dict__['items']
             return items[key].value
-        except:
+        except KeyError:
             pass
 
         return super().__getattr__(key)
@@ -71,7 +73,7 @@ class DataTableRow(QtCore.QObject):
             items = super().__dict__['items']
             items[key].setValue(value)
             return
-        except:
+        except KeyError:
             pass
 
         super().__setattr__(key, value)
@@ -105,8 +107,11 @@ class DataTableRow(QtCore.QObject):
         return str({k: v.value for k,v in self.items.items() if hasattr(v, 'value')})
 
 class DataTable(QtWidgets.QTableWidget):
+    onChange = QtCore.pyqtSignal()
+
     def __init__(self, parent = None):
         super().__init__(parent)
+        self.cellChanged.connect(lambda x, y: self.onChange.emit())
         self.rows = {}
 
     def __len__(self):
@@ -141,6 +146,7 @@ class DataTable(QtWidgets.QTableWidget):
             self.__delitem__(name)
 
         self.rows[name] = row_data
+        self.onChange.emit()
 
     def __delitem__(self, name):
         if name in self.rows.keys():
@@ -148,6 +154,7 @@ class DataTable(QtWidgets.QTableWidget):
 
             self.removeRow(data.get_row())
             del self.rows[name]
+        self.onChange.emit()
 
     def __iter__(self):
         for k, v in self.rows.items():
@@ -194,20 +201,6 @@ if __name__ == '__main__':
 
     central = QtWidgets.QWidget(win)
     win.setCentralWidget(central)
-
-    def create_table(pos, n):
-        table = DataTable(central)
-        table.setGeometry(pos)
-        table.setColumnCount(n)
-        table.setShowGrid(False)
-
-        for i,s in enumerate(['X', 'Y']):
-            item = QtWidgets.QTableWidgetItem()
-            item.setTextAlignment(QtCore.Qt.AlignCenter)
-            item.setText(s)
-            table.setHorizontalHeaderItem(i, item)
-
-        return table
 
     layout = QtWidgets.QVBoxLayout()
 
