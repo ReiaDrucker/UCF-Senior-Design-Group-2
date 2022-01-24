@@ -4,6 +4,9 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 
+import os, sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from depth import matching, disparity, depth
 
 class DepthProvider(QtCore.QObject):
