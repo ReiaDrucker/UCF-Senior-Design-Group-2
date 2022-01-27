@@ -11,8 +11,8 @@ class editVectorDialog(QDialog):
         super().__init__()
         self.setWindowTitle("Edit Vector")
         self.createLayout(pd)
-        
-    # Create form layout of dialog window. 
+
+    # Create form layout of dialog window.
     def createLayout(self, pd):
         self.message = QLabel("Select the vector to edit.")
 
@@ -38,7 +38,7 @@ class editVectorDialog(QDialog):
             itemStr = point.getComboStr()
             self.pointCombo.addItem(itemStr)
             self.pointCombo2.addItem(itemStr)
-        self.fillBoxes(pd)        
+        self.fillBoxes(pd)
 
         # Create layout and add everything to it.
         self.layout = QFormLayout()
@@ -64,15 +64,15 @@ class editVectorDialog(QDialog):
         # Get chosen index.
         p1Index = self.pointCombo.currentIndex()
         p2Index = self.pointCombo2.currentIndex()
-        
+
         # If there are valid vectors.
         # Edit vector update table.
         #pd.vectors = np.delete(pd.vectors, vIndex)
         # Create new vector with points and name.
-        vName = self.nameBox.text()     
+        vName = self.nameBox.text()
         vec = Vector(pd.points[p1Index], pd.points[p2Index], vName)
 
-        # If same point selected twice, don't accept.            
+        # If same point selected twice, don't accept.
         if p1Index == p2Index:
             self.message.setText("You need to enter two distinct points!")
 
@@ -86,7 +86,7 @@ class editVectorDialog(QDialog):
             pd.updateVectorTable()
             pd.update()
             self.close()
-    
+
     # Get positions of point in points.
     def getPointPos(self, points, point):
         for i in range(len(points)):

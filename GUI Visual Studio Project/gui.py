@@ -8,6 +8,7 @@ from deletePointDialog import *
 from deleteAngleDialog import *
 from editPointDialog import *
 from editVectorDialog import *
+from editAngleDialog import *
 from changeColorDialog import *
 from photoDisplayerContainer import *
 import pickle
@@ -47,7 +48,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable.setGeometry(QtCore.QRect(1000, 500, 580, 300))
         self.vectorTable.setColumnCount(4)
         self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        
+
         # Set up columns for vector table.
         for i in range(4):
             item = QtWidgets.QTableWidgetItem()
@@ -110,7 +111,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.buttonDeleteVector.setGeometry(QtCore.QRect(1200, 830, 150, 30))
         self.buttonEditVector.setGeometry(QtCore.QRect(1400, 830, 150, 30))
 
-        self.buttonAddVector.clicked.connect(self.addVector)      
+        self.buttonAddVector.clicked.connect(self.addVector)
         self.buttonDeleteVector.clicked.connect(self.deleteVector)
         self.buttonEditVector.clicked.connect(self.editVector)
 
@@ -125,7 +126,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.buttonAddAngle.clicked.connect(self.addAngle)
         self.buttonDeleteAngle.clicked.connect(self.deleteAngle)
-        
+        self.buttonEditAngle.clicked.connect(self.editAngle)
+
 
         # Sets the widget in the center
         MainWindow.setCentralWidget(self.centralwidget)
@@ -139,7 +141,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuUploadImages = QtWidgets.QMenu("Upload Images", self.menubar)
         self.menuToggleDisplayOptions = QtWidgets.QMenu("Toggle Display Options", self.menubar)
         self.menuZoomOptions = QtWidgets.QMenu("Zoom Options", self.menubar)
-        
+
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -191,7 +193,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # TODO: Button not connected yet.
         self.actionShowInterpolatedImage = QtWidgets.QAction("Show Interpolated Image", MainWindow)
-        
+
         # Add actions to menus.
         self.menuFile.addAction(self.actionLoadData)
         self.menuFile.addAction(self.actionExportData)
@@ -209,7 +211,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuZoomOptions.addAction(self.actionZoomReset)
 
 
-        
+
         # Add menus to menu bar.
         self.menubar.addMenu(self.menuFile)
         self.menubar.addMenu(self.menuUploadImages)
@@ -247,12 +249,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(selection == 1 and self.rightImagePath != None and os.path.exists(self.rightImagePath)):
             self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
-        
+
     # Adds point row to point table widget.
     def addPoint(self):
         dialog = pointDialog(self.pd)
         dialog.exec()
-                
+
     # Adds vector row to vector table widget.
     def addVector(self):
         dialog = vectorDialog(self.pd)
@@ -263,7 +265,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if self.pd.vectors.size >= 2:
             dialog = angleDialog(self.pd)
             dialog.exec()
-    
+
     # Deletes vector from vector table.
     def deleteVector(self):
         if self.pd.vectors.size > 0:
@@ -288,14 +290,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
             dialog = editPointDialog(self.pd)
             dialog.exec()
 
-    def changeColor(self, changeType):
-        dialog = changeColorDialog(self, changeType)
-        dialog.exec()
-
+    # Edits vectors in vector table.
     def editVector(self):
         if self.pd.vectors.size > 0:
             dialog = editVectorDialog(self.pd)
             dialog.exec()
+
+    # Edits angles in angle table.
+    def editAngle(self):
+        if self.pd.angles.size > 0:
+            dialog = editAngleDialog(self.pd)
+            dialog.exec()
+
+    def changeColor(self, changeType):
+        dialog = changeColorDialog(self, changeType)
+        dialog.exec()
 
     # Write to a file
     # Can't pickle UI_MainWindow need to figure out how to do that
@@ -310,7 +319,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(filePath[0] != ""):
             with open(filePath[0], 'wb') as handle:
                 pickle.dump(objectToSave, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
+
             # Write the data via out
 
     #Load a file
@@ -338,7 +347,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 # Load image path data
                 self.leftImagePath = data[2]
                 self.rightImagePath = data[3]
-                
+
                 # Tries left and then right
                 self.displayImage(0)
                 self.displayImage(1)
@@ -351,7 +360,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             return None
 
-        
+
 
 if __name__ == "__main__":
     import sys
@@ -360,12 +369,12 @@ if __name__ == "__main__":
     from vector import *
     import numpy as np
 
-    
+
     #p1 = Point("A", 0, 0, 0, 0, 0)
     p2 = Point("B", 0, 1, 4, 6, 7)
     p3 = Point("C", 1, 2, 3, 4, 5)
     #print(p2)
- 
+
     v1 = Vector(p3,p2)
     #print(v1)
     #v2 = Vector(p1, p3);
