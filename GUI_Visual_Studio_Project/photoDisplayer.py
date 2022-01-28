@@ -79,7 +79,8 @@ class PhotoDisplayer(QWidget):
             case = ord('A')
         return chr(self.points.size % 26 + case)
 
-
+    # TODO: Probably want to set draw enable or disabled here for each pixmap as this is how it updates
+    # Also need to disable toggle draw so the user can't turn it on if it is disabled
     def setNewPixmap(self, new):
         # When you get a new image resize the pixmap to fit it
         self.pix = new
