@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
+from editParametersDialog import *
 from photoDisplayerContainer import *
 from dataTable import *
 from colorSelector import *
@@ -87,6 +88,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.pointTable.onChange.connect(self.pd.update)
         self.vectorTable.onChange.connect(self.pd.update)
+
+        # Button to tune hyperparameters.
+        # self.buttonTuneParameters = QtWidgets.QPushButton("Tune Hyperparameters", self.centralwidget)
+        # # TODO: setGeometry
+        # self.buttonTuneParameters.clicked.connect(self.tuneParameters)
 
         self.depthProvider.imageChanged.connect(self.setImage)
         self.depthProvider.imageScaled.connect(self.scalePoints)
@@ -204,6 +210,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def displayImage(self, selection):
         self.depthProvider.show(selection)
+
+    def tuneParameters(self):
+        dialog = editParametersDialog(self.pd)
+        dialog.exec()
 
     # Write to a file
     # Can't pickle UI_MainWindow need to figure out how to do that
