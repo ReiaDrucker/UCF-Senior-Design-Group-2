@@ -72,7 +72,7 @@ class editAngleDialog(QDialog):
         #pd.vectors = np.delete(pd.vectors, vIndex)
         # Create new vector with points and name.
         aName = self.nameBox.text()
-        ang = Angle(pd.vectors[p1Index], pd.vectors[p2Index], vName)
+        ang = Angle(pd.vectors[v1Index], pd.vectors[v2Index], aName)
 
         # If same point selected twice, don't accept.
         if v1Index == v2Index:

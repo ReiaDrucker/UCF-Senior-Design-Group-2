@@ -11,10 +11,10 @@ class pointDialog(QDialog):
         super().__init__()
         self.setWindowTitle("Enter New Point")
         self.createLayout(pd)
-        
+
     # Creates form layout of dialog window.
     def createLayout(self, pd):
-        # Create button box.    
+        # Create button box.
         buttonBox = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(buttonBox)
         self.buttonBox.accepted.connect(lambda: self.addPoint(pd))
@@ -32,7 +32,7 @@ class pointDialog(QDialog):
         self.realXBox = QLineEdit("0", self)
         self.realYBox = QLineEdit("0", self)
         self.realZBox = QLineEdit("0", self)
-        
+
         # Create layout and add everything to it.
         self.layout = QFormLayout()
         self.layout.addRow(self.message)
@@ -76,7 +76,7 @@ class pointDialog(QDialog):
             #message.setText("Please fill fields with integers only")
             self.update()
 
-        
+
         #else:
             #print("not in bounds")
            # message.setText("Point is out of Bounds!")

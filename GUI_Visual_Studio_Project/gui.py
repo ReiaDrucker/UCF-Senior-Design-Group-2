@@ -193,15 +193,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # TODO: Button not connected yet.
         self.actionShowInterpolatedImage = QtWidgets.QAction("Show Interpolated Image", MainWindow)
-<<<<<<< HEAD:GUI Visual Studio Project/gui.py
 
-=======
         self.actionShowInterpolatedImage.triggered.connect(lambda: self.displayImage(2))
 
         self.actionShowDisparityMapImage = QtWidgets.QAction("Show Disparity Map", MainWindow)
         self.actionShowDisparityMapImage.triggered.connect(lambda: self.displayImage(3))
-        
->>>>>>> 4189b2160ce207855550a283fc36062c1062791e:GUI_Visual_Studio_Project/gui.py
+
         # Add actions to menus.
         self.menuFile.addAction(self.actionLoadData)
         self.menuFile.addAction(self.actionExportData)
@@ -260,9 +257,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(selection == 1 and self.rightImagePath != None and os.path.exists(self.rightImagePath)):
             self.pd.setNewPixmap(QtGui.QPixmap(self.rightImagePath))
             self.update()
-<<<<<<< HEAD:GUI Visual Studio Project/gui.py
 
-=======
         # Show Interpolated/Processed Image
         if(selection == 2):
             #self.pd.setNewPixmap(#PixmapGoesHere)
@@ -273,8 +268,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.update()
 
 
-        
->>>>>>> 4189b2160ce207855550a283fc36062c1062791e:GUI_Visual_Studio_Project/gui.py
+
     # Adds point row to point table widget.
     def addPoint(self):
         dialog = pointDialog(self.pd)
@@ -385,14 +379,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             return None
 
-<<<<<<< HEAD:GUI Visual Studio Project/gui.py
-
-=======
-    
-
-        
->>>>>>> 4189b2160ce207855550a283fc36062c1062791e:GUI_Visual_Studio_Project/gui.py
-
 if __name__ == "__main__":
     import sys
     import math
@@ -406,6 +392,7 @@ if __name__ == "__main__":
     p3 = Point("C", 1, 2, 3, 4, 5)
     #print(p2)
 
+    print("Main")
     v1 = Vector(p3,p2)
     #print(v1)
     #v2 = Vector(p1, p3);
