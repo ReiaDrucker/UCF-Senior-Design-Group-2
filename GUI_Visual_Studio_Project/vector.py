@@ -41,3 +41,6 @@ class Vector(DataTableRow):
 
         dist = (self.dx ** 2 + self.dy ** 2 + self.dz ** 2) ** .5
         self.dist = dist
+
+    def __str__(self):
+        return f'{self.name}: <{self.dx}, {self.dy}, {self.dz}>'

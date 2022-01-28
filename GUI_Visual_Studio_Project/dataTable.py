@@ -110,7 +110,7 @@ class DataTableRow(QtCore.QObject):
             yield self.items[key]
 
     def __str__(self):
-        return str({k: v.value for k,v in self.items.items() if hasattr(v, 'value')})
+        return str({k: str(v.value) for k,v in self.items.items() if hasattr(v, 'value')})
 
 class DataTable(QtWidgets.QTableWidget):
     onChange = QtCore.pyqtSignal()
@@ -175,6 +175,9 @@ class DataTableWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
 
         self.__table = DataTable(parent=self)
+        self.__table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.__table.onChange.connect(self.resize)
+
         layout.addWidget(self.__table)
 
         self.__table.setColumnCount(len(columns))
@@ -195,6 +198,10 @@ class DataTableWidget(QtWidgets.QWidget):
         layout.addLayout(hlayout)
 
         self.setLayout(layout)
+
+    @QtCore.pyqtSlot()
+    def resize(self):
+        self.__table.resizeColumnsToContents()
 
     def get_table(self):
         return self.__table

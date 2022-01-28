@@ -55,3 +55,6 @@ class Point(DataTableRow):
         self.x, self.y, self.z = self.depthProvider.getXYZ(self.u, self.v)
 
         self.blocked = False
+
+    def __str__(self):
+        return f'{self.name}: <{self.x}, {self.y}, {self.z}>'
