@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
 from photoDisplayerContainer import *
 from dataTable import *
+from colorSelector import *
 from depthProvider import *
 from point import *
 from vector import *
@@ -34,8 +35,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.depthProvider = DepthProvider()
 
-    def addTable(self, columns, onNew, x, y, w, h):
-        widget = DataTableWidget(columns, parent=self.centralwidget)
+    def addTable(self, columns, onNew, x, y, w, h, color=None, onColorChange=None):
+        bottom_widgets = []
+
+        new_button = QtWidgets.QPushButton('New')
+        new_button.clicked.connect(onNew)
+        bottom_widgets += [new_button]
+
+        if onColorChange is not None:
+            color_select = ColorSelector(color)
+            color_select.currentIndexChanged.connect(onColorChange)
+            bottom_widgets += [color_select]
+
+        widget = DataTableWidget(columns, bottom_widgets=bottom_widgets, parent=self.centralwidget)
         widget.get_table().setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.layout.addWidget(widget, y, x, h, w)
 
@@ -53,14 +65,25 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.layout = QtWidgets.QGridLayout()
 
-        self.pointTable = self.addTable(['u', 'v', 'x', 'y', 'z', ''], self.addPoint, 2, 0, 1, 1)
-        self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Magnitude', ''], self.addVector, 2, 1, 1, 1)
-        self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', ''], self.addAngle, 0, 2, 1, 1)
-
         self.pd = PhotoDisplayer(self)
         self.pdContainer = photoDisplayerContainer(self.centralwidget, self.pd)
         self.pdContainer.setObjectName("pdContainer")
         self.layout.addWidget(self.pdContainer, 0, 0, 2, 2)
+
+        def changeColor(pen):
+            @QtCore.pyqtSlot(int)
+            def f(idx):
+                pen.setColor(self.sender().get_color())
+                self.pd.update()
+            return f
+
+        self.pointTable = self.addTable(['u', 'v', 'x', 'y', 'z', ''],
+                                        self.addPoint, 2, 0, 1, 1,
+                                        color = QtCore.Qt.red, onColorChange=changeColor(self.pd.pointPen))
+        self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Magnitude', ''],
+                                         self.addVector, 2, 1, 1, 1,
+                                         color = QtCore.Qt.black, onColorChange=changeColor(self.pd.vectorPen))
+        self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', ''], self.addAngle, 0, 2, 1, 1)
 
         self.pointTable.onChange.connect(self.pd.update)
         self.vectorTable.onChange.connect(self.pd.update)

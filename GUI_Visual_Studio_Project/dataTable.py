@@ -169,7 +169,7 @@ class DataTable(QtWidgets.QTableWidget):
 class DataTableWidget(QtWidgets.QWidget):
     onNew = QtCore.pyqtSignal()
 
-    def __init__(self, columns, parent=None):
+    def __init__(self, columns, bottom_widgets = [], parent=None):
         super().__init__(parent)
 
         layout = QtWidgets.QVBoxLayout()
@@ -189,12 +189,9 @@ class DataTableWidget(QtWidgets.QWidget):
             self.__table.setHorizontalHeaderItem(i, item)
 
         hlayout = QtWidgets.QHBoxLayout()
-
-        self._button = QtWidgets.QPushButton('New')
-        self._button.clicked.connect(self.onNew.emit)
-        hlayout.addWidget(self._button)
-        hlayout.addStretch()
-
+        for widget in bottom_widgets:
+            hlayout.addWidget(widget)
+            hlayout.addStretch()
         layout.addLayout(hlayout)
 
         self.setLayout(layout)
