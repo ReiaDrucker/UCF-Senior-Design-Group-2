@@ -68,10 +68,13 @@ class PhotoDisplayer(QWidget):
 
     def drawPoints(self, painter):
         painter.setPen(self.pointPen)
+        painter.setBrush(painter.pen().color())
 
         # Draw all points
         for name, point in self.app.pointTable:
-            painter.drawPoint(point.u, point.v)
+            # TODO: resize on selection?
+            sz = 1
+            painter.drawEllipse(QPointF(point.u, point.v), sz, sz)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

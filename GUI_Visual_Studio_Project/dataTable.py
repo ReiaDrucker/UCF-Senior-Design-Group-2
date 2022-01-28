@@ -44,6 +44,7 @@ class DataTableItem(QtWidgets.QTableWidgetItem):
 
 class DataTableRow(QtCore.QObject):
     deleted = QtCore.pyqtSignal()
+    selected = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
