@@ -9,6 +9,7 @@ from deleteAngleDialog import *
 from editPointDialog import *
 from editVectorDialog import *
 from editAngleDialog import *
+from editParametersDialog import *
 from changeColorDialog import *
 from photoDisplayerContainer import *
 import pickle
@@ -88,6 +89,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButtonChangePointColor = QtWidgets.QPushButton("Select Point Color", self.centralwidget)
         self.pushButtonChangePointColor.setGeometry(QtCore.QRect(1200, 10, 150, 30))
         self.pushButtonChangePointColor.clicked.connect(lambda: self.changeColor(1))
+
+        # Button to tune hyperparameters.
+        # self.buttonTuneParameters = QtWidgets.QPushButton("Tune Hyperparameters", self.centralwidget)
+        # # TODO: setGeometry
+        # self.buttonTuneParameters.clicked.connect(self.tuneParameters)
 
         # Buttons for points.
         self.buttonAddPoint = QtWidgets.QPushButton("Add Point", self.centralwidget)
@@ -323,6 +329,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def changeColor(self, changeType):
         dialog = changeColorDialog(self, changeType)
+        dialog.exec()
+
+    def tuneParameters(self):
+        dialog = editParametersDialog(self.pd)
         dialog.exec()
 
     # Write to a file
