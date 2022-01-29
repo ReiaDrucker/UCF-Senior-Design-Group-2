@@ -173,7 +173,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionShowLeftImage = create_action("Show Left Image", lambda: self.displayImage(0))
         self.actionShowRightImage = create_action("Show Right Image", lambda: self.displayImage(1))
         self.actionShowInterpolatedImage = create_action("Show Interpolated Image", lambda: self.displayImage(2))
-        self.actionShowDisparityMapImage = create_action("Show Interpolated Image", lambda: self.displayImage(3))
+        self.actionShowDisparityMapImage = create_action("Show Disparity", lambda: self.displayImage(3))
 
         def add_actions_to_menu(menu, actions):
             for action in actions:

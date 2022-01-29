@@ -100,6 +100,6 @@ class DepthProvider(QtCore.QObject):
             self.show(idx)
 
     def show(self, idx):
-        if self.images[idx] is not None:
+        if idx < len(self.images) and self.images[idx] is not None:
             self.current = idx
             self.imageChanged.emit()
