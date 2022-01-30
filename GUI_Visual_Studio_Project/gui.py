@@ -50,6 +50,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         widget = DataTableWidget(columns, bottom_widgets=bottom_widgets, parent=self.centralwidget)
         widget.get_table().setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        widget.get_table().setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.layout.addWidget(widget, y, x, h, w)
 
         widget.onNew.connect(onNew)

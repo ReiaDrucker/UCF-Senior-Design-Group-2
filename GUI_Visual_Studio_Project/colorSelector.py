@@ -23,5 +23,9 @@ class ColorSelector(QtWidgets.QComboBox):
             cur_idx = self.findData(color)
             self.setCurrentIndex(cur_idx)
 
+    def set_color(self, color):
+        cur_idx = self.findData(color)
+        self.setCurrentIndex(cur_idx)
+
     def get_color(self):
         return QtCore.Qt.GlobalColor(self.currentData())
