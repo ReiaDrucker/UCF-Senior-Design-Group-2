@@ -25,14 +25,13 @@ class DepthProvider(QtCore.QObject):
         # self.depthUpdated.connect(self.debug)
 
     def calculate(self):
+        # TODO: detect/display errors
         old = self.images[self.current].shape
         stereo = matching.make_stereo_pair(*self.images)
         stereo = matching.fill_matches(stereo)
-        stereo = stereo._replace(matches=matching.remove_match_outliers(stereo.matches))
         stereo = matching.adjust_scale(stereo, 1000)
         # stereo = matching.surface_blur(stereo, 50)
         stereo = matching.fill_matches(stereo)
-        stereo = stereo._replace(matches=matching.remove_match_outliers(stereo.matches))
 
         self.debug_frame = matching.debug_frame(stereo, 0.5)
 
