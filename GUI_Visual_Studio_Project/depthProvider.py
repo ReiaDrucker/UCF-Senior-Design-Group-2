@@ -91,13 +91,17 @@ class DepthProvider(QtCore.QObject):
     def current_pixmap(self):
         return self.pixmap(self.current)
 
-    def set_image(self, idx, path):
+    def set_image(self, idx, path, calculate = True):
         self.images[idx] = cv.imread(path, cv.IMREAD_GRAYSCALE)
 
         if (self.images[0] is not None) and (self.images[1] is not None):
-            self.calculate_async()
+            if calculate:
+                self.calculate_async()
         else:
             self.show(idx)
+
+    def reset(self):
+        self.images = [None] * 2
 
     def show(self, idx):
         if idx < len(self.images) and self.images[idx] is not None:

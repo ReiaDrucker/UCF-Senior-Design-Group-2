@@ -222,7 +222,29 @@ class Ui_MainWindow(QtWidgets.QWidget):
         fname = "SDFDATA File (*.SDFDATA)"
         filePath = QtWidgets.QFileDialog.getSaveFileName(self, "Select Directory To Save To", os.getcwd(), fname, fname)
 
-        objectToSave = [self.pd.points, self.pd.vectors, self.imagePath, self.pd.pointPen.color(), self.pd.vectorPen.color(), self.pd.angles]
+        objectToSave = {
+            'point': {
+                'idx': self.pointIdx,
+                'table': self.pointTable.serialize(lambda p: p.serialize())
+            },
+
+            'vector': {
+                'idx': self.vectorIdx,
+                'table': self.vectorTable.serialize(lambda v: v.serialize())
+            },
+
+            'angle': {
+                'idx': self.angleIdx,
+                'table': self.angleTable.serialize(lambda a: a.serialize())
+            },
+
+            'images': self.imagePath,
+
+            'colors': {
+                'point': self.pd.pointPen.color(),
+                'vector': self.pd.vectorPen.color()
+            }
+        }
 
         # If path is valid serialize the data into the file
         if(filePath[0] != ""):
@@ -241,24 +263,31 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Make sure they selected something correct
         if(filePath[0] != "" and filePath[0].endswith(".SDFDATA")):
             with open(filePath[0], 'rb') as handle:
-                data = pickle.load(handle)
-
-                # Load point and vecotr data
-                self.pd.points = data[0]
-                self.pd.vectors = data[1]
-                self.pd.angles = data[6]
-                self.pd.pointPen.setColor(data[4])
-                self.pd.vectorPen.setColor(data[5])
-                self.pd.updatePointTable()
-                self.pd.updateVectorTable()
-                self.pd.updateAngleTable()
+                state = pickle.load(handle)
 
                 # Load image path data
-                self.imagePath = data[2]
+                self.depthProvider.reset()
+                for idx, img in enumerate(state['images']):
+                    self.imagePath[idx] = img
+                    self.depthProvider.set_image(idx, img, calculate=False)
+                self.depthProvider.calculate()
 
-                # Tries left and then right
-                self.displayImage(0)
-                self.displayImage(1)
+                # Load point and vector data
+                self.pointTable.deserialize(state['point']['table'], lambda v: Point(self.depthProvider, v[0], v[1]))
+                self.pointIdx = state['point']['idx']
+
+                self.vectorTable.deserialize(state['vector']['table'], lambda v: Vector(self.pointTable[v[0]], self.pointTable[v[1]]))
+                self.vectorIdx = state['vector']['idx']
+
+                self.angleTable.deserialize(state['angle']['table'], lambda v: Angle(self.vectorTable[v[0]], self.vectorTable[v[1]]))
+                self.angleIdx = state['angle']['idx']
+
+                # Load pen colors
+                # TODO: adjust color selector
+                self.pd.pointPen.setColor(state['colors']['point'])
+                self.pd.vectorPen.setColor(state['colors']['vector'])
+
+                self.pd.update()
 
             # Read the data via inStream
 

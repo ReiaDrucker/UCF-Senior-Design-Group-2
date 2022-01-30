@@ -44,3 +44,6 @@ class Vector(DataTableRow):
 
     def __str__(self):
         return f'{self.name}: <{self.dx}, {self.dy}, {self.dz}>'
+
+    def serialize(self):
+        return self.s.name, self.t.name

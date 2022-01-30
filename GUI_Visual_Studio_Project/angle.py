@@ -1,7 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from dataTable import DataTableRow
 import math
+
+from dataTable import DataTableRow
 
 class Angle(DataTableRow):
     def __init__(self, a, b):
@@ -32,3 +33,6 @@ class Angle(DataTableRow):
     def recalculate(self):
         c = self.a.dot(self.b) / self.a.dist / self.b.dist
         self.angle = math.acos(c) * 180 / math.pi
+
+    def serialize(self):
+        return self.a.name, self.b.name

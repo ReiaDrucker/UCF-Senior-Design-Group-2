@@ -58,3 +58,6 @@ class Point(DataTableRow):
 
     def __str__(self):
         return f'{self.name}: <{self.x}, {self.y}, {self.z}>'
+
+    def serialize(self):
+        return self.u, self.v

@@ -167,6 +167,20 @@ class DataTable(QtWidgets.QTableWidget):
         for k, v in self.rows.items():
             yield k, v
 
+    def serialize(self, serialize_row):
+        ret = {}
+        for k, v in self.rows.items():
+            ret[k] = serialize_row(v)
+        return {k:serialize_row(v) for k,v in self.rows.items()}
+
+    def deserialize(self, data, deserialize_row):
+        keys = list(self.rows.keys())
+        for k in keys:
+            self.__delitem__(k)
+
+        for k, v in data.items():
+            self[k] = deserialize_row(v)
+
 class DataTableWidget(QtWidgets.QWidget):
     onNew = QtCore.pyqtSignal()
 
