@@ -121,7 +121,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def addVector(self):
-        selected = list(set(self.pointTable.row_name(x.row()) for x in self.pointTable.selectedItems()))
+        selected = sorted(list(set(self.pointTable.row_name(x.row()) for x in self.pointTable.selectedItems())))
+
+        # don't add the same vector twice
+        for k, v in self.vectorTable:
+            if sorted([v.s.name, v.t.name]) == selected:
+                return
+
         if len(selected) == 2:
             vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]])
             self.vectorTable[createLabel(self.vectorIdx)] = vec
@@ -129,7 +135,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def addAngle(self):
-        selected = list(set(self.vectorTable.row_name(x.row()) for x in self.vectorTable.selectedItems()))
+        selected = sorted(list(set(self.vectorTable.row_name(x.row()) for x in self.vectorTable.selectedItems())))
+
+        # don't add the same angle twice
+        for k, v in self.angleTable:
+            if sorted([v.a.name, v.b.name]) == selected:
+                return
+
         if len(selected) == 2:
             ang = Angle(self.vectorTable[selected[0]], self.vectorTable[selected[1]])
             self.angleTable[createLabel(self.angleIdx)] = ang
