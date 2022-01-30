@@ -23,7 +23,7 @@ class Angle(DataTableRow):
         b.dataChanged.connect(updater('b'))
         b.deleted.connect(self.delete)
 
-        self['angle'] = self.create_field(0, float, editable=False)
+        self['angle'] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
 
         self.recalculate()
 

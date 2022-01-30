@@ -16,12 +16,12 @@ class Point(DataTableRow):
         self.depthProvider.depthUpdated.connect(self.recast)
 
         for field in 'uv':
-            self[field] = self.create_field(0, float)
+            self[field] = self.create_field(0, float, lambda x: f'{x:.1f}')
             self[field].dataChanged.signal.connect(self.recast)
             self[field].dataChanged.signal.connect(self.dataChanged.emit)
 
         for field in 'xyz':
-            self[field] = self.create_field(0, float)
+            self[field] = self.create_field(0, float, lambda x: f'{x:.1f}')
             self[field].dataChanged.signal.connect(self.reproject)
             self[field].dataChanged.signal.connect(self.dataChanged.emit)
 
@@ -57,7 +57,7 @@ class Point(DataTableRow):
         self.blocked = False
 
     def __str__(self):
-        return f'{self.name}: <{self.x}, {self.y}, {self.z}>'
+        return f'{self.name}: <{self.x:.1f}, {self.y:.1f}, {self.z:.1f}>'
 
     def serialize(self):
         return self.u, self.v

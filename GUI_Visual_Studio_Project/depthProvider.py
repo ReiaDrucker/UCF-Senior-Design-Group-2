@@ -33,7 +33,7 @@ class DepthProvider(QtCore.QObject):
         # stereo = matching.surface_blur(stereo, 50)
         stereo = matching.fill_matches(stereo)
 
-        self.debug_frame = matching.debug_frame(stereo, 0.5)
+        # self.debug_frame = matching.debug_frame(stereo, 0.5)
 
         self.images = [stereo.left, stereo.right]
         new = self.images[self.current].shape

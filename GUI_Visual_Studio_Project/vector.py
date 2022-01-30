@@ -24,7 +24,7 @@ class Vector(DataTableRow):
         t.deleted.connect(self.delete)
 
         for field in ['dx', 'dy', 'dz', 'dist']:
-            self[field] = self.create_field(0, float, editable=False)
+            self[field] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
 
         self.recalculate()
 
@@ -43,7 +43,7 @@ class Vector(DataTableRow):
         self.dist = dist
 
     def __str__(self):
-        return f'{self.name}: <{self.dx}, {self.dy}, {self.dz}>'
+        return f'{self.name}: <{self.dx:.1f}, {self.dy:.1f}, {self.dz:.1f}>'
 
     def serialize(self):
         return self.s.name, self.t.name
