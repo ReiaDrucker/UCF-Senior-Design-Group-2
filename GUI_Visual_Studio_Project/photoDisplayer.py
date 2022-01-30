@@ -49,7 +49,7 @@ class PhotoDisplayer(QWidget):
             self.drawPoints(painter)
 
     def addPoint(self, x, y):
-        if(self.inBounds(x,y)):
+        if self.drawStuff and self.inBounds(x, y):
             self.app.addPointAtPixel(x, y)
 
     # TODO: Probably want to set draw enable or disabled here for each pixmap as this is how it updates
