@@ -1,30 +1,63 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 import math
 import numpy as np
 
-class Point(object):
+from dataTable import DataTableRow
 
-    def __init__(self, name, x, y, z, length, width):
-        self.name = name
-        self.realCoordinates = np.array([x,y,z])
-        self.pixelCoordinates = np.array([length, width])
+class Point(DataTableRow):
+    dataChanged = QtCore.pyqtSignal()
+    blocked = False
+
+    def __init__(self, depthProvider, u = 0, v = 0):
+        super().__init__()
+
+        self.depthProvider = depthProvider
+        self.depthProvider.depthUpdated.connect(self.recast)
+
+        for field in 'uv':
+            self[field] = self.create_field(0, float, lambda x: f'{x:.1f}')
+            self[field].dataChanged.signal.connect(self.recast)
+            self[field].dataChanged.signal.connect(self.dataChanged.emit)
+
+        for field in 'xyz':
+            self[field] = self.create_field(0, float, lambda x: f'{x:.1f}')
+            self[field].dataChanged.signal.connect(self.reproject)
+            self[field].dataChanged.signal.connect(self.dataChanged.emit)
+
+        self.z = 1
+        self.u = u
+        self.v = v
+
+        self['D'] = QtWidgets.QPushButton('Delete')
+        self['D'].clicked.connect(self.delete)
+
+    @QtCore.pyqtSlot()
+    def reproject(self):
+        if self.blocked:
+            return
+        self.blocked = True
+
+        # TODO: handle camera params (position, rotation, focal length)
+        f = 1
+        self.u = self.x * f / self.z
+        self.v = self.y * f / self.z
+
+        self.blocked = False
+
+    @QtCore.pyqtSlot()
+    def recast(self):
+        if self.blocked:
+            return
+        self.blocked = True
+
+        # TODO: handle camera params (positon, rotation, focal length)
+        self.x, self.y, self.z = self.depthProvider.getXYZ(self.u, self.v)
+
+        self.blocked = False
 
     def __str__(self):
-        return "Point {0}:\nReal Coordinates: {1}\t Pixel Coordinates: {2}".format(self.name, self.getRealCoordinates(), self.getPixelCoordinates())
+        return f'{self.name}: <{self.x:.1f}, {self.y:.1f}, {self.z:.1f}>'
 
-    def getRealCoordinates(self):
-        return self.realCoordinates
-
-    def getRealCoordinatesStr(self):
-        return "({:.2f}, {:.2f}, {:.2f})".format(self.realCoordinates[0], self.realCoordinates[1], self.realCoordinates[2])
-
-    def getPixelCoordinates(self):
-        return self.pixelCoordinates
-
-    def getPixelCoordinatesStr(self):
-        return "({:.2f}, {:.2f})".format(self.pixelCoordinates[0], self.pixelCoordinates[1])
-
-    def getComboStr(self):
-        return self.name + ": " + self.getPixelCoordinatesStr() + "; " + self.getRealCoordinatesStr()
-
-
-
+    def serialize(self):
+        return self.u, self.v

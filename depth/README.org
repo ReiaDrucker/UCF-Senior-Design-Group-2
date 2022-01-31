@@ -1,0 +1,70 @@
+* Hyperparameters
+** cleaning our image
+*** image size / blur
+    It's not entirely clear what blur or rescale method is the best for removing noise while retaining texture
+** matching
+*** feature detector
+    Currently using ORB, but there are several options for this like AKAZE or SIFT
+**** nfeatures
+     - The feature detector takes the "best" n features, based on some metric
+     - currently hard-coded to 1e5
+*** feature matching
+    Currently we are using a BFMatcher (Brute Force Matcher) that compares all
+    the points and generates a list of potential matches
+**** distance metric
+     - The feature detector generates a feature vector for each point
+     - there are many ways to compare points, but the recommended on for ORB is
+       NORM_HAMMING (the hamming distance between the bit vectors)
+**** ratio test
+     - Currently we compare the top 2 matching right image points for each left image point
+     - we then filter out the matches where the second best point is almost as
+       good as the best one, since it is probably bad
+     - the current test for this is $m.distance < 0.75 * n.distance$, where distance is the distance metric of our matcher
+**** additional outlier removal??
+     - we might be able to filter out additional outliers based just on distance distribution
+       (e.g. remove matches whose distance is an outlier based on an IQR test)
+** centering our images
+   - we all our matching lines to be horizontal in our image, so it might make sense to shift one image so that the lines are all horizontal
+   - it might be premature to do this without estimating the camera's extrinsic params first, since we don't know if our images are rotated
+** calibration
+   before we can rectify we need to estimate the relative rotation and
+   translation (and maybe distortion) of our cameras
+*** fundamental matrix estimation
+    currently using an opencv builtin function, which implements the 8 point algorithm
+**** minimizing error
+     - this method tries to find the best possible fundamental matrix given our
+     points, but our points are probably noisy so it needs some strategy to
+     choose between matrices
+     - currently using LMDEDS (least medians), since it yielded (seemingly) better results than least squares and RANSAC
+
+*** bundle adjustment (and maybe essential matrix estimation instead)
+**** essential matrix estimate
+    - we need the essential matrix to extract camera pose for bundle adjustment
+    - we would need to guess our camera intrinsics as well to convert our
+      fundamental matrix into an essential matrix
+    - alternatively we can use findEssentialMat() to do most of that for us
+**** essential mat -> pose
+    - since this mapping is ambiguous without matches, we need to use our
+      points to find out which of the 4 possible poses puts our points in
+      front of the camera
+    - potentially problematic since our points might contain extreme outliers,
+      and i don't know if this function is resistant to outliers
+**** least squares minimization of reprojection error
+     - currently we define our cost function as a vector of the distance
+       between our original matching points in the image, and reprojected
+       matching points based on triangulation and our current guess for the
+       camera pose + distortion
+     - maybe this cost function shouldn't be linear??
+     - the scipy least squares implementation has several possible strategies
+       for finding minima, currently just using trf (trust region reflective,
+       idk what that means) as opposed to 'dogbox' or 'lm'
+** rectification
+   - we can use our camera pose to try to realign our images
+   - currently using a builtin opencv function (stereoRectify) to create the mapping
+   - there are some more choices here for scaling/interpolation
+
+** TODO block matching
+   
+
+
+

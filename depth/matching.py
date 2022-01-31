@@ -1,144 +1,254 @@
+import os, sys
 import cv2 as cv
 import numpy as np
 import math
+import random
+from collections import namedtuple
+from matplotlib import pyplot as plt
+import matplotlib
 
-class ImageWithFeatures:
-    def __init__(self, img, target_size, tx = 0, ty = 0):
-        scale = max(img.shape[0] / target_size, img.shape[1] / target_size)
-        shape = np.int0([img.shape[1] / scale, img.shape[0] / scale])
-        self.img = cv.resize(img, shape)
+if __package__:
+    from . import util
+else:
+    import util
 
-        self.__shift(tx, ty)
-        self.__find_features()
+def _rescale(img, L):
+    '''
+    Resize the image to fit in an LxL box
+    '''
+    s = min(L / img.shape[0], L / img.shape[1])
+    return cv.resize(img, np.int0((img.shape[1] * s, img.shape[0] * s)))
 
-    def __shift(self, tx, ty):
-        mat = np.array([
-            [1, 0, tx],
-            [0, 1, ty]
-        ], dtype=np.float32)
-        self.img = cv.warpAffine(self.img, mat, (self.img.shape[1], self.img.shape[0]))
+StereoPair = namedtuple('StereoPair', 'left, right, matches')
+def make_stereo_pair(left, right, L = None):
+    '''
+    Make a stereo pair for future operations
+    '''
+    if L is not None:
+        left = _rescale(left, L)
+        right = _rescale(right, L)
 
-    def __find_features(self):
-        orb = cv.ORB_create(nfeatures=100000)
-        self.kp = orb.detect(self.img, None)
-        self.kp, self.des = orb.compute(self.img, self.kp)
+    return StereoPair(left, right, None)
 
-    def __pts_from_match(self, match, left_kp, right_kp):
-        return (np.int0(left_kp[match.queryIdx].pt),
-                np.int0(right_kp[match.trainIdx].pt))
+ImageFeatures = namedtuple('ImageFeatures', 'kp, des')
+def _find_features(img):
+    '''
+    Find the features in an image using ORB tracker
+    '''
+    orb = cv.ORB_create(nfeatures=100000)
+    kp = orb.detect(img, None)
+    kp, des = orb.compute(img, kp)
+    return ImageFeatures(kp, des)
 
+def _pts_from_match(match, left_kp, right_kp):
+    '''
+    Convert orb feature to image coordinates
+    '''
+    return (np.int0(left_kp[match.queryIdx].pt),
+            np.int0(right_kp[match.trainIdx].pt))
 
-    def match(self, o):
-        # https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_matcher/py_matcher.html
-        # create BFMatcher object
-        bf = cv.BFMatcher(cv.NORM_HAMMING)
-        # Match descriptors.
-        matches = bf.knnMatch(self.des, o.des, k = 2)
-        good = []
-        for m,n in matches:
-            if m.distance < 0.75 * n.distance:
-                good.append(m)
+def fill_matches(stereo):
+    '''
+    Find matching features in each image and append them to the StereoPair
+    '''
+    feat_l = _find_features(stereo.left)
+    feat_r = _find_features(stereo.right)
 
-        # Sort them in the order of their distance (between feature vectors, not points).
-        ret = sorted(good, key = lambda x:x.distance)
-        ret = [self.__pts_from_match(match, self.kp, o.kp) for match in ret]
-        return ret
+    # Match descriptors.
+    bf = cv.BFMatcher(cv.NORM_HAMMING)
+    matches = bf.knnMatch(feat_l.des, feat_r.des, k = 2)
 
-def __lerp(a, b, x):
+    good = []
+    for m,n in matches:
+        if m.distance < 0.75 * n.distance:
+            good.append(m)
+
+    # Sort them in the order of their distance (between feature vectors, not points).
+    good = sorted(good, key = lambda x:x.distance)
+    good = [_pts_from_match(match, feat_l.kp, feat_r.kp) for match in good]
+    good = np.array(good).reshape(len(good), 2, 2)
+    return stereo._replace(matches=good)
+
+def remove_match_outliers(matches):
+    '''
+    For debugging.
+    Remove outliers based on length.
+    '''
+    u = matches[:,0]
+    v = matches[:,1]
+    d = np.linalg.norm(u - v, axis=1)
+    q1 = np.quantile(d, .25)
+    q3 = np.quantile(d, .75)
+    iqr = q3 - q1
+    lo = q1 - iqr * 1.5
+    hi = q3 + iqr * 1.5
+    mask = (lo < d) & (d < hi)
+    u = u[mask == 1]
+    v = v[mask == 1]
+    return np.c_[u, v].reshape(u.shape[0], 2, 2)
+
+def adjust_scale(stereo, L):
+    assert stereo.matches is not None
+
+    u = stereo.matches[:,0]
+    v = stereo.matches[:,1]
+
+    d = v[:,0] - u[:,0]
+    q = np.percentile(d, [.25, .75])
+
+    low_x = q[0] - (q[1] - q[0]) * 1.5
+
+    c1 = np.mean(u[:,1])
+    c2 = np.mean(v[:,1])
+
+    d1 = np.mean(np.linalg.norm(u - c1, axis=1) ** 2) ** .5
+    d2 = np.mean(np.linalg.norm(v - c2, axis=1) ** 2) ** .5
+
+    h1 = np.array([
+        [1, 0, 0],
+        [0, 1, -c1],
+        [0, 0, d1]
+    ])
+
+    h2 = np.array([
+        [1, 0, -low_x],
+        [0, 1, -c2],
+        [0, 0, d2]
+    ])
+
+    h1, h2 = util.correct_homographies((h1, h2), (stereo.left.shape, stereo.right.shape), (L, L))
+
+    left = cv.warpPerspective(stereo.left, h1, (L, L), flags=cv.INTER_NEAREST)
+    right = cv.warpPerspective(stereo.right, h2, (L, L), flags=cv.INTER_NEAREST)
+
+    u = util.warp_points(u, h1)
+    v = util.warp_points(v, h2)
+
+    c1 = np.mean(u, axis=0)
+    c2 = np.mean(v, axis=0)
+
+    return StereoPair(left, right, np.c_[u, v].reshape((u.shape[0], 2, 2)))
+
+def surface_blur(stereo, sigma):
+    stereo = stereo._replace(left = cv.bilateralFilter(stereo.left, -1, sigma, sigma))
+    stereo = stereo._replace(right = cv.bilateralFilter(stereo.right, -1, sigma, sigma))
+    return stereo
+
+def _lerp(a, b, x):
     return np.add(np.multiply(a, x), np.multiply(b, 1 - x))
 
-def __sigmoid(x):
+def _sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-def __length(a, b):
-    x = np.add(a, np.multiply(b, -1))
-    return (x.dot(x)) ** 0.5
+def debug_frame(stereo, z, lines = False):
+    '''
+    For debugging.
+    Generate a frame interopolating between the left and right images.
+    '''
+    norm_dx = np.max(abs(stereo.matches[:,0,0] - stereo.matches[:,1,0]))
 
-def remove_match_outliers(pts):
-    pts = sorted(pts, key = lambda x: __length(*x))
-    n = len(pts)
+    shape = (
+        min(stereo.left.shape[0], stereo.right.shape[0]),
+        min(stereo.left.shape[1], stereo.right.shape[1])
+    )
 
-    q = [__length(*pts[i]) for i in [(n * x) // 4 for x in range(4)]]
-    iqr = q[3] - q[1]
+    frame = stereo.left[:shape[0], :shape[1]] * z
+    frame = frame + stereo.right[:shape[0], :shape[1]] * (1 - z)
+    frame[frame > 255] = 255
+    frame = frame.astype('uint8')
 
-    def good(x):
-       dist = __length(*x)
-       return dist >= q[1] - 1.5 * iqr and dist <= q[3] + 1.5 * iqr
+    for i in range(stereo.matches.shape[0]):
+        u = stereo.matches[i,0]
+        v = stereo.matches[i,1]
 
-    return [x for x in pts if good(x)]
+        color = (0, 255, 0)
+        color = _lerp((255, 0, 0), (0, 0, 255), _sigmoid((u[0] - v[0]) / norm_dx))
 
-def __main():
-    # grab both stereograms, scale them down to fit in 1000x1000
-    left = ImageWithFeatures(cv.imread('../data/left.tif'),
-                             1000,
-                             0,
-                             -5.87105309784089) # specifying y translation manually for this smaple
-    right = ImageWithFeatures(cv.imread('../data/right.tif'), 1000)
+        if lines:
+            cv.line(frame, u.astype(int), v.astype(int), color, 2)
+        else:
+            cv.circle(frame, _lerp(u, v, z).astype(int), 1, color, -1)
 
-    print('Left Image Feature Count:', len(left.kp))
+    return frame
 
-    # Match the features using Brute Force Matching
-    # (Matches features using feature vector, not distance)
-    to_draw = left.match(right)
-    prev_n = len(to_draw)
-    print('Match count', prev_n)
-
-    # Get the corresponding points from each match
-    to_draw = remove_match_outliers(to_draw)
-    n = len(to_draw)
-    print('Removed outliers:', prev_n - n)
-
-    # Get a reasonable magnitude to use to normalize colors
-    norm_dx = sorted([abs(u[0] - v[0]) for u, v in to_draw])[-1]
-
-    min_dx, max_dx = (0, 0)
-    if True:
-        a = sorted([u[0] - v[0] for u, v in to_draw])
-        min_dx = a[0]
-        max_dx = a[-1]
-
-    # Sanity check to ensure the images aren't shifted vertically
-    mean_dy = sum([v[1] - u[1] for u, v in to_draw]) / n
-    variance_dy = sum([(v[1] - u[1] - mean_dy) ** 2 for u, v in to_draw]) / n
-
-    print('norm dx:', norm_dx)
-    print('min dx:', min_dx)
-    print('max dx:', max_dx)
-    print('mean dy:', mean_dy)
-    print('stddev dy:', variance_dy ** 0.5)
-
-    # Draws the linear interpolation of the left and right features with weight, z in [0.0, 1.0]
-    def draw_frame(frame, z, sample_colors = None):
-        for u,v in to_draw:
-            color = (0, 255, 0)
-            if sample_colors:
-                color = __lerp(sample_colors[0][u[1]][u[0]],
-                            sample_colors[1][v[1]][v[0]],
-                            __sigmoid((u[0] - v[0]) / norm_dx))
-            else:
-                color = __lerp((255, 0, 0), (0, 0, 255), __sigmoid((u[0] - v[0]) / norm_dx))
-
-            cv.circle(frame, np.int0(__lerp(u, v, z)), 2, color, -1)
-
-    example = left.img.copy()
-    draw_frame(example, 1)
-    cv.imshow("still frame", example)
-    cv.waitKey(0)
-
-    video_path = 'feature_matching.avi'
-
-    fps = 24
-    seconds = 4
+def debug_video(stereo, video_path, fps, seconds):
+    '''
+    For debugging.
+    Generate a video from a series of debug frames.
+    '''
     fourcc = cv.VideoWriter_fourcc(*'MP42')
-    video = cv.VideoWriter(video_path, fourcc, fps, (left.img.shape[1], left.img.shape[0]), True)
-    right_scaled = cv.resize(right.img, (left.img.shape[1], left.img.shape[0]))
+
+    shape = (
+        min(stereo.left.shape[0], stereo.right.shape[0]),
+        min(stereo.left.shape[1], stereo.right.shape[1])
+    )
+
+    video = cv.VideoWriter(video_path,
+                           fourcc,
+                           fps,
+                           (shape[1], shape[0]),
+                           True)
+
     for i in range(fps * seconds):
         z = (math.sin(i * 2 * math.pi / fps / seconds) + 1) / 2
-        frame = np.add(np.multiply(left.img, z), np.multiply(right_scaled, 1 - z)).astype(np.uint8)
-        # np.zeros(left.img.shape, dtype=np.uint8)
-        draw_frame(frame, z)
+        frame = debug_frame(stereo, z)
         video.write(frame)
     video.release()
 
+def alt_debug_frame(stereo):
+    fig = plt.figure(figsize=(10,5))
+    L = fig.add_subplot(121)
+    R = fig.add_subplot(122)
+    L.imshow(stereo.left)
+    L.axis('off')
+    R.imshow(stereo.right)
+    R.axis('off')
+
+    matches = stereo.matches
+    print(matches.shape)
+
+    fig.canvas.draw()
+    transFig = fig.transFigure.inverted()
+    for i in random.sample(range(matches.shape[0]), 100):
+        u = matches[i][0]
+        v = matches[i][1]
+
+        r = random.random()
+        b = random.random()
+        g = random.random()
+        color = (r, g, b)
+
+        L.scatter(u[0], u[1], s=20, color=color)
+        R.scatter(v[0], v[1], s=20, color=color)
+
+        u2 = transFig.transform(L.transData.transform(u))
+        v2 = transFig.transform(R.transData.transform(v))
+
+        line = matplotlib.lines.Line2D((u2[0], v2[0]),
+                                       (u2[1], v2[1]),
+                                       transform=fig.transFigure,
+                                       color=color)
+        fig.lines.append(line)
+
+    plt.show()
+
 if __name__ == '__main__':
-    __main()
+    left = cv.imread('../data/left.tif')
+    right = cv.imread('../data/right.tif')
+
+    stereo = make_stereo_pair(left, right)
+    stereo = fill_matches(stereo)
+    stereo = adjust_scale(stereo, 1000)
+    stereo = fill_matches(stereo)
+    stereo = stereo._replace(matches=remove_match_outliers(stereo.matches))
+    stereo = adjust_scale(stereo, 1000)
+
+    alt_debug_frame(stereo)
+
+    frame = debug_frame(stereo, .5, lines=True)
+    plt.imshow(frame)
+    plt.show()
+
+    if len(sys.argv) > 1:
+        assert '.avi' in sys.argv[1]
+        debug_video(stereo, sys.argv[1], 24, 10)
