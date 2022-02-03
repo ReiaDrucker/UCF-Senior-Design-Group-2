@@ -4,6 +4,7 @@ from dataTable import DataTableRow
 
 class Vector(DataTableRow):
     dataChanged = QtCore.pyqtSignal()
+    distChanged = QtCore.pyqtSignal()
 
     def __init__(self, s, t):
         super().__init__()
@@ -23,13 +24,30 @@ class Vector(DataTableRow):
         t.dataChanged.connect(updater('t'))
         t.deleted.connect(self.delete)
 
-        for field in ['dx', 'dy', 'dz', 'dist']:
+        for field in ['dx', 'dy', 'dz']:
             self[field] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
+
+        # Magnitude field.
+        distItem = self.create_field(0, float, lambda x: f'{x:.2f}', editable=True)
+        distItem.dataChanged.signal.connect(self.changeMag)
+        self['dist'] = distItem
+
+        self.prevDist = 0
 
         self.recalculate()
 
         self['D'] = QtWidgets.QPushButton('Delete')
         self['D'].clicked.connect(self.delete)
+
+    # Calculates percent of magnitude change and re-scales other vectors.
+    def changeMag(self):
+        if (self.prevDist != 0):
+            percent = (self.dist/self.prevDist) * 100
+            print("Percentage:", percent,"%")
+            #updateDepthMap(percent)
+
+        self.prevDist = self.dist
+
 
     def dot(self, o):
         return self.dx * o.dx + self.dy * o.dy + self.dz * o.dz
