@@ -44,6 +44,9 @@ class Vector(DataTableRow):
         if (self.prevDist != 0):
             percent = (self.dist/self.prevDist) * 100
             print("Percentage:", percent,"%")
+
+            # Probably best if we grab the depth provider pointer from a point the vector was made with and make the changes through that
+            # Need to enable some sort of testing metric for before and after we do that with the tsukaba dataset
             #updateDepthMap(percent)
 
         self.prevDist = self.dist
