@@ -25,6 +25,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="angle.py" />
+    <Compile Include="colorSelector.py" />
+    <Compile Include="dataTable.py" />
+    <Compile Include="depthProvider.py" />
+    <Compile Include="editParametersDialog.py" />
     <Compile Include="photoDisplayerContainer.py">
       <SubType>Code</SubType>
     </Compile>
