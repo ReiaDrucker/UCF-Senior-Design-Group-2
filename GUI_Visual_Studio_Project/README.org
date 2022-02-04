@@ -1,6 +1,22 @@
 * GUI
 ** photoDisplayer
+   Displays an image and points and vectors atop it.
 *** Initializing
-    - Takes in the parent app as a parameter.
-    - Defaults to 1024x1024 in size.
+    - Takes parent app as a parameter.
+    - Defaults to dimensions 1024 x 1024.
+    - QPixmap for drawing defaults to blue canvas.
     - Red pen for drawing points, black pen for drawing vectors.
+*** Drawing
+    - On setNewPixmap(self, new), put new image into the QPixmap and update the canvas.
+    - On drawPoints(self, painter) and drawVectors(self, painter), use QPainter object to draw points/vectors to screen.
+      - Accesses points and vectors through the pointTable/vectorTable in the parent app.
+** photoDisplayerContainer
+   - The photoDisplayer cannot handle zoom capabilities while retaining integrity of the point/vector positions.
+   - photoDisplayerContainer is based on QGraphicsScene which gives it native zoom support.
+*** Initializing
+    - Takes parent widget and photoDisplayer object as a parameter.
+    - Default zoom factor is 2.0.
+    - Initializes QGraphicsScene with the photoDisplayer.
+*** Zooming
+    - Uses native scale(sx, sy) function to zoom on photoDisplayer widget.
+    - On resetZoom(self), reset container to default zoom state.
