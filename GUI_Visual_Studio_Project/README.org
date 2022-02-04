@@ -1,0 +1,6 @@
+* GUI
+** photoDisplayer
+*** Initializing
+    - Takes in the parent app as a parameter.
+    - Defaults to 1024x1024 in size.
+    - Red pen for drawing points, black pen for drawing vectors.
