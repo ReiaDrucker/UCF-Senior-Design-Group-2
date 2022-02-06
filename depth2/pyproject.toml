@@ -4,6 +4,7 @@ requires = [
     "wheel",
     "pybind11>=2.8.0",
     "cmake>=3.21",
+    "conan",
     "scikit-build>=0.12",
     "opencv-contrib-python-headless>=4.5"
 ]

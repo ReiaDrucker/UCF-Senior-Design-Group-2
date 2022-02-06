@@ -2,8 +2,31 @@ cmake_minimum_required(VERSION 3.15...3.19)
 
 project(depth_algo VERSION "0.0.1")
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+include(conan.cmake)
+
+conan_cmake_configure(
+  REQUIRES opencv/4.5.3
+  REQUIRES eigen/3.4.0
+  OPTIONS ffmpeg:with_openjpeg=False
+  GENERATORS cmake_find_package)
+
+conan_cmake_autodetect(settings)
+
+message("hmm: ${settings}")
+
+# this seems jank
+set(CONAN_COMMAND "conan")
+
+conan_cmake_install(PATH_OR_REFERENCE .
+                    BUILD missing
+                    REMOTE conancenter
+                    SETTINGS ${settings})
 
 if(SKBUILD)
   # Scikit-Build does not add your site-packages to the search path
