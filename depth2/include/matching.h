@@ -1,25 +1,34 @@
 #include <array>
-#include <opencv2/core/base.hpp>
-#include <opencv2/core/types.hpp>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
 #include <Eigen/Eigen>
 
+#include <pybind11/numpy.h>
+
 #include <common/util.h>
+#include <common/math.h>
 
 constexpr int nfeatures = 1e5;
 constexpr double ratio = .75;
+constexpr int target_scale = 500;
 
-struct ImageSet {
+namespace py = pybind11;
+
+struct ImagePair {
   std::array<cv::Mat, 2> img;
   std::vector<std::array<cv::Point2f, 2>> matches;
 
-  ImageSet() {
-    
+  using array_t = py::array_t<uint8_t, py::array::c_style | py::array::forcecast>;
+  ImagePair(array_t left, array_t right) {
+    img[0] = cv::Mat(left.shape(0), left.shape(1), CV_8UC1, (uint8_t*)left.data()).clone();
+    img[1] = cv::Mat(right.shape(0), right.shape(1), CV_8UC1, (uint8_t*)right.data()).clone();
+
+    img[0] = math::rescale(img[0], target_scale);
+    img[1] = math::rescale(img[1], target_scale);
   }
 
-  ImageSet& fill_matches() {
+  ImagePair& fill_matches() {
     struct kp_and_matches {
       std::vector<cv::KeyPoint> kp;
       cv::Mat des;
@@ -52,7 +61,14 @@ struct ImageSet {
     return *this;
   }
 
-  void adjust_scale() {
+  auto get_image(int idx) {
+    return util::mat_to_array<uint8_t>(img[idx]);
+  }
 
+  auto get_matches() {
+    static constexpr int elem_sz = sizeof(float);
+    return py::array_t<float>({(int)matches.size(), 2, 2},
+                              {2 * 2 * elem_sz, 2 * elem_sz, elem_sz},
+                              (float*)matches.data());
   }
 };

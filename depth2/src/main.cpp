@@ -6,32 +6,19 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-int add(int i, int j) {
-  return i + j;
-}
-
 namespace py = pybind11;
 
 PYBIND11_MODULE(_core, m) {
   m.doc() = R"pbdoc(
-        Pybind11 example plugin
-        -----------------------
-        .. currentmodule:: scikit_build_example
-        .. autosummary::
-           :toctree: _generate
-           add
-           subtract
+        Module for calculating depth from stereogram images.
     )pbdoc";
 
-  m.def("add", &add, R"pbdoc(
-        Add two numbers
-        Some other explanation about the add function.
-    )pbdoc");
-
-  m.def("subtract", [](int i, int j) { return i - j; }, R"pbdoc(
-        Subtract two numbers
-        Some other explanation about the subtract function.
-    )pbdoc");
+  py::class_<ImagePair>(m, "ImagePair")
+    .def(py::init<py::array_t<uint8_t>, py::array_t<uint8_t>>())
+    .def("fill_matches", &ImagePair::fill_matches)
+    .def("get_matches", &ImagePair::get_matches)
+    .def("get_image", &ImagePair::get_image)
+    ;
 
 #ifdef VERSION_INFO
   m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

@@ -42,11 +42,11 @@ endif()
 
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS features2d)
 find_package(Eigen3 REQUIRED)
 
 pybind11_add_module(_core MODULE src/main.cpp)
-target_link_libraries(_core PRIVATE opencv_core Eigen3::Eigen)
+target_link_libraries(_core PRIVATE opencv_core opencv_features2d Eigen3::Eigen)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
