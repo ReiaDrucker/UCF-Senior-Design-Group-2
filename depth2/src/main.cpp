@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <matching.h>
+#include <calib.h>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)

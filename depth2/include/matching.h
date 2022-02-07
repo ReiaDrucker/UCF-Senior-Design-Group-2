@@ -1,8 +1,9 @@
+#pragma once
+
 #include <array>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
-#include <Eigen/Eigen>
 
 #include <pybind11/numpy.h>
 
@@ -70,5 +71,16 @@ struct ImagePair {
     return py::array_t<float>({(int)matches.size(), 2, 2},
                               {2 * 2 * elem_sz, 2 * elem_sz, elem_sz},
                               (float*)matches.data());
+  }
+
+  cv::Mat get_matches_mat(int idx) {
+    return cv::Mat(matches.size(), 1, CV_32FC1, (float*)matches.data() + idx, 2 * sizeof(float));
+  }
+
+  auto get_matches_tuple() {
+    return std::array<cv::Mat, 2> {
+      get_matches_mat(0),
+      get_matches_mat(1)
+    };
   }
 };

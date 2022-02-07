@@ -12,6 +12,7 @@ include(conan.cmake)
 
 conan_cmake_configure(
   REQUIRES opencv/4.5.3
+  REQUIRES gtsam/4.0.3
   REQUIRES eigen/3.4.0
   OPTIONS ffmpeg:with_openjpeg=False
   GENERATORS cmake_find_package)
