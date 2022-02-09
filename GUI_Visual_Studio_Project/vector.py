@@ -4,9 +4,8 @@ from dataTable import DataTableRow
 
 class Vector(DataTableRow):
     dataChanged = QtCore.pyqtSignal()
-    distChanged = QtCore.pyqtSignal()
 
-    def __init__(self, s, t):
+    def __init__(self, s, t, pd):
         super().__init__()
 
         def updater(key):
@@ -15,6 +14,8 @@ class Vector(DataTableRow):
                 self.__setattr__(key, self.sender())
                 self.recalculate()
             return func
+
+        self.pdRef = pd
 
         self['s'] = self.create_field(s, editable=False)
         s.dataChanged.connect(updater('s'))
@@ -45,19 +46,30 @@ class Vector(DataTableRow):
 
     # Calculates percent of magnitude change and re-scales other vectors.
     def changeMag(self):
-        if (self.prevDist != 0):
+        if (self.prevDist != 0 and self.prevDist != self.dist and self.pdRef.drawStuff):
             percent = (self.dist/self.prevDist) * 100
+
+            # When you edit the magnitude, the vector display is toggled off
+            #   and editing for the tables is turned off.
+            # Hard to tell currently if I have to modify anything since this isn't done.
+            # Note: If you change data in the point table, this will toggle vector display and point editing.
+            #   since that changes the magnitude.
+
+            #self.pdRef.displayToggle.emit()
+            self.pdRef.toggleDraw()
 
             # Issue here being that while depth is being calculated all the points update to their intermediary values maybe don't connect until that is done
             # Shouldn't be able to plot anything until after that is done anyways so probabbly not a big deal, make sure everything is disabled until depth is calculated
-            # Can't test or run anything until this is setup 
+            # Can't test or run anything until this is setup
 
-            #print("Percentage:", percent,"%")
             #print(self.depthProviderRef.depth)
             # Need to enable some sort of testing metric for before and after we do the error correction with the tsukaba dataset
 
             # This function needs to be in the depth provider
             #self.depthProviderRef.updateDepthMap(percent)
+
+            # Call toggleDraw() again once scaling is complete.
+            #self.pdRef.toggleDraw()
 
         self.prevDist = self.dist
 

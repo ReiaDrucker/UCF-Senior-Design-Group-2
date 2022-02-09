@@ -9,6 +9,7 @@ import numpy as np
 import os
 
 class PhotoDisplayer(QWidget):
+    displayToggle = pyqtSignal()
 
     def __init__(self, app, width = 1024, height = 1024):
         super().__init__()
@@ -27,6 +28,7 @@ class PhotoDisplayer(QWidget):
 
     def toggleDraw(self):
        self.drawStuff = not(self.drawStuff)
+       self.displayToggle.emit()
        self.update()
 
     def inBounds(self, xVal, yVal):

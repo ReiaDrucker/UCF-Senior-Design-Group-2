@@ -51,6 +51,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         widget = DataTableWidget(columns, bottom_widgets=bottom_widgets, parent=self.centralwidget)
         widget.get_table().setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         widget.get_table().setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        widget.get_table().setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
         self.layout.addWidget(widget, y, x, h, w)
 
         widget.onNew.connect(onNew)
@@ -68,6 +69,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.layout = QtWidgets.QGridLayout()
 
         self.pd = PhotoDisplayer(self)
+        self.pd.displayToggle.connect(self.toggleTableEdits)
         self.pdContainer = photoDisplayerContainer(self.centralwidget, self.pd)
         self.pdContainer.setObjectName("pdContainer")
         self.layout.addWidget(self.pdContainer, 0, 0, 2, 2)
@@ -101,6 +103,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.centralwidget.setLayout(self.layout)
 
     @QtCore.pyqtSlot()
+    def toggleTableEdits(self):
+        print("Toggling Edits")
+        if (self.pointTable.editTriggers() == QtWidgets.QAbstractItemView.DoubleClicked):
+            self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+            self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+            self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        else:
+            self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
+            self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
+            self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
+
+    @QtCore.pyqtSlot()
     def setImage(self):
         self.pd.setNewPixmap(self.depthProvider.current_pixmap())
         self.pdContainer.fitToWindow()
@@ -129,7 +143,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 return
 
         if len(selected) == 2:
-            vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]])
+            vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]], self.pd)
             self.vectorTable[createLabel(self.vectorIdx)] = vec
             self.vectorIdx += 1
 
