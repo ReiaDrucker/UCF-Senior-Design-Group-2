@@ -26,6 +26,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="angle.py" />
+    <Compile Include="hyperParameterTuning.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="colorSelector.py" />
     <Compile Include="dataTable.py" />
     <Compile Include="depthProvider.py" />
