@@ -1,1 +1,3 @@
 *.SDFDATA
+**/__pycache__/
+**/hpTuning/
