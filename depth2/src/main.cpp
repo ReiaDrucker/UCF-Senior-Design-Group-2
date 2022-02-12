@@ -21,6 +21,10 @@ PYBIND11_MODULE(_core, m) {
     .def("get_image", &ImagePair::get_image)
     ;
 
+  py::class_<CameraPose>(m, "CameraPose")
+    .def(py::init<ImagePair&, double>())
+    ;
+
 #ifdef VERSION_INFO
   m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else

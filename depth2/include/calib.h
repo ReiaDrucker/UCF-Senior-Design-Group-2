@@ -1,49 +1,30 @@
 #pragma once
-
 #include <opencv2/core/matx.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/sfm.hpp>
+
+#define CERES_FOUND 1
+#include <opencv2/sfm/reconstruct.hpp>
 
 #include "matching.h"
 
 struct CameraPose {
-  std::vector<cv::Mat> K;
-  std::vector<cv::Mat> R;
-  std::vector<cv::Mat> t;
-  std::vector<cv::Mat> dist;
-  std::vector<cv::Mat> matches;
+  std::array<cv::Mat, 2> R;
+  std::array<cv::Mat, 2> t;
+  cv::Mat K;
+  std::vector<cv::Vec3f> p;
 
-  static CameraPose from_images(ImagePair& stereo, double f) {
-    cv::Mat K = (cv::Mat_<float>(3, 3) <<
-                 f, 0, 0,
-                 0, f, 0,
-                 0, 0, f);
-    
+  CameraPose(ImagePair& stereo, double f) {
+    K = (cv::Mat_<float>(3, 3) <<
+         f, 0, 0,
+         0, f, 0,
+         0, 0, f);
+
     auto [u, v] = stereo.get_matches_tuple();
 
-    // TODO: center the points to make K the same
+    u = u - cv::Vec2f(stereo.img[0].cols / 2., stereo.img[0].rows / 2.);
+    v = v - cv::Vec2f(stereo.img[1].cols / 2., stereo.img[1].rows / 2.);
 
-    auto E = cv::findEssentialMat(u, v, K, cv::LMEDS);
-
-    cv::Mat R, t;
-    cv::recoverPose(E, u, v, R, t);
-
-    auto z3 = cv::Mat::zeros(3, 1, CV_32FC1);
-    auto z5 = cv::Mat::zeros(5, 1, CV_32FC1);
-
-    return CameraPose {
-      .K = { K, K },
-      .R = { cv::Mat::eye(3, 3, CV_32FC1), R },
-      .t = { z3, t },
-      .dist = { z5, z5 },
-      .matches = { u, v }
-    };
-  }
-
-  CameraPose& bundle_adjustment() {
-    
-
-    return *this;
+    cv::sfm::reconstruct(std::array{u, v}, R, t, K, p, true /* is projective */);
   }
 };
-
-// TODO: https://www.uco.es/investiga/grupos/ava/node/39

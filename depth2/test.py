@@ -1,3 +1,4 @@
+#!/bin/env python3
 # TODO: pytest
 
 import depth_algo as depth
@@ -15,3 +16,5 @@ stereo.fill_matches()
 left = stereo.get_image(0)
 plt.imshow(left)
 plt.show()
+
+pose = depth.CameraPose(stereo, 500)

@@ -10,16 +10,21 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(conan.cmake)
 
+execute_process(
+ COMMAND conan export ${CMAKE_SOURCE_DIR}/external/opencv/ 4.1.2@depth_algo/local
+ COMMAND_ERROR_IS_FATAL ANY
+ )
+
 conan_cmake_configure(
-  REQUIRES opencv/4.5.3
+  REQUIRES opencv/4.1.2@depth_algo/local
   REQUIRES gtsam/4.0.3
   REQUIRES eigen/3.4.0
   OPTIONS ffmpeg:with_openjpeg=False
+  OPTIONS opencv:contrib=True
+  OPTIONS opencv:contrib_sfm=True
   GENERATORS cmake_find_package)
 
 conan_cmake_autodetect(settings)
-
-message("hmm: ${settings}")
 
 # this seems jank
 set(CONAN_COMMAND "conan")
@@ -43,11 +48,10 @@ endif()
 
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS features2d)
-find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS features2d sfm)
 
 pybind11_add_module(_core MODULE src/main.cpp)
-target_link_libraries(_core PRIVATE opencv_core opencv_features2d Eigen3::Eigen)
+target_link_libraries(_core PRIVATE opencv_core opencv_features2d opencv_sfm)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
