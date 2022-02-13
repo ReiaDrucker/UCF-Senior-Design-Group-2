@@ -1,1 +1,1 @@
-from ._core import __doc__, __version__, ImagePair
+from ._core import __doc__, __version__, ImagePair, CameraPose

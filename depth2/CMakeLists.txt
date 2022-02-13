@@ -51,7 +51,7 @@ find_package(pybind11 CONFIG REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS features2d sfm)
 
 pybind11_add_module(_core MODULE src/main.cpp)
-target_link_libraries(_core PRIVATE opencv_core opencv_features2d opencv_sfm)
+target_link_libraries(_core PRIVATE opencv_core opencv_features2d opencv_sfm unwind)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})

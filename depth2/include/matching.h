@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <opencv2/core/hal/interface.h>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
@@ -74,7 +75,8 @@ struct ImagePair {
   }
 
   cv::Mat get_matches_mat(int idx) {
-    return cv::Mat(matches.size(), 1, CV_32FC1, (float*)matches.data() + idx, 2 * sizeof(float));
+    using vec = cv::Vec2f;
+    return cv::Mat(matches.size(), 1, CV_32FC2, (vec*)matches.data() + idx, 2 * sizeof(vec));
   }
 
   auto get_matches_tuple() {

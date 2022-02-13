@@ -166,6 +166,9 @@ class OpenCVConan(ConanFile):
                 self.options["jasper"].with_libjpeg = self.options.with_jpeg
             if self.options.get_safe("with_tiff"):
                 self.options["libtiff"].jpeg = self.options.with_jpeg
+        if self.options.contrib_sfm:
+            self.options['ceres-solver'].use_glog = True
+            self.options['ceres-solver'].use_gflags = True
 
         if self.settings.os == "Android":
             self.options.with_openexr = False  # disabled because this forces linkage to libc++_shared.so
@@ -200,7 +203,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("contrib_sfm"):
             self.requires("gflags/2.2.2")
             self.requires("glog/0.5.0")
-            self.requires("ceres-solver/2.0.0")
+            self.requires("ceres-solver/1.14.0")
         if self.options.with_quirc:
             self.requires("quirc/1.1")
         if self.options.get_safe("with_gtk"):

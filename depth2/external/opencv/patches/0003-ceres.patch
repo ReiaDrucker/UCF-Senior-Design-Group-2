@@ -1,5 +1,5 @@
 diff --git a/modules/sfm/CMakeLists.txt b/modules/sfm/CMakeLists.txt
-index 53a8d437..acd9bd13 100644
+index 53a8d437..7e11c8ef 100644
 --- a/modules/sfm/CMakeLists.txt
 +++ b/modules/sfm/CMakeLists.txt
 @@ -5,10 +5,8 @@ set(the_description "SFM algorithms")
@@ -10,7 +10,7 @@ index 53a8d437..acd9bd13 100644
 -if(NOT Ceres_FOUND)  # Looks like Ceres find glog on the own, so separate search isn't necessary
 -  find_package(Glog QUIET)
 -endif()
-+find_package(Glog QUIET)
++# find_package(Glog QUIET)
 +find_package(Ceres REQUIRED)
  
  if((gflags_FOUND OR GFLAGS_FOUND OR GFLAGS_INCLUDE_DIRS) AND (glog_FOUND OR GLOG_FOUND OR GLOG_INCLUDE_DIRS))
@@ -38,20 +38,19 @@ index 53a8d437..acd9bd13 100644
 -    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 -  endif()
 -endif()
-+set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD 20)
  
  ### DEFINE OPENCV SFM MODULE DEPENDENCIES ###
  
-@@ -127,7 +114,7 @@ endif()
- include_directories(${OCV_TARGET_INCLUDE_DIRS_${the_module}})
- add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/src/libmv_light" "${CMAKE_CURRENT_BINARY_DIR}/src/libmv")
+@@ -85,7 +72,6 @@ ocv_add_module(sfm
+   WRAP python
+ )
  
--ocv_target_link_libraries(${the_module} ${LIBMV_LIGHT_LIBS})
-+ocv_target_link_libraries(${the_module} ${LIBMV_LIGHT_LIBS} Ceres::ceres)
- 
- 
- ### CREATE OPENCV SFM TESTS ###
-@@ -137,6 +124,4 @@ ocv_add_accuracy_tests()
+-
+ ocv_warnings_disable(CMAKE_CXX_FLAGS
+   -Wundef
+   -Wshadow
+@@ -137,6 +123,4 @@ ocv_add_accuracy_tests()
  
  ### CREATE OPENCV SFM SAMPLES ###
  
@@ -59,3 +58,18 @@ index 53a8d437..acd9bd13 100644
 -  ocv_add_samples(opencv_viz)
 -endif ()
 +ocv_add_samples(opencv_viz)
+diff --git a/modules/sfm/src/libmv_light/libmv/correspondence/CMakeLists.txt b/modules/sfm/src/libmv_light/libmv/correspondence/CMakeLists.txt
+index eef1f243..a20f2939 100644
+--- a/modules/sfm/src/libmv_light/libmv/correspondence/CMakeLists.txt
++++ b/modules/sfm/src/libmv_light/libmv/correspondence/CMakeLists.txt
+@@ -9,9 +9,9 @@ FILE(GLOB CORRESPONDENCE_HDRS *.h)
+ ADD_LIBRARY(correspondence STATIC ${CORRESPONDENCE_SRC} ${CORRESPONDENCE_HDRS})
+ 
+ TARGET_LINK_LIBRARIES(correspondence LINK_PRIVATE ${GLOG_LIBRARY} multiview)
++
+ IF(TARGET Eigen3::Eigen)
+   TARGET_LINK_LIBRARIES(correspondence LINK_PUBLIC Eigen3::Eigen)
+ ENDIF()
+ 
+-
+ LIBMV_INSTALL_LIB(correspondence)

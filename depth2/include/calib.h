@@ -1,4 +1,7 @@
 #pragma once
+#include <iostream>
+
+#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/matx.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/sfm.hpp>
@@ -9,22 +12,30 @@
 #include "matching.h"
 
 struct CameraPose {
-  std::array<cv::Mat, 2> R;
-  std::array<cv::Mat, 2> t;
-  cv::Mat K;
-  std::vector<cv::Vec3f> p;
+  cv::Matx33d K;
+  std::vector<cv::Mat> R;
+  std::vector<cv::Mat> t;
+  std::vector<cv::Mat> p;
 
   CameraPose(ImagePair& stereo, double f) {
-    K = (cv::Mat_<float>(3, 3) <<
-         f, 0, 0,
-         0, f, 0,
-         0, 0, f);
+    K = cv::Matx33d(f, 0, 0,
+                    0, f, 0,
+                    0, 0, f);
 
-    auto [u, v] = stereo.get_matches_tuple();
+    auto pts = stereo.get_matches_tuple();
+    for(int i = 0; i < 2; i++) {
+      pts[i] = pts[i] - cv::Scalar(stereo.img[i].cols / 2., stereo.img[i].rows / 2.);
+      pts[i] = pts[i].reshape(1).t();
+      pts[i].convertTo(pts[i], CV_64FC1);
+    }
 
-    u = u - cv::Vec2f(stereo.img[0].cols / 2., stereo.img[0].rows / 2.);
-    v = v - cv::Vec2f(stereo.img[1].cols / 2., stereo.img[1].rows / 2.);
+    std::cout << pts[0].size << std::endl;
 
-    cv::sfm::reconstruct(std::array{u, v}, R, t, K, p, true /* is projective */);
+    cv::sfm::reconstruct(pts, R, t, K, p, true /* is projective */);
+
+    std::cout << R.size() << std::endl;
+    std::cout << R[0].size << std::endl;
   }
+
+  
 };
