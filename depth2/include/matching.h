@@ -1,23 +1,25 @@
 #pragma once
 
 #include <array>
-#include <opencv2/core/hal/interface.h>
+#include <opencv2/features2d.hpp>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/xfeatures2d.hpp>
 
 #include <pybind11/numpy.h>
 
 #include <common/util.h>
 #include <common/math.h>
 
-constexpr int N_FEATURES = 1e5;
-constexpr double RATIO = .75;
-constexpr int TARGET_SCALE = 500;
-
 namespace py = pybind11;
 
 struct ImagePair {
+  static constexpr int N_FEATURES = 1e5;
+  static constexpr double RATIO = .75;
+  static constexpr int TARGET_SCALE = 500;
+  using Detector = cv::ORB;
+
   std::array<cv::Mat, 2> img;
   std::vector<std::array<cv::Point2f, 2>> matches;
 
@@ -36,19 +38,18 @@ struct ImagePair {
       cv::Mat des;
     };
 
-    auto features = util::for_each(img, [](auto&& img, auto) {
-      auto orb = cv::ORB::create(N_FEATURES);
-
+    auto detector = Detector::create(N_FEATURES);
+    auto features = util::for_each(img, [&](auto&& img, auto) {
       kp_and_matches ret;
 
-      orb->detect(img, ret.kp);
-      orb->compute(img, ret.kp, ret.des);
+      detector->detect(img, ret.kp);
+      detector->compute(img, ret.kp, ret.des);
 
       return ret;
     });
 
     std::vector<std::vector<cv::DMatch>> matches_;
-    auto matcher = cv::BFMatcher(cv::NORM_HAMMING);
+    auto matcher = cv::BFMatcher(detector->defaultNorm());
     matcher.knnMatch(features[0].des, features[1].des, matches_, 2);
 
     matches.reserve(matches_.size());
@@ -60,6 +61,11 @@ struct ImagePair {
       }
     }
 
+    return *this;
+  }
+
+  ImagePair& rectify(auto& pose) {
+    img = pose.rectify(img);
     return *this;
   }
 

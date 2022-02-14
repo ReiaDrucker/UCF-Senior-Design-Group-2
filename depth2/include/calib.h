@@ -1,5 +1,4 @@
 #pragma once
-#include <gtsam/linear/NoiseModel.h>
 #include <iostream>
 
 #include <opencv2/opencv.hpp>
@@ -24,32 +23,34 @@ struct CameraPose {
   std::array<cv::Mat, 2> t;
   cv::Mat p;
 
+  std::array<cv::Scalar, 2> center;
+
   double e1, e2;
 
-  CameraPose(ImagePair& stereo, double fov) {
+  CameraPose(ImagePair& stereo, double fov):
+    e1(std::numeric_limits<double>::quiet_NaN()),
+    e2(std::numeric_limits<double>::quiet_NaN())
+  {
     f = math::focal_from_fov(stereo.img[0].size, fov);
-    std::cout << f << std::endl;
 
     auto K = cv::Matx33d(f, 0, 0,
                          0, f, 0,
-                         0, 0, f);
+                         0, 0, 1);
 
     pts = stereo.get_matches_tuple();
     pts = util::for_each(pts, [&](auto&& p, auto i) {
-      return cv::Mat(p - cv::Scalar(stereo.img[i].cols / 2., stereo.img[i].rows / 2.));
+      center[i] = cv::Scalar(stereo.img[i].cols / 2., stereo.img[i].rows / 2.);
+      return cv::Mat(p - center[i]);
     });
 
     R[0] = cv::Mat::eye(3, 3, CV_64FC1);
     t[0] = cv::Mat::zeros(3, 1, CV_64FC1);
-
-    std::cout << pts[0].size << std::endl;
 
     cv::Mat mask;
     auto E = cv::findEssentialMat(pts[0], pts[1], K, cv::LMEDS, 0.999, 1.0, mask);
     cv::recoverPose(E, pts[0], pts[1], K, R[1], t[1], std::numeric_limits<double>::infinity(), mask, p);
 
     cv::convertPointsFromHomogeneous(p.reshape(4), p);
-    assert(p.type() == CV_64FC3);
 
     for(int i = 0; i < p.rows; i++) {
       auto pt = p.at<cv::Vec3d>(i);
@@ -57,34 +58,13 @@ struct CameraPose {
     }
 
     p = util::filter_mat<cv::Vec3d>(p, mask);
-    auto P = util::for_each(std::array<int,2>{}, [&](auto&&, auto i) {
+    util::for_each(std::array<int,2>{}, [&](auto&&, auto i) {
       pts[i] = util::filter_mat<cv::Vec2f>(pts[i], mask);
-      return math::construct_proj_mat(R[i], t[i], K);
+      return 0;
     });
 
-    // let's get the angle from top down between our cameras
-    {
-      auto a = cv::Vec3d(0, 0, 1);
-      cv::Vec3d b = cv::Mat(R[1] * a);
-
-      auto A = cv::Vec2d(a[1], a[2]);
-      auto B = cv::Vec2d(b[1], b[2]);
-
-      std::cout << "angle (deg): " << acos(A.dot(B)) * 180 / acos(-1) << std::endl;
-    }
-
-    std::cout << p.size << std::endl;
-    std::cout << "f: " << f << std::endl;
-    std::cout << "R: " << R[1] << std::endl;
-    std::cout << "t: " << t[1] << std::endl;
-
-    int acc = 0;
-    for(int i = 0; i < p.rows; i++) {
-      auto pt = p.at<cv::Vec3d>(i);
-      acc += pt[2] < 0;
-    }
-
-    std::cout << "behind cam: " << acc << std::endl;
+    if(p.type() != CV_64FC3 || pts[0].type() != CV_32FC2)
+      throw runtime_error("Unexpected matrix types");
   }
 
   void refine() {
@@ -95,19 +75,18 @@ struct CameraPose {
 
     Cal3_S2 K(f, f, 0, 0, 0);
 
-    auto cal_noise = noiseModel::Diagonal::Sigmas((Vector(5) << 100, 100, 0.01 /*skew*/, 100, 100).finished());
+    auto cal_noise = noiseModel::Diagonal::Sigmas((Vector(5) << 1, 1, 0.01, 1, 1).finished());
     graph.emplace_shared<PriorFactor<Cal3_S2>>(Symbol('K', 0), K, cal_noise);
-
     initial.insert(Symbol('K', 0), K);
 
     int n = pts[0].rows;
     auto measurement_noise = noiseModel::Isotropic::Sigma(2, 2.0);
     auto pose = util::for_each(pts, [&](auto&& pts, auto i) {
-      auto pose = util::gtsam_pose_from_cv<double>(R[i], t[i]);
+      auto pose = util::gtsam_pose_from_cv<double>(R[i].t(), -R[i].t() * t[i]);
       initial.insert(Symbol('x', i), pose);
 
       for(int j = 0; j < n; j++) {
-        auto pt_cv = pts.template at<cv::Vec2d>(j);
+        auto pt_cv = pts.template at<cv::Vec2f>(j);
         auto pt = gtsam::Point2(pt_cv[0], pt_cv[1]);
         graph.emplace_shared<GeneralSFMFactor2<Cal3_S2>>(pt, measurement_noise,
                                                          Symbol('x', i), Symbol('l', j), Symbol('K', 0));
@@ -116,8 +95,8 @@ struct CameraPose {
       return pose;
     });
 
-    auto pose_noise = noiseModel::Diagonal::Sigmas((Vector(6) << Vector3::Constant(0.1),
-                                                        Vector3::Constant(0.1)).finished());
+    auto pose_noise = noiseModel::Diagonal::Sigmas((Vector(6) << Vector3::Constant(0.0),
+                                                        Vector3::Constant(0.0)).finished());
     graph.emplace_shared<PriorFactor<Pose3> >(gtsam::Symbol('x', 0), pose[0], pose_noise);
 
     Point3 first_pt;
@@ -132,6 +111,7 @@ struct CameraPose {
     auto point_noise = noiseModel::Isotropic::Sigma(3, 0.1);
     graph.emplace_shared<PriorFactor<Point3>>(Symbol('l', 0), first_pt, point_noise);
 
+    graph.print();
 
     e1 = graph.error(initial);
 
@@ -151,12 +131,66 @@ struct CameraPose {
       auto pt_gtsam = result.at<Point3>(Symbol('l', i));
       p.at<cv::Vec3d>(i) = cv::Vec3d(pt_gtsam[0], pt_gtsam[1], pt_gtsam[2]);
     }
+  }
 
-    std::cout << e1 << " " << e2 << std::endl;
+  std::array<cv::Mat, 2> rectify(const std::array<cv::Mat, 2>& img) {
+    auto K = cv::Matx33d(f, 0, center[0][0],
+                         0, f, center[0][1],
+                         0, 0, 1);
 
-    std::cout << "f: " << f << std::endl;
-    std::cout << "R: " << R[1] << std::endl;
-    std::cout << "t: " << t[1] << std::endl;
-    std::cout << "sample: " << p.at<cv::Vec3d>(69) << std::endl;
+    std::array<cv::Mat, 2> R_;
+    std::array<cv::Mat, 2> P_;
+    cv::Mat Q;
+
+    auto size = cv::Size(img[0].size[0], img[0].size[1]);
+    cv::stereoRectify(K, {}, K, {}, size, R[1], t[1],
+                      R_[0], R_[1], P_[0], P_[1], Q,
+                      cv::CALIB_ZERO_DISPARITY, -1, size);
+
+    return util::for_each(std::array<int,2>{}, [&](auto&&, auto i) {
+      std::array<cv::Mat, 2> map;
+      cv::initUndistortRectifyMap(K, {}, R_[i], P_[i], size, CV_32FC2, map[0], map[1]);
+      cv::Mat ret;
+      cv::remap(img[i], ret, map[0], map[1], cv::INTER_LINEAR);
+      return ret;
+    });
+  }
+
+  auto get_matches() {
+    static constexpr int elem_sz = sizeof(float);
+
+    int n = pts[0].rows;
+    std::vector<cv::Vec2f> flat(n * 2);
+    for(int i = 0; i < n; i++) {
+      flat[i * 2 + 0] = pts[0].at<cv::Vec2f>(i) + cv::Vec2f(center[0][0], center[0][1]);
+      flat[i * 2 + 1] = pts[1].at<cv::Vec2f>(i) + cv::Vec2f(center[1][0], center[1][1]);
+    }
+
+    return py::array_t<float>({n, 2, 2},
+                              {2 * 2 * elem_sz, 2 * elem_sz, elem_sz},
+                              (float*)flat.data());
+  }
+
+  friend ostream& operator<<(ostream& os, const CameraPose& pose) {
+    os << "p.size: " << pose.p.size << '\n';
+    os << "f: " << pose.f << '\n';
+    os << "R: " << pose.R[1] << '\n';
+    os << "t: " << pose.t[1] << '\n';
+
+    {
+      auto a = cv::Vec3d(0, 0, 1);
+      auto b = a;
+
+      a = cv::Mat(pose.R[0] * a);
+      b = cv::Mat(pose.R[1] * b);
+
+      os << "horizontal angle (deg): " <<
+        math::angle(cv::Vec2d(a[1], a[2]), cv::Vec2d(b[1], b[2])) * 180 / acos(-1) << '\n';
+    }
+
+    if(!isnan(pose.e1))
+      os << "error before/after: " << pose.e1 << " " << pose.e2 << "\n";
+
+    return os;
   }
 };

@@ -11,10 +11,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(conan.cmake)
 
 conan_cmake_configure(
-  REQUIRES opencv/4.5.3
+  REQUIRES opencv/4.1.2
   REQUIRES gtsam/4.0.3
   REQUIRES eigen/3.4.0
   OPTIONS ffmpeg:with_openjpeg=False
+  OPTIONS opencv:contrib=True
   GENERATORS cmake_find_package)
 
 conan_cmake_autodetect(settings)
@@ -41,11 +42,11 @@ endif()
 
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS features2d calib3d)
+find_package(OpenCV REQUIRED COMPONENTS features2d calib3d xfeatures2d)
 find_package(GTSAM REQUIRED)
 
 pybind11_add_module(_core MODULE src/main.cpp)
-target_link_libraries(_core PRIVATE opencv_core opencv_features2d opencv_calib3d GTSAM::gtsam)
+target_link_libraries(_core PRIVATE opencv_core opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})

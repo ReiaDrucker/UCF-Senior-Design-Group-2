@@ -19,11 +19,18 @@ PYBIND11_MODULE(_core, m) {
     .def("fill_matches", &ImagePair::fill_matches)
     .def("get_matches", &ImagePair::get_matches)
     .def("get_image", &ImagePair::get_image)
+    .def("rectify", [](ImagePair& pair, CameraPose& pose) { return pair.rectify(pose); })
     ;
 
   py::class_<CameraPose>(m, "CameraPose")
     .def(py::init<ImagePair&, double>())
     .def("refine", &CameraPose::refine)
+    .def("get_matches", &CameraPose::get_matches)
+    .def("__repr__", [](const CameraPose& pose) {
+      std::stringstream ss;
+      ss << pose;
+      return ss.str();
+    })
     ;
 
 #ifdef VERSION_INFO
