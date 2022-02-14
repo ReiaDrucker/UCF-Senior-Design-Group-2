@@ -23,6 +23,7 @@ PYBIND11_MODULE(_core, m) {
 
   py::class_<CameraPose>(m, "CameraPose")
     .def(py::init<ImagePair&, double>())
+    .def("refine", &CameraPose::refine)
     ;
 
 #ifdef VERSION_INFO

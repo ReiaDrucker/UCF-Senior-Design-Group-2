@@ -11,9 +11,9 @@
 #include <common/util.h>
 #include <common/math.h>
 
-constexpr int nfeatures = 1e5;
-constexpr double ratio = .75;
-constexpr int target_scale = 500;
+constexpr int N_FEATURES = 1e5;
+constexpr double RATIO = .75;
+constexpr int TARGET_SCALE = 500;
 
 namespace py = pybind11;
 
@@ -26,8 +26,8 @@ struct ImagePair {
     img[0] = cv::Mat(left.shape(0), left.shape(1), CV_8UC1, (uint8_t*)left.data()).clone();
     img[1] = cv::Mat(right.shape(0), right.shape(1), CV_8UC1, (uint8_t*)right.data()).clone();
 
-    img[0] = math::rescale(img[0], target_scale);
-    img[1] = math::rescale(img[1], target_scale);
+    img[0] = math::rescale(img[0], TARGET_SCALE);
+    img[1] = math::rescale(img[1], TARGET_SCALE);
   }
 
   ImagePair& fill_matches() {
@@ -36,8 +36,8 @@ struct ImagePair {
       cv::Mat des;
     };
 
-    auto features = util::for_each(img, [](auto&& img) {
-      auto orb = cv::ORB::create(nfeatures);
+    auto features = util::for_each(img, [](auto&& img, auto) {
+      auto orb = cv::ORB::create(N_FEATURES);
 
       kp_and_matches ret;
 
@@ -53,7 +53,7 @@ struct ImagePair {
 
     matches.reserve(matches_.size());
     for(auto p: matches_) {
-      if(p[0].distance < ratio * p[1].distance) {
+      if(p[0].distance < RATIO * p[1].distance) {
         auto& u = features[0].kp[p[0].queryIdx].pt;
         auto& v = features[1].kp[p[0].trainIdx].pt;
         matches.push_back({ u, v });

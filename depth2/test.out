@@ -1,0 +1,65 @@
+305.981
+2713 x 1
+angle (deg): 0.778224
+2087 x 1
+f: 305.981
+R: [0.9999426903207549, 0.004405469750747858, -0.009757454092451772;
+ -0.00449767591124476, 0.9999452504708201, -0.009448120037662338;
+ 0.009715296469405974, 0.009491464435160345, 0.9999077583044284]
+t: [0.9958643851536906;
+ 0.002651621298127375;
+ 0.09081351929615546]
+behind cam: 0
+CheiralityException: Landmark l160 behind Camera x1
+CheiralityException: Landmark l173 behind Camera x1
+CheiralityException: Landmark l200 behind Camera x1
+CheiralityException: Landmark l257 behind Camera x1
+CheiralityException: Landmark l304 behind Camera x1
+CheiralityException: Landmark l367 behind Camera x1
+CheiralityException: Landmark l392 behind Camera x1
+CheiralityException: Landmark l402 behind Camera x1
+CheiralityException: Landmark l761 behind Camera x1
+CheiralityException: Landmark l1738 behind Camera x1
+CheiralityException: Landmark l1949 behind Camera x1
+CheiralityException: Landmark l160 behind Camera x1
+CheiralityException: Landmark l173 behind Camera x1
+CheiralityException: Landmark l200 behind Camera x1
+CheiralityException: Landmark l257 behind Camera x1
+CheiralityException: Landmark l304 behind Camera x1
+CheiralityException: Landmark l367 behind Camera x1
+CheiralityException: Landmark l392 behind Camera x1
+CheiralityException: Landmark l402 behind Camera x1
+CheiralityException: Landmark l761 behind Camera x1
+CheiralityException: Landmark l1738 behind Camera x1
+CheiralityException: Landmark l1949 behind Camera x1
+CheiralityException: Landmark l160 behind Camera x1
+CheiralityException: Landmark l173 behind Camera x1
+CheiralityException: Landmark l200 behind Camera x1
+CheiralityException: Landmark l257 behind Camera x1
+CheiralityException: Landmark l304 behind Camera x1
+CheiralityException: Landmark l367 behind Camera x1
+CheiralityException: Landmark l392 behind Camera x1
+CheiralityException: Landmark l402 behind Camera x1
+CheiralityException: Landmark l761 behind Camera x1
+CheiralityException: Landmark l1738 behind Camera x1
+CheiralityException: Landmark l1949 behind Camera x1
+CheiralityException: Landmark l160 behind Camera x1
+CheiralityException: Landmark l173 behind Camera x1
+CheiralityException: Landmark l200 behind Camera x1
+CheiralityException: Landmark l257 behind Camera x1
+CheiralityException: Landmark l304 behind Camera x1
+CheiralityException: Landmark l367 behind Camera x1
+CheiralityException: Landmark l392 behind Camera x1
+CheiralityException: Landmark l402 behind Camera x1
+CheiralityException: Landmark l761 behind Camera x1
+CheiralityException: Landmark l1738 behind Camera x1
+CheiralityException: Landmark l1949 behind Camera x1
+-nan -nan
+f: 305.981
+R: [0.9999426903207549, 0.004405469750747858, -0.009757454092451772;
+ -0.00449767591124476, 0.9999452504708201, -0.009448120037662338;
+ 0.009715296469405974, 0.009491464435160345, 0.9999077583044284]
+t: [0.9958643851536906;
+ 0.002651621298127375;
+ 0.09081351929615546]
+sample: [-1.04079, -1.08051, 1.06714]
