@@ -42,11 +42,11 @@ endif()
 
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS features2d calib3d xfeatures2d)
+find_package(OpenCV REQUIRED COMPONENTS features2d calib3d xfeatures2d ximgproc)
 find_package(GTSAM REQUIRED)
 
 pybind11_add_module(_core MODULE src/main.cpp)
-target_link_libraries(_core PRIVATE opencv_core opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam)
+target_link_libraries(_core PRIVATE opencv_core opencv_ximgproc opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})

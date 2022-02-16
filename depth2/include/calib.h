@@ -1,9 +1,12 @@
 #pragma once
+#include <gtsam/geometry/Cal3_S2.h>
 #include <iostream>
 
+#include <opencv2/calib3d.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <gtsam/geometry/Point2.h>
+#include <gtsam/geometry/Cal3DS2.h>
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/slam/ProjectionFactor.h>
@@ -18,6 +21,7 @@
 
 struct CameraPose {
   double f;
+  double skew;
   std::array<cv::Mat, 2> pts;
   std::array<cv::Mat, 2> R;
   std::array<cv::Mat, 2> t;
@@ -27,9 +31,18 @@ struct CameraPose {
 
   double e1, e2;
 
+  void validateTypes() {
+    if(p.type() != CV_64FC3
+       || pts[0].type() != CV_32FC2
+       || R[0].type() != CV_64FC1
+       || t[0].type() != CV_64FC1)
+      throw runtime_error("Unexpected matrix types");
+  }
+
   CameraPose(ImagePair& stereo, double fov):
     e1(std::numeric_limits<double>::quiet_NaN()),
-    e2(std::numeric_limits<double>::quiet_NaN())
+    e2(std::numeric_limits<double>::quiet_NaN()),
+    skew(0)
   {
     f = math::focal_from_fov(stereo.img[0].size, fov);
 
@@ -63,8 +76,7 @@ struct CameraPose {
       return 0;
     });
 
-    if(p.type() != CV_64FC3 || pts[0].type() != CV_32FC2)
-      throw runtime_error("Unexpected matrix types");
+    validateTypes();
   }
 
   void refine() {
@@ -111,19 +123,19 @@ struct CameraPose {
     auto point_noise = noiseModel::Isotropic::Sigma(3, 0.1);
     graph.emplace_shared<PriorFactor<Point3>>(Symbol('l', 0), first_pt, point_noise);
 
-    graph.print();
-
     e1 = graph.error(initial);
 
     auto result = LevenbergMarquardtOptimizer(graph, initial).optimize();
     e2 = graph.error(result);
 
     K = result.at<Cal3_S2>(Symbol('K', 0));
-    f = sqrt(K.fx() * K.fy());
+    // f = sqrt(K.fx() * K.fy());
+    // skew = K.skew();
 
     util::for_each(std::array<int,2>{}, [&](auto&&, int i) {
       auto [R2, t2] = util::cv_from_gtsam_pose(result.at<Pose3>(Symbol('x', i)));
-      R[i] = R2; t[i] = t2;
+      R[i] = R2.t(); t[i] = -R2.t() * t2;
+      t[i] /= sqrt(t[i].dot(t[i]));
       return 0;
     });
 
@@ -131,29 +143,48 @@ struct CameraPose {
       auto pt_gtsam = result.at<Point3>(Symbol('l', i));
       p.at<cv::Vec3d>(i) = cv::Vec3d(pt_gtsam[0], pt_gtsam[1], pt_gtsam[2]);
     }
+
+    validateTypes();
   }
 
   std::array<cv::Mat, 2> rectify(const std::array<cv::Mat, 2>& img) {
-    auto K = cv::Matx33d(f, 0, center[0][0],
-                         0, f, center[0][1],
-                         0, 0, 1);
+    std::array<cv::Matx33d, 2> K;
 
-    std::array<cv::Mat, 2> R_;
-    std::array<cv::Mat, 2> P_;
-    cv::Mat Q;
+    K[0] = cv::Matx33d(f, skew, center[0][0],
+                       0, f, center[0][1],
+                       0, 0, 1);
 
-    auto size = cv::Size(img[0].size[0], img[0].size[1]);
-    cv::stereoRectify(K, {}, K, {}, size, R[1], t[1],
-                      R_[0], R_[1], P_[0], P_[1], Q,
-                      cv::CALIB_ZERO_DISPARITY, -1, size);
+    K[1] = cv::Matx33d(f, skew, center[1][0],
+                       0, f, center[1][1],
+                       0, 0, 1);
 
-    return util::for_each(std::array<int,2>{}, [&](auto&&, auto i) {
-      std::array<cv::Mat, 2> map;
-      cv::initUndistortRectifyMap(K, {}, R_[i], P_[i], size, CV_32FC2, map[0], map[1]);
+    // S=np.mat([[0,-T[2],T[1]],[T[2],0,-T[0]],[-T[1],T[0],0]])
+    // E=S*np.mat(R)
+
+    cv::Vec3d T = t[1];
+    cv::Matx33d Tx(0, -T[2], T[1],
+                   T[2], 0, -T[0],
+                   -T[1], T[0], 0);
+    auto E = Tx * R[1];
+    cv::Matx33d F = cv::Mat(K[1].inv().t() * E * K[0].inv());
+
+    // F = F * (1 / F(2, 2));
+    std::cout << F << std::endl;
+
+    auto size = cv::Size(img[0].size[1], img[0].size[0]);
+    std::array<cv::Mat, 2> H;
+    cv::stereoRectifyUncalibrated(pts[0], pts[1], F, size, H[0], H[1]);
+
+    std::tie(H, size) = math::get_optimal_homography(H, {img[0].size, img[1].size});
+
+    return util::for_each(H, [&](auto&& H, auto i) {
+      pts[i] = math::warp_points(pts[i] + center[i], H) - center[i];
       cv::Mat ret;
-      cv::remap(img[i], ret, map[0], map[1], cv::INTER_LINEAR);
+      cv::warpPerspective(img[i], ret, H, size);
       return ret;
     });
+
+    validateTypes();
   }
 
   auto get_matches() {
@@ -171,21 +202,22 @@ struct CameraPose {
                               (float*)flat.data());
   }
 
-  friend ostream& operator<<(ostream& os, const CameraPose& pose) {
+  friend std::ostream& operator<<(std::ostream& os, const CameraPose& pose) {
     os << "p.size: " << pose.p.size << '\n';
     os << "f: " << pose.f << '\n';
+    os << "skew: " << pose.skew << '\n';
     os << "R: " << pose.R[1] << '\n';
     os << "t: " << pose.t[1] << '\n';
 
     {
-      auto a = cv::Vec3d(0, 0, 1);
-      auto b = a;
+      auto yaw = atan2(pose.R[1].at<double>(1, 0), pose.R[1].at<double>(0, 0));
+      auto pitch = atan2(-pose.R[1].at<double>(2, 0), hypot(pose.R[1].at<double>(2, 1), pose.R[1].at<double>(2, 2)));
+      auto roll = atan2(pose.R[1].at<double>(2, 1), pose.R[1].at<double>(2, 2));
 
-      a = cv::Mat(pose.R[0] * a);
-      b = cv::Mat(pose.R[1] * b);
-
-      os << "horizontal angle (deg): " <<
-        math::angle(cv::Vec2d(a[1], a[2]), cv::Vec2d(b[1], b[2])) * 180 / acos(-1) << '\n';
+      auto to_deg = [](auto x) { return x * 180 / acos(-1); };
+      os << "yaw (deg): " << to_deg(yaw)  << '\n';
+      os << "pitch (deg): " << to_deg(pitch) << '\n';
+      os << "roll (deg): " << to_deg(roll) << '\n';
     }
 
     if(!isnan(pose.e1))

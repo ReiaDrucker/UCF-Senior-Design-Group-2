@@ -21,6 +21,7 @@ struct ImagePair {
   using Detector = cv::ORB;
 
   std::array<cv::Mat, 2> img;
+  cv::Mat left2;
   std::vector<std::array<cv::Point2f, 2>> matches;
 
   using array_t = py::array_t<uint8_t, py::array::c_style | py::array::forcecast>;
@@ -30,6 +31,8 @@ struct ImagePair {
 
     img[0] = math::rescale(img[0], TARGET_SCALE);
     img[1] = math::rescale(img[1], TARGET_SCALE);
+
+    left2 = img[0];
   }
 
   ImagePair& fill_matches() {

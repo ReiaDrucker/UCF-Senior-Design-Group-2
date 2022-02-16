@@ -3,6 +3,7 @@
 #include <iostream>
 #include <matching.h>
 #include <calib.h>
+#include <depth.h>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -31,6 +32,12 @@ PYBIND11_MODULE(_core, m) {
       ss << pose;
       return ss.str();
     })
+    ;
+
+  py::class_<PointCloud>(m, "PointCloud")
+    .def(py::init<ImagePair&, int, int, int, double>())
+    .def("get_disparity", &PointCloud::get_disparity)
+    .def("get_confidence", &PointCloud::get_confidence)
     ;
 
 #ifdef VERSION_INFO

@@ -1,3 +1,4 @@
 **/*.egg-info/
 **/_skbuild/
 **/.cache/
+compile_commands.json
