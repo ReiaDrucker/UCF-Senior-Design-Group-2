@@ -1,0 +1,3 @@
+add_library(LocalExpStereo INTERFACE)
+target_include_directories(LocalExpStereo INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(LocalExpStereo INTERFACE maxflow)
