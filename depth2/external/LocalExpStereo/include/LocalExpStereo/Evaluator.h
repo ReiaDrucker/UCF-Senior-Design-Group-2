@@ -112,6 +112,7 @@ public:
 
 	void evaluate(cv::Mat labeling_m, cv::Mat unaryCost2, const StereoEnergy& energy2, bool show, bool save, bool print, int index, int mode)
 	{
+#if 0
 		bool isTicking = timer.isTicking();
 		stop();
 
@@ -152,7 +153,7 @@ public:
 				cv::namedWindow(header + std::to_string(mode) + "N", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO);
 				cv::namedWindow(header + std::to_string(mode) + "E", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO);
 			}
-			//cv::imshow(header + std::to_string(mode) + "V", vdispMapVis);
+			cv::imshow(header + std::to_string(mode) + "V", vdispMapVis);
 			cv::imshow(header + std::to_string(mode) + "D", disparityMapVis);
 			cv::imshow(header + std::to_string(mode) + "N", normalMapVis);
 			cv::imshow(header + std::to_string(mode) + "E", errorMapVis);
@@ -184,6 +185,7 @@ public:
 
 		if (isTicking)
 			start();
+#endif
 	}
 
 	void start()

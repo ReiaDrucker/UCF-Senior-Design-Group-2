@@ -131,7 +131,7 @@ void CameraPose::refine() {
   validateTypes();
 }
 
-std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img) {
+std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img, cv::Mat& mask) {
   std::array<cv::Matx33d, 2> K;
 
   K[0] = cv::Matx33d(f, skew, center[0][0],
@@ -161,7 +161,7 @@ std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img) {
 
   std::tie(H, size) = math::get_optimal_homography(H, {img[0].size, img[1].size});
 
-  return util::for_each(H, [&](auto&& H, auto i) {
+  array<cv::Mat, 2> ret = util::for_each(H, [&](auto&& H, auto i) {
     pts[i] = math::warp_points(pts[i] + center[i], H) - center[i];
     cv::Mat ret;
     cv::warpPerspective(img[i], ret, H, size);
@@ -169,6 +169,10 @@ std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img) {
   });
 
   validateTypes();
+
+  cv::warpPerspective(mask, mask, H[0], size);
+
+  return ret;
 }
 
 py::array_t<float> CameraPose::get_matches() {
@@ -181,7 +185,7 @@ py::array_t<float> CameraPose::get_matches() {
     flat[i * 2 + 1] = pts[1].at<cv::Vec2f>(i) + cv::Vec2f(center[1][0], center[1][1]);
   }
 
-  return py::array_t<float>({n, 2, 2},
+  return py::array_t<float, py::array::c_style>({n, 2, 2},
                             {2 * 2 * elem_sz, 2 * elem_sz, elem_sz},
                             (float*)flat.data());
 }

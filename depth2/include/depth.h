@@ -12,10 +12,16 @@ struct PointCloud {
   cv::Mat disparity;
   cv::Mat conf;
 
+  enum class MatcherType {
+    SGBM,
+    LOCAL_EXP
+  };
+
+  static constexpr auto MATCHER = MatcherType::LOCAL_EXP;
+
   PointCloud(ImagePair& stereo, int min_disp, int num_disp, int block_size, double sigma_color);
 
-  py::array_t<float> get_confidence();
-  py::array_t<int16_t> get_disparity(double thresh = 0);
+  py::array_t<float> get_disparity();
 
   static void init_pybind(py::module_& m);
 

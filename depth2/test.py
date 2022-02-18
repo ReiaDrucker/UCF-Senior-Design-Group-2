@@ -81,6 +81,7 @@ matches = pose.get_matches()
 frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
 
 n = matches.shape[0]
+print(matches.shape)
 dx = np.array([matches[i,1,0] - matches[i,0,0] for i in range(n)])
 print('dx:', dx.mean(), dx.max(), dx.min())
 
@@ -93,11 +94,14 @@ num_disp = (int(max_disp - min_disp + 15) // 16) * 16
 
 print(min_disp, num_disp)
 
-cloud = depth.PointCloud(stereo, min_disp, num_disp, 3, 1.5)
-disp = cloud.get_disparity(0)
+# TODO: do a better job detecting min/num disparities
+# especially in cases where the disparity might be reversed
+# -2, 10 for target image
+cloud = depth.PointCloud(stereo, -2, 10, 3, 1.5)
+disp = cloud.get_disparity()
 print(disp.min(), disp.max())
 plt.imshow(disp, cmap='gray')
 plt.show()
 
-plt.imshow(cloud.get_confidence())
-plt.show()
+np.save('disp', disp)
+cv.imwrite('rgb.png', right)

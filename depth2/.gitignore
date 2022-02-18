@@ -2,3 +2,6 @@
 **/_skbuild/
 **/.cache/
 compile_commands.json
+**/*.png
+**/*.npy
+**/*.xcf

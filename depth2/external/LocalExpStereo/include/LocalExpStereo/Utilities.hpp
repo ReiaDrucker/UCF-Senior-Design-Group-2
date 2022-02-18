@@ -2,6 +2,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <fstream>
+#include <cstdint>
 
 namespace cvutils
 {
@@ -18,125 +19,6 @@ namespace cvutils
 			return *((float *)b) < 1.0;
 		}
 
-		static cv::Mat read_pfm_file(const std::string& filename)
-		{
-			int w, h;
-			char buf[256];
-			FILE *f;
-			fopen_s(&f, filename.c_str(), "rb");
-			if (f == NULL)
-			{
-				//wprintf(L"PFM file absent: %s\n\n", filename.c_str());
-				return cv::Mat();
-			}
-
-			int channel = 1;
-			fscanf(f, "%s\n", buf);
-			if (strcmp(buf, "Pf") == 0) channel = 1;
-			else if (strcmp(buf, "PF") == 0) channel = 3;
-			else {
-				printf(buf);
-				printf("Not a 1/3 channel PFM file.\n");
-				return cv::Mat();
-			}
-			fscanf(f, "%d %d\n", &w, &h);
-			double scale = 1.0;
-			fscanf(f, "%lf\n", &scale);
-			int little_endian = 0;
-			if (scale < 0.0)
-			{
-				little_endian = 1;
-				scale = -scale;
-			}
-			size_t datasize = w*h*channel;
-			std::vector<byte> data(datasize * sizeof(float));
-
-			cv::Mat image = cv::Mat(h, w, CV_MAKE_TYPE(CV_32F, channel));
-
-			// Adjust the position of the file because fscanf() reads too much (due to "\n"?)
-			fseek(f, -(long)datasize * sizeof(float), SEEK_END);
-			size_t count = fread((void *)&data[0], sizeof(float), datasize, f);
-			if (count != datasize)
-			{
-				printf("Expected size %zu, read size %zu.\n", datasize, count);
-				printf("Could not read ground truth file.\n");
-				return cv::Mat();
-			}
-			int native_little_endian = is_little_endian();
-			for (int i = 0; i < datasize; i++)
-			{
-				byte *p = &data[i * 4];
-				if (little_endian != native_little_endian)
-				{
-					byte temp;
-					temp = p[0]; p[0] = p[3]; p[3] = temp;
-					temp = p[1]; p[1] = p[2]; p[2] = temp;
-				}
-				int jj = (i / channel) % w;
-				int ii = (i / channel) / w;
-				int ch = i % channel;
-				image.at<float>(h - 1 - ii, jj*channel + ch) = *((float *)p);
-			}
-			fclose(f);
-			return image;
-		}
-
-		static void save_pfm_file(const std::string& filename, const cv::Mat& image)
-		{
-			int width = image.cols;
-			int height = image.rows;
-
-			FILE *stream;
-			fopen_s(&stream, filename.c_str(), "wb");
-			if (stream == NULL)
-			{
-				printf("PFM file absent: %s\n\n", filename.c_str());
-				return;
-			}
-			// write the header: 3 lines: Pf, dimensions, scale factor (negative val == little endian)
-			int channel = image.channels();
-			if (channel == 1)
-				fprintf(stream, "Pf\n%d %d\n%lf\n", width, height, -1.0 / 255.0);
-			else if (channel == 3)
-				fprintf(stream, "PF\n%d %d\n%lf\n", width, height, -1.0 / 255.0);
-			else {
-				printf("Channels %d must be 1 or 3\n", image.channels());
-				return;
-			}
-
-
-			// pfm stores rows in inverse order!
-			int linesize = width*channel;
-			std::vector<float> rowBuff(linesize);
-			for (int y = height - 1; y >= 0; y--)
-			{
-				auto ptr = image.ptr<float>(y);
-				auto pBuf = &rowBuff[0];
-				for (int x = 0; x < linesize; x++)
-				{
-					float val = (float)(*ptr);
-					pBuf[x] = val;
-					ptr++;
-					/*if (val > 0 && val <= 255)
-					rowBuf[x] = val;
-					else
-					{
-					printf("invalid: val %f\n", flo(x,y));
-					rowBuf[x] = 0.0f;
-					}*/
-				}
-				if ((int)fwrite(&rowBuff[0], sizeof(float), width, stream) != width)
-				{
-					printf("[ERROR] problem with fwrite.");
-				}
-				fflush(stream);
-			}
-
-			fclose(stream);
-			return;
-		}
-
-
 		static bool writeMatBinary(std::ofstream& ofs, const cv::Mat& out_mat)
 		{
 			cv::Mat out = out_mat;
@@ -148,16 +30,16 @@ namespace cvutils
 			}
 			if (out.empty()) {
 				int s = 0;
-				ofs.write((const char*)(&s), sizeof(__int32));
+				ofs.write((const char*)(&s), sizeof(int32_t));
 				return true;
 			}
-			__int32 rows = out.rows;
-			__int32 cols = out.cols;
-			__int32 type = out.type();
+			int32_t rows = out.rows;
+			int32_t cols = out.cols;
+			int32_t type = out.type();
 
-			ofs.write((const char*)(&rows), sizeof(__int32));
-			ofs.write((const char*)(&cols), sizeof(__int32));
-			ofs.write((const char*)(&type), sizeof(__int32));
+			ofs.write((const char*)(&rows), sizeof(int32_t));
+			ofs.write((const char*)(&cols), sizeof(int32_t));
+			ofs.write((const char*)(&type), sizeof(int32_t));
 			ofs.write((const char*)(out.data), out.elemSize() * out.total());
 
 			return true;
@@ -178,13 +60,13 @@ namespace cvutils
 
 			if (readHeader)
 			{
-				__int32 rows, cols, type;
-				ifs.read((char*)(&rows), sizeof(__int32));
+				int32_t rows, cols, type;
+				ifs.read((char*)(&rows), sizeof(int32_t));
 				if (rows == 0) {
 					return true;
 				}
-				ifs.read((char*)(&cols), sizeof(__int32));
-				ifs.read((char*)(&type), sizeof(__int32));
+				ifs.read((char*)(&cols), sizeof(int32_t));
+				ifs.read((char*)(&type), sizeof(int32_t));
 
 				in_mat.release();
 				in_mat.create(rows, cols, type);

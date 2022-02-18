@@ -16,6 +16,7 @@ conan_cmake_configure(
   REQUIRES eigen/3.4.0
   OPTIONS ffmpeg:with_openjpeg=False
   OPTIONS opencv:contrib=True
+  OPTIONS opencv:parallel=tbb
   GENERATORS cmake_find_package)
 
 conan_cmake_autodetect(settings)
@@ -48,10 +49,24 @@ find_package(GTSAM REQUIRED)
 add_subdirectory(external/maxflow)
 add_subdirectory(external/LocalExpStereo)
 
-pybind11_add_module(_core MODULE src/main.cpp src/matching.cpp src/calib.cpp)
-target_link_libraries(_core PRIVATE opencv_core opencv_ximgproc opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam LocalExpStereo)
+pybind11_add_module(_core MODULE src/main.cpp src/matching.cpp src/calib.cpp src/depth.cpp)
+target_link_libraries(_core PRIVATE opencv_core opencv_ximgproc opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam LocalExpStereo maxflow tbb)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
 install(TARGETS _core DESTINATION .)
+
+# Force the RPATH installation so the user does not have to fiddle
+# with the library path `(DY)?LD_LIBRARY_PATH` 1_.
+#
+# .. _1: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling#always-full-rpath
+set(lib_path "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${lib_path}" is_system)
+if ("${is_system}" STREQUAL "-1")
+    # The following is necessary for installation in a virtual
+    # environment `python -m pip venv env`
+    set_target_properties(_core PROPERTIES
+        INSTALL_RPATH_USE_LINK_PATH TRUE
+        INSTALL_RPATH "${lib_path}")
+endif()

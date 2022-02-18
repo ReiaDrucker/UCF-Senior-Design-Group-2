@@ -122,7 +122,7 @@ public:
 		float zs = cv::theRNG().uniform(MIN_DISPARITY, MAX_DISPARITY);
 		float vs = MAX_VDISPARITY != 0 ? cv::theRNG().uniform(-MAX_VDISPARITY, MAX_VDISPARITY) : 0;
 
-		// CV_PI/4Ç≈ a = 1, b = 0 Ç‹Ç≈
+		// CV_PI/4Ç≈ a = 1, b = 0 Å‹Ç≈
 		cv::Vec3d n = cvutils::getRandomUnitVector(CV_PI / 3);
 		//cv::Vec3d n = cvutils::getRandomUnitVector(0.5);
 		return Plane::CreatePlane(n, zs, (float)s.x, (float)s.y, vs);
@@ -622,8 +622,8 @@ public:
 		//cv::Ptr<cv::ximgproc::GuidedFilter> cvfilter;
 	};
 	
-	virtual void ComputeUnaryPotentialWithoutCheck(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable = Reusable(), int mode = 0) const {};
-	virtual void ComputeUnaryPotential(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusabl = Reusable(), int mode = 0) const {};
+	virtual void ComputeUnaryPotentialWithoutCheck(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable, int mode = 0) const {};
+	virtual void ComputeUnaryPotential(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable, int mode = 0) const {};
 };
 
 class NaiveStereoEnergy : public StereoEnergy
@@ -648,7 +648,10 @@ public:
 		{
 			cv::Mat GX;
 			//cv::Mat GY;
-			cv::cvtColor(I[m], gray, cv::COLOR_BGR2GRAY);
+
+      if(I[m].channels() != 1)
+        cv::cvtColor(I[m], gray, cv::COLOR_BGR2GRAY);
+
 			GX = cv::Mat(size, CV_MAKE_TYPE(CV_32F, 1));
 			//GY = cv::Mat(size, CV_MAKE_TYPE(CV_32F, 1));
 			cv::Sobel(gray, GX, CV_32F, 1, 0, ksize, factor, 0, cv::BORDER_REPLICATE);
@@ -691,7 +694,7 @@ public:
 	}
 
 
-	void ComputeUnaryPotentialWithoutCheck(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable = Reusable(), int mode = 0) const override
+	void ComputeUnaryPotentialWithoutCheck(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable, int mode = 0) const override
 	{
 		if (reusable.pIL.empty())
 		{
@@ -753,7 +756,7 @@ public:
 			rawCosts(subrect).copyTo(costs(subrect));
 	}
 
-	void ComputeUnaryPotential(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable = Reusable(), int mode = 0) const override
+	void ComputeUnaryPotential(const cv::Rect& filterRect, const cv::Rect& targetRect, const cv::Mat& costs, const Plane& plane, Reusable& reusable, int mode = 0) const override
 	{
 		ComputeUnaryPotentialWithoutCheck(filterRect, targetRect, costs, plane, reusable, mode);
 

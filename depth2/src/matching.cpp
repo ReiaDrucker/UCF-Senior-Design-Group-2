@@ -12,6 +12,8 @@ ImagePair::ImagePair(ImagePair::array_t left, ImagePair::array_t right) {
 
   img[0] = math::rescale(img[0], TARGET_SCALE);
   img[1] = math::rescale(img[1], TARGET_SCALE);
+
+  mask = cv::Mat::ones(img[1].rows, img[1].cols, CV_32FC1);
 }
 
 ImagePair& ImagePair::fill_matches() {
@@ -47,7 +49,7 @@ ImagePair& ImagePair::fill_matches() {
 }
 
 ImagePair& ImagePair::rectify(CameraPose& pose) {
-  img = pose.rectify(img);
+  img = pose.rectify(img, mask);
   return *this;
 }
 

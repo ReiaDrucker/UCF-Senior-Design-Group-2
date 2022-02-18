@@ -20,6 +20,7 @@ struct ImagePair {
   using array_t = py::array_t<uint8_t, py::array::c_style | py::array::forcecast>;
 
   std::array<cv::Mat, 2> img;
+  cv::Mat mask;
   std::vector<std::array<cv::Point2f, 2>> matches;
 
   ImagePair(array_t left, array_t right);
