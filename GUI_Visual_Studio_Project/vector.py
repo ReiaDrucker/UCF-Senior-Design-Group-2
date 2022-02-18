@@ -1,4 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from MagPopup import *
+
 
 from dataTable import DataTableRow
 
@@ -54,8 +56,22 @@ class Vector(DataTableRow):
             # Hard to tell currently if I have to modify anything since this isn't done.
             # Note: If you change data in the point table, this will toggle vector display and point editing.
             #   since that changes the magnitude.
+            # msg = QtWidgets.QMessageBox()
+            # #msg.setWindowTitle("Re-scaling Magnitudes. Please wait...")
+            # msg.setText("Re-scaling Magnitudes. Please wait...")
+            # msg.setIcon(QtWidgets.QMessageBox.Information)
+            # #msg.buttonClicked.connect(print("Test"))
+            # #msg.setStandardButtons()
+            # msg.exec_()
 
-            #self.pdRef.displayToggle.emit()
+            # test = MagPopup()
+            # test.exec()
+
+            # x = msg.exec_()
+            # print(x)
+            # if x == 1024:
+            #     print("Test")
+
             self.pdRef.toggleDraw()
 
             # Issue here being that while depth is being calculated all the points update to their intermediary values maybe don't connect until that is done
@@ -69,7 +85,10 @@ class Vector(DataTableRow):
             #self.depthProviderRef.updateDepthMap(percent)
 
             # Call toggleDraw() again once scaling is complete.
-            #self.pdRef.toggleDraw()
+            self.pdRef.toggleDraw()
+            #test.scaleFinish.signal.emit()
+            #test.func()
+
 
         self.prevDist = self.dist
 

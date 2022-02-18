@@ -24,7 +24,7 @@ class PhotoDisplayer(QWidget):
         self.pointPen = QPen(Qt.red, 5)
         self.vectorPen = QPen(Qt.black, 3)
 
-        self.drawStuff = True
+        self.drawStuff = False
 
     def toggleDraw(self):
        self.drawStuff = not(self.drawStuff)

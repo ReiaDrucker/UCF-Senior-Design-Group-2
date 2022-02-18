@@ -92,6 +92,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pointTable.onChange.connect(self.pd.update)
         self.vectorTable.onChange.connect(self.pd.update)
 
+        # Display is turned off until 2 images are uploaded.
+        self.toggleTableEdits()
+
         # Button to tune hyperparameters.
         # self.buttonTuneParameters = QtWidgets.QPushButton("Tune Hyperparameters", self.centralwidget)
         # # TODO: setGeometry
@@ -104,6 +107,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def toggleTableEdits(self):
+        # Depending on current selection behavior, set to a different selection behavior and mode
         print("Toggling Edits")
         if (self.pointTable.editTriggers() == QtWidgets.QAbstractItemView.DoubleClicked):
             self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -116,6 +120,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def setImage(self):
+        if self.imagePath[0] is not None and self.imagePath[1] is not None:
+            self.pointTable.clearTable()
+            self.vectorTable.clearTable()
+            self.angleTable.clearTable()
+
+            self.pointIdx = 0
+            self.vectorIdx = 0
+            self.angleIdx = 0
+
         self.pd.setNewPixmap(self.depthProvider.current_pixmap())
         self.pdContainer.fitToWindow()
 
@@ -127,7 +140,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def addPoint(self):
-        self.addPointAtPixel()
+        if self.pd.drawStuff:
+            self.addPointAtPixel()
 
     def addPointAtPixel(self, u = 0, v = 0):
         self.pointTable[createLabel(self.pointIdx)] = Point(self.depthProvider, u, v)
@@ -135,31 +149,33 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def addVector(self):
-        selected = sorted(list(set(self.pointTable.row_name(x.row()) for x in self.pointTable.selectedItems())))
+        if self.pd.drawStuff:
+            selected = sorted(list(set(self.pointTable.row_name(x.row()) for x in self.pointTable.selectedItems())))
 
-        # don't add the same vector twice
-        for k, v in self.vectorTable:
-            if sorted([v.s.name, v.t.name]) == selected:
-                return
+            # don't add the same vector twice
+            for k, v in self.vectorTable:
+                if sorted([v.s.name, v.t.name]) == selected:
+                    return
 
-        if len(selected) == 2:
-            vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]], self.pd)
-            self.vectorTable[createLabel(self.vectorIdx)] = vec
-            self.vectorIdx += 1
+            if len(selected) == 2:
+                vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]], self.pd)
+                self.vectorTable[createLabel(self.vectorIdx)] = vec
+                self.vectorIdx += 1
 
     @QtCore.pyqtSlot()
     def addAngle(self):
-        selected = sorted(list(set(self.vectorTable.row_name(x.row()) for x in self.vectorTable.selectedItems())))
+        if self.pd.drawStuff:
+            selected = sorted(list(set(self.vectorTable.row_name(x.row()) for x in self.vectorTable.selectedItems())))
 
-        # don't add the same angle twice
-        for k, v in self.angleTable:
-            if sorted([v.a.name, v.b.name]) == selected:
-                return
+            # don't add the same angle twice
+            for k, v in self.angleTable:
+                if sorted([v.a.name, v.b.name]) == selected:
+                    return
 
-        if len(selected) == 2:
-            ang = Angle(self.vectorTable[selected[0]], self.vectorTable[selected[1]])
-            self.angleTable[createLabel(self.angleIdx)] = ang
-            self.angleIdx += 1
+            if len(selected) == 2:
+                ang = Angle(self.vectorTable[selected[0]], self.vectorTable[selected[1]])
+                self.angleTable[createLabel(self.angleIdx)] = ang
+                self.angleIdx += 1
 
     def setupMenu(self, MainWindow):
         # Creates menu bar.
@@ -231,6 +247,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.lastDir = os.path.dirname(name)
                 self.imagePath[idx] = name
                 self.depthProvider.set_image(idx, name)
+
+                # Toggle display after both uploaded and depth calculated.
+                if not(self.pd.drawStuff) and self.imagePath[1 - idx] is not None:
+                    self.pd.toggleDraw()
+
                 self.update()
 
         return f

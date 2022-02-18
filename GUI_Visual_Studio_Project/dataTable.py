@@ -163,6 +163,11 @@ class DataTable(QtWidgets.QTableWidget):
             del self.rows[name]
         self.onChange.emit()
 
+    def clearTable(self):
+        size = self.__len__()
+        for i in range(size):
+            self.__delitem__(self.row_name(0))
+
     def __iter__(self):
         for k, v in self.rows.items():
             yield k, v
