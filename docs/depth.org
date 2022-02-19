@@ -1,0 +1,86 @@
+* Global Feature Matching
+  - We don't what the alignment of our image is at this stage, so any matching
+    at this stage will be ineffcient / inaccurate
+  - Tradeoff between match density and accuracy (more points -> less accurate points)
+** Generate Feature Vectors
+   - Features describe the area surrounding an image
+   - Several available methods for detecting good features and generating vectors/descriptors for each of them
+     - ORB (current choice)
+     - AKAZE
+     - SIFT
+     - DAISY
+** Matching Feature Vectors
+   - We can compare each vector using some method (Hamming distance for ORB)
+   - Since we don't really care about execution time, we can do a brute force
+     matching between all of our points, using `cv::BFMatcher`
+   - (Ratio test) Matcher finds top 2 matches for each point, then we use the ratio test to filter potentially bad matches
+     - Our implementation [[../depth2/src/matching.cpp][here]]: 
+     #+begin_example c++
+    for(auto p: matches_) {
+      if(p[0].distance < RATIO * p[1].distance) {
+        auto& u = features[0].kp[p[0].queryIdx].pt;
+        auto& v = features[1].kp[p[0].trainIdx].pt;
+        matches.push_back({ u, v });
+      }
+    }
+     #+end_example
+* Pose Recovery
+  - From our matches we can estimate our camera's pose
+    #+begin_example c++
+    auto E = cv::findEssentialMat(pts[0], pts[1], K, cv::LMEDS, 0.999, 1.0, mask);
+    cv::recoverPose(E, pts[0], pts[1], K, R[1], t[1], std::numeric_limits<double>::infinity(), mask, p);
+    #+end_example
+  - This requires us to guess the intrinisic camera parameters (e.g. focal
+    length), currently this needs to be manually configured
+* Bundle Adjustment [optional, maybe not even worth fixing]
+  - We might be able to do a better job at recovering our pose by minimizing reprojection error
+  - This might not even be worth it if we only have 2 images, I can't find definitive information on this
+  - Currently using [[https://gtsam.org][GTSAM]] to implement this
+    - My implementation: [[../depth2/src/calib.cpp][CameraPose::refine()]]
+    - Based on [[https://github.com/nghiaho12/SFM_example/blob/master/src/main.cpp][this example]]
+* Rectification
+  - The final stereo matching step requires our images to be aligned to improve our accuracy-density curve
+  - With our reasonable pose and camera intrinsic estimates we can re-align our images
+  - We can generate a transformation based on our camera parameters and then
+    apply them to our images and matches
+    - Our implementation is [[../depth2/src/calib.cpp][here]]
+      #+begin_example c++
+      cv::stereoRectifyUncalibrated(pts[0], pts[1], F, size, H[0], H[1]);
+      // ...
+      pts[i] = math::warp_points(pts[i] + center[i], H) - center[i];
+      cv::Mat ret;
+      cv::warpPerspective(img[i], ret, H, size);
+      return ret;
+      #+end_example
+* Stereo Matching
+  - With our images aligned, all matches should be horizontally aligned
+  - We can also place bounds on how far left and right points in the right image
+    can be relative to the coordinates of the left image
+  - This matching is analogous to computing the disparity - the horizontal
+    displacement for each pixel in the left image to it's match to the right
+    image
+  - All available algorithms only find local minima, rather than guaranteeing the best solution
+  - in order for either of them to find a good solution we need to set a tight bound on the minimum and maximum disparity
+    - currently this is done manually in [[../depth2/test.py][test.py]], but should be automatically determined from our matches if possible
+  - masking out the background, or manual coloring our image might help
+** Semi-Global Block Matching (SGBM)
+   - This somewhat naive algorithm simply scans the image and compares blocks of
+     pixels (similar to the feature vector comparisons from the initial match)
+   - Because we know the disparity should correspond to real geometries it has a
+     few properties we can use to verify it
+     - left-right consistency: lines drawn between matches should not intersect
+     - uniqueness: each pixel in the left image should be matched to at most one
+       pixel in the right image
+** Graph Cut
+   - since the problem is a bipartite matching and cost problem, it makes sense to reduce it to min-cost-max-flow
+     - see the rough overview [[https://ieeexplore.ieee.org/document/937668][here]] (will require IEEE login, but you can use the UCF portal)
+   - graph construction and minimization strategy is somewhat complicated and varies between implementations
+     - for our particalular implementation see this [[https://github.com/t-taniai/LocalExpStereo/tree/master/LocalExpansionStereo][repo]] (there is also a paper cited there)
+   - performance is worse than SGBM, and depending on graph structure (e.g. the presence of cycles) finding a solution might be NP hard
+   - algorithms for finding an approximate solution for the type of graph typically generated in stereo matching (energy minimization) exist
+     - the current implementation allows a configurable number of iterations
+* Point Clouds
+  - Our final disparity output might still have holes and areas of inaccuracy
+  - Techiques exist for generating a water-tight mesh (without holes) that we should probably look into
+  - identifying and removing areas of inaccuracy (or at the very least
+    displaying them to the image) would also help
