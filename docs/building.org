@@ -1,0 +1,24 @@
+#+TITLE: Building
+
+* Depth Algorithm
+** Using pip
+    Installing the depth algorithm using pip is very simple:
+   
+#+begin_example bash
+cd depth2
+pip install .
+#+end_example
+
+** Using Visual Studio
+   * TODO
+
+** The Build System in Detail
+   - The requirements are specified in [[../depth2/pyproject.toml][pyproject.toml.]]
+    
+   - The entrypoint for the build system is in [[../depth2/setup.py][setup.py]].
+   It uses [[https://scikit-build.readthedocs.io/en/latest/index.html][scikit-build]] and [[https://cmake.org][cmake]] to build the project.
+    
+   - [[../depth2/CMakeLists.txt][CMakeLists.txt]] handles the rest of the build.
+     - [[https://conan.io][conan]] is used to handle installing the C++ dependencies.
+
+        
