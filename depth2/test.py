@@ -8,17 +8,17 @@ import cv2 as cv
 import numpy as np
 import math
 
-# r_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/left/tsukuba_daylight_L_00005.png'
-# l_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/right/tsukuba_daylight_R_00005.png'
+r_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/left/tsukuba_daylight_L_00020.png'
+l_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/right/tsukuba_daylight_R_00020.png'
 
-l_path = '../data/left.tif'
-r_path = '../data/right.tif'
+# l_path = '../data/left.tif'
+# r_path = '../data/right.tif'
 
 # l_path = '../../data/left.png'
 # r_path = '../../data/right.png'
 
-# l_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_01/data/0000000000.png'
-# r_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_02/data/0000000000.png'
+# l_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_00/data/0000000000.png'
+# r_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_01/data/0000000000.png'
 
 
 left = cv.imread(l_path, cv.IMREAD_GRAYSCALE)
@@ -26,6 +26,8 @@ right = cv.imread(r_path, cv.IMREAD_GRAYSCALE)
 
 stereo = depth.ImagePair(left, right)
 stereo.fill_matches()
+
+print(stereo.get_matches().shape)
 
 from collections import namedtuple
 StereoPair = namedtuple('StereoPair', 'left, right, matches')
@@ -96,9 +98,13 @@ print(min_disp, num_disp)
 
 # TODO: do a better job detecting min/num disparities
 # especially in cases where the disparity might be reversed
-# -2, 10 for target image
-cloud = depth.PointCloud(stereo, -2, 10, 3, 1.5)
+# -2, 12 for target image
+cloud = depth.PointCloud(stereo, -36, 40, 3, 1.5)
 disp = cloud.get_disparity()
+
+plt.hist(disp, bins=20)
+plt.show()
+
 print(disp.min(), disp.max())
 plt.imshow(disp, cmap='gray')
 plt.show()

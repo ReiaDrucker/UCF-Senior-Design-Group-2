@@ -47,7 +47,9 @@ CameraPose::CameraPose(ImagePair& stereo, double fov):
   auto E = cv::findEssentialMat(pts[0], pts[1], K, cv::LMEDS, 0.999, 1.0, mask);
   cv::recoverPose(E, pts[0], pts[1], K, R[1], t[1], std::numeric_limits<double>::infinity(), mask, p);
 
-  cv::convertPointsFromHomogeneous(p.reshape(4), p);
+  std::cout << p.size << std::endl;
+
+  cv::convertPointsFromHomogeneous(cv::Mat(p.t()).reshape(4), p);
 
   for(int i = 0; i < p.rows; i++) {
     auto pt = p.at<cv::Vec3d>(i);
