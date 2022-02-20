@@ -1,6 +1,8 @@
 #!/bin/env python3
 # TODO: pytest
 
+from copy import copy
+
 import depth_algo as depth
 import matplotlib.pyplot as plt
 
@@ -8,18 +10,17 @@ import cv2 as cv
 import numpy as np
 import math
 
-r_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/left/tsukuba_daylight_L_00020.png'
-l_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/right/tsukuba_daylight_R_00020.png'
+# r_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/left/tsukuba_daylight_L_00020.png'
+# l_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/right/tsukuba_daylight_R_00020.png'
 
-# l_path = '../data/left.tif'
-# r_path = '../data/right.tif'
+l_path = '../data/left.tif'
+r_path = '../data/right.tif'
 
 # l_path = '../../data/left.png'
 # r_path = '../../data/right.png'
 
 # l_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_00/data/0000000000.png'
 # r_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_01/data/0000000000.png'
-
 
 left = cv.imread(l_path, cv.IMREAD_GRAYSCALE)
 right = cv.imread(r_path, cv.IMREAD_GRAYSCALE)
@@ -69,16 +70,42 @@ def debug_frame(stereo, z, lines = False):
 
     return frame
 
-pose = depth.CameraPose(stereo, 75 * math.pi / 180)
-print(pose)
+def rectify(stereo, fov):
+    stereo = copy(stereo)
+    pose = depth.CameraPose(stereo, fov * math.pi / 180)
 
-# pose.refine()
-# print(pose)
+    # pose.refine()
+    # print(pose)
 
-stereo.rectify(pose)
+    stereo.rectify(pose)
+
+    return stereo, pose
+
+def focal_grid(n = 25):
+    w = int(n ** .5)
+    fig, ax = plt.subplots((n + w - 1) // w, w)
+
+    s = 30
+    t = 180
+    step = (t - s) / n
+
+    for i in range(n):
+        x = s + step * i
+        stereo_, pose_ = rectify(stereo, x)
+        right = stereo_.get_image(1)
+        ax[i // w, i % w].imshow(right)
+
+focal_grid(25)
+
+stereo, pose = rectify(stereo, 120)
+
+plt.show()
 
 left = stereo.get_image(0)
 right = stereo.get_image(1)
+
+cv.imwrite('rgb.png', left)
+
 matches = pose.get_matches()
 frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
 
@@ -99,7 +126,7 @@ print(min_disp, num_disp)
 # TODO: do a better job detecting min/num disparities
 # especially in cases where the disparity might be reversed
 # -2, 12 for target image
-cloud = depth.PointCloud(stereo, -36, 40, 3, 1.5)
+cloud = depth.PointCloud(stereo, -6, 15, 3, 1.5)
 disp = cloud.get_disparity()
 
 plt.hist(disp, bins=20)
@@ -110,4 +137,3 @@ plt.imshow(disp, cmap='gray')
 plt.show()
 
 np.save('disp', disp)
-cv.imwrite('rgb.png', right)

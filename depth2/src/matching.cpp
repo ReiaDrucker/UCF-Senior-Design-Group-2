@@ -13,6 +13,9 @@ ImagePair::ImagePair(ImagePair::array_t left, ImagePair::array_t right) {
   img[0] = math::rescale(img[0], TARGET_SCALE);
   img[1] = math::rescale(img[1], TARGET_SCALE);
 
+  cv::fastNlMeansDenoising(img[0], img[0], 15);
+  cv::fastNlMeansDenoising(img[1], img[1], 15);
+
   mask = cv::Mat::ones(img[1].rows, img[1].cols, CV_32FC1);
 }
 
@@ -79,6 +82,9 @@ std::array<cv::Mat, 2> ImagePair::get_matches_tuple() {
 void ImagePair::init_pybind(py::module_& m) {
   py::class_<ImagePair>(m, "ImagePair")
     .def(py::init<py::array_t<uint8_t>, py::array_t<uint8_t>>())
+    .def("__copy__", [](const ImagePair& o) {
+      return ImagePair(o);
+    })
     .def("fill_matches", &ImagePair::fill_matches)
     .def("get_matches", &ImagePair::get_matches)
     .def("get_image", &ImagePair::get_image)
