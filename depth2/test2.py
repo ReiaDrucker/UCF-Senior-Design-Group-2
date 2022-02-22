@@ -6,16 +6,16 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-disp = np.load('disp.npy')
-rgb = cv.imread('rgb.png', cv.IMREAD_GRAYSCALE)
+import argparse
 
-plt.imshow(disp)
-plt.show()
 
-def display_cloud(rgb, disparity, focal_length, eps = 1e-3):
+def display_cloud(rgb, disparity, focal_length, inv = -1, eps = 1e-3):
     h, w = rgb.shape[:2]
 
-    disparity = np.ones(disparity.shape) * disparity.max() * 2 - disparity
+    if inv > 0:
+        disparity = np.ones(disparity.shape) * disparity.max() * inv - disparity
+    else:
+        disparity = np.ones(disparity.shape) * disparity.min() + disparity
 
     depth = np.ones(disparity.shape) / disparity
 
@@ -38,7 +38,7 @@ def display_cloud(rgb, disparity, focal_length, eps = 1e-3):
     plt.imshow(rgbd.depth)
     plt.show()
 
-    guess = o3d.camera.PinholeCameraIntrinsic(w, h, focal_length, focal_length, w / 1.8, h / 2)
+    guess = o3d.camera.PinholeCameraIntrinsic(w, h, focal_length, focal_length, w / 2, h / 2)
     print(guess.intrinsic_matrix)
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, guess, project_valid_depth_only=True)
     pcd.remove_non_finite_points()
@@ -52,4 +52,15 @@ def display_cloud(rgb, disparity, focal_length, eps = 1e-3):
     o3d.visualization.draw_geometries([pcd])
     o3d.io.write_point_cloud("stereo.pcd", pcd)
 
-display_cloud(rgb, disp, 305)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Display point cloud for computed disparity')
+
+    parser.add_argument('-f', dest='f', type=int, default=300)
+    parser.add_argument('--inv', dest='inv', type=float, default=-1)
+
+    disp = np.load('disp.npy')
+    rgb = cv.imread('rgb.png', cv.IMREAD_GRAYSCALE)
+
+    args = parser.parse_args()
+
+    display_cloud(rgb, disp, args.f, args.inv)

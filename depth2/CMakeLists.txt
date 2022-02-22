@@ -10,13 +10,21 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(conan.cmake)
 
+execute_process(
+  COMMAND conan export ${CMAKE_SOURCE_DIR}/external/gtsam 4.0.3@depth_algo/local
+  COMMAND_ERROR_IS_FATAL ANY
+)
+
 conan_cmake_configure(
   REQUIRES opencv/4.1.2
-  REQUIRES gtsam/4.0.3
+  REQUIRES gtsam/4.0.3@depth_algo/local
   REQUIRES eigen/3.4.0
+  REQUIRES boost/1.78.0
   OPTIONS ffmpeg:with_openjpeg=False
+  OPTIONS ffmpeg:with_libvpx=False
   OPTIONS opencv:contrib=True
-  OPTIONS opencv:parallel=tbb
+  # OPTIONS opencv:parallel=tbb
+  OPTIONS gtsam:build_unstable=False
   GENERATORS cmake_find_package)
 
 conan_cmake_autodetect(settings)
@@ -50,7 +58,7 @@ add_subdirectory(external/maxflow)
 add_subdirectory(external/LocalExpStereo)
 
 pybind11_add_module(_core MODULE src/main.cpp src/matching.cpp src/calib.cpp src/depth.cpp)
-target_link_libraries(_core PRIVATE opencv_core opencv_photo opencv_ximgproc opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam LocalExpStereo maxflow tbb)
+target_link_libraries(_core PRIVATE opencv_core opencv_photo opencv_ximgproc opencv_features2d opencv_xfeatures2d opencv_calib3d GTSAM::gtsam LocalExpStereo maxflow)
 target_include_directories(_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
