@@ -58,7 +58,7 @@ PointCloud::PointCloud(ImagePair& stereo, int min_disp, int num_disp, int block_
       return ret;
     });
 
-    FastGCStereo matcher(img_color[1], img_color[0], params, max_disp, min_disp, 5 /* vdisp */);
+    FastGCStereo matcher(img_color[0], img_color[1], params, max_disp, min_disp, 5 /* vdisp */);
 
     {
       auto prop1 = ExpansionProposer(1);

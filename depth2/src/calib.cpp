@@ -155,7 +155,7 @@ std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img, cv
   cv::Matx33d F = cv::Mat(K[1].inv().t() * E * K[0].inv());
 
   // F = F * (1 / F(2, 2));
-  std::cout << F << std::endl;
+  std::cout << (F * (1 / F(2, 2))) << std::endl;
 
   auto size = cv::Size(img[0].size[1], img[0].size[0]);
   std::array<cv::Mat, 2> H;

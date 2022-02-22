@@ -168,7 +168,7 @@ protected:
 		for (int i = 0; i < len; ++i)
 			v.push_back(i);
 
-		std::random_shuffle(v.begin(), v.end());
+		std::shuffle(v.begin(), v.end(), std::mt19937{});
 
 		return v;
 	}
