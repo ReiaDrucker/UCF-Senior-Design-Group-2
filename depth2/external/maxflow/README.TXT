@@ -1,3 +1,5 @@
+Forked from: http://pub.ist.ac.at/~vnk/software.html
+
 ###################################################################
 #                                                                 #
 #    MAXFLOW - software for computing mincut/maxflow in a graph   #
