@@ -4,10 +4,11 @@ import cv2 as cv
 import open3d as o3d
 import numpy as np
 
+import math
+
 from matplotlib import pyplot as plt
 
 import argparse
-
 
 def display_cloud(rgb, disparity, focal_length, inv = -1, eps = 1e-3):
     h, w = rgb.shape[:2]
@@ -18,11 +19,13 @@ def display_cloud(rgb, disparity, focal_length, inv = -1, eps = 1e-3):
         disparity = np.ones(disparity.shape) * disparity.min() + disparity
 
     depth = np.ones(disparity.shape) / disparity
+    depth[disparity == 0] = 0
+    depth[depth > .3] = 0
 
-    # plt.hist(depth.flatten(), bins=20)
-    # plt.show()
+    plt.hist(depth.flatten(), bins=20)
+    plt.show()
 
-    depth = (depth * 127 / depth.max()).astype(np.uint8)
+    depth = (depth * 127 / depth[depth != math.inf].max()).astype(np.uint8)
 
     # depth[rgb == 0] = 255
     # rgb[rgb != 0] = 127

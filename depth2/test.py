@@ -10,37 +10,25 @@ import cv2 as cv
 import numpy as np
 import math
 
-# r_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/left/tsukuba_daylight_L_00020.png'
-# l_path = '../data/tsukuba/NewTsukubaStereoDataset/illumination/daylight/right/tsukuba_daylight_R_00020.png'
-
-l_path = '../data/left.tif'
-r_path = '../data/right.tif'
-
-# l_path = '../../data/left.png'
-# r_path = '../../data/right.png'
-
-# l_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_00/data/0000000000.png'
-# r_path = '/home/shado/workspace/edu/cop4934/kitti_sample/2011_09_26/2011_09_26_drive_0020_extract/image_01/data/0000000000.png'
-
-left = cv.imread(l_path, cv.IMREAD_GRAYSCALE)
-right = cv.imread(r_path, cv.IMREAD_GRAYSCALE)
-
-stereo = depth.ImagePair(left, right)
-stereo.fill_matches()
-
-print(stereo.get_matches().shape)
+import argparse
 
 from collections import namedtuple
+
+config = {
+    'verbose': True
+}
+
 StereoPair = namedtuple('StereoPair', 'left, right, matches')
-def _lerp(a, b, x):
-    return np.add(np.multiply(a, x), np.multiply(b, 1 - x))
-def _sigmoid(x):
-    return 1 / (1 + math.exp(-x))
 def debug_frame(stereo, z, lines = False):
     '''
     For debugging.
     Generate a frame interopolating between the left and right images.
     '''
+    def _lerp(a, b, x):
+        return np.add(np.multiply(a, x), np.multiply(b, 1 - x))
+    def _sigmoid(x):
+        return 1 / (1 + math.exp(-x))
+
     norm_dx = np.max(abs(stereo.matches[:,0,0] - stereo.matches[:,1,0]))
 
     left = stereo.left if len(stereo.left.shape) == 3 else cv.cvtColor(stereo.left, cv.COLOR_GRAY2RGB)
@@ -70,6 +58,19 @@ def debug_frame(stereo, z, lines = False):
 
     return frame
 
+def matching(l_path, r_path):
+    left = cv.imread(l_path, cv.IMREAD_GRAYSCALE)
+    right = cv.imread(r_path, cv.IMREAD_GRAYSCALE)
+
+    stereo = (depth.ImagePairBuilder()
+            .build()
+            .load_images(left, right)
+            .fill_matches())
+
+    print('\tMatches shape:', stereo.get_matches().shape)
+
+    return stereo
+
 def rectify(stereo, fov):
     stereo = copy(stereo)
     pose = depth.CameraPose(stereo, fov * math.pi / 180)
@@ -79,7 +80,35 @@ def rectify(stereo, fov):
 
     stereo.rectify(pose)
 
-    return stereo, pose
+    matches = pose.get_matches()
+    print('\tFiltered matches shape:', matches.shape)
+
+    return stereo, matches
+
+def guess_disparity_range(matches):
+    n = matches.shape[0]
+    dx = np.array([matches[i,0,0] - matches[i,1,0] for i in range(n)])
+    print('\tDisparity statistics from matches (min, median, max):', dx.min(), np.median(dx), dx.max())
+
+    q1,q3 = np.quantile(dx, [.25, .75])
+    iqr = q3 - q1
+    lo = math.floor(q1 - iqr * 1.5)
+    hi = math.ceil(q3 + iqr * 1.5)
+
+    return lo, hi
+
+def disparity(stereo, lo, hi):
+    # TODO: do a better job detecting min/num disparities
+    # especially in cases where the disparity might be reversed
+    cloud = (depth.PointCloudBuilder()
+            .set_matcher(depth.PointCloudMatcherType.LOCAL_EXP)
+            # .set_matcher(depth.PointCloudMatcherType.SGBM)
+            .set_min_disp(lo)
+            .set_max_disp(hi)
+            .build()
+            .load_stereo(stereo))
+
+    return cloud.get_disparity()
 
 def focal_grid(n = 25):
     w = int(n ** .5)
@@ -95,45 +124,55 @@ def focal_grid(n = 25):
         right = stereo_.get_image(1)
         ax[i // w, i % w].imshow(right)
 
-focal_grid(25)
+    plt.show()
 
-stereo, pose = rectify(stereo, 120)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Calculate and save point cloud disparity')
 
-plt.show()
+    parser.add_argument('l_path', type=str, help='Left image path')
+    parser.add_argument('r_path', type=str, help='Right image path')
+    parser.add_argument('--fov', dest='fov', type=int, default=120, help='Estimated FOV for rectification')
+    parser.add_argument('--min_disp', dest='min_disp', type=int, default=None,
+                        help='Lower end of disparity search range')
+    parser.add_argument('--max_disp', dest='max_disp', type=int, default=None,
+                        help='Upper end of disparity search range')
+    parser.add_argument('--no-rect', dest='no_rect', action='store_true', help='Skip rectification')
 
-left = stereo.get_image(0)
-right = stereo.get_image(1)
+    args = parser.parse_args()
 
-cv.imwrite('rgb.png', left)
+    print('\nMATCHING...')
+    stereo = matching(args.l_path, args.r_path)
 
-matches = pose.get_matches()
-frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
+    matches = None
+    if args.no_rect:
+        matches = stereo.get_matches()
+    else:
+        print('\nRECTIFICATION...')
+        stereo, matches = rectify(stereo, args.fov)
 
-n = matches.shape[0]
-print(matches.shape)
-dx = np.array([matches[i,1,0] - matches[i,0,0] for i in range(n)])
-print('dx:', dx.mean(), dx.max(), dx.min())
+    left = stereo.get_image(0)
+    right = stereo.get_image(1)
+    cv.imwrite('rgb.png', left)
+    frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
 
-plt.imshow(frame)
-plt.show()
+    lo, hi = args.min_disp, args.max_disp
+    if lo is None or hi is None:
+        if lo != hi:
+            print('Warning: Please set both of max_disp and min_disp.')
 
-min_disp = int(dx.min())
-max_disp = dx.max()
-num_disp = (int(max_disp - min_disp + 15) // 16) * 16
+        print('\nGUESSING DISPARITY RANGE...')
+        lo, hi = guess_disparity_range(matches)
+    else:
+        print('\nUSING SELECTED DISPARITY RANGE')
+    print('\tDisparity range:', lo, hi)
 
-print(min_disp, num_disp)
+    print('\nDISPARITY...')
+    disp = disparity(stereo, lo, hi)
 
-# TODO: do a better job detecting min/num disparities
-# especially in cases where the disparity might be reversed
-# -2, 12 for target image
-cloud = depth.PointCloud(stereo, -6, 15, 3, 1.5)
-disp = cloud.get_disparity()
+    np.save('disp', disp)
+    plt.hist(disp, bins=20)
+    plt.show()
+    print('\tOutput disparity range:', disp.min(), disp.max())
+    plt.imshow(disp, cmap='gray')
+    plt.show()
 
-plt.hist(disp, bins=20)
-plt.show()
-
-print(disp.min(), disp.max())
-plt.imshow(disp, cmap='gray')
-plt.show()
-
-np.save('disp', disp)
