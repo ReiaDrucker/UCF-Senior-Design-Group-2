@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from photoDisplayer import *
 from editParametersDialog import *
+from parameterDialog import *
 from photoDisplayerContainer import *
 from dataTable import *
 from colorSelector import *
@@ -263,6 +264,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         dialog = editParametersDialog(self.pd)
         dialog.exec()
 
+    def editParameters(self):
+        dialog = parameterDialog()
+        dialog.exec()
+
     # Write to a file
     # Can't pickle UI_MainWindow need to figure out how to do that
     # Probably best to use QDatastream instead
@@ -344,6 +349,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return None
         else:
             return None
+
+    
 
 if __name__ == "__main__":
     import sys
