@@ -210,6 +210,8 @@ namespace math {
     }
 
     cv::Mat ret = cv::Mat::zeros(sizes.size(), sizes.data(), CV_32FC1);
+
+    float mx = 0;
     for(int d = 0; d < ndisp; d++) {
       for(int u = 0; u < h; u++) {
         for(int v = 0; v < w; v++) {
@@ -226,10 +228,13 @@ namespace math {
             }
           }
 
-          ret.at<float>(d, u, v) = 6 - gssim(p, alpha, beta, gamma, eps);
+          mx = max(mx,
+                   ret.at<float>(d, u, v) = gssim(p, alpha, beta, gamma, eps));
         }
       }
     }
+
+    ret = mx - ret;
 
     fill_out_of_view(ret, 0);
     return ret;
