@@ -72,13 +72,28 @@ PointCloud& PointCloud::load_stereo(ImagePair& stereo) {
     FastGCStereo matcher(img_color[0], img_color[1], params, config.num_disp(), 0, 5 /* vdisp */);
 
     {
-      std::array<cv::Mat, 2> vol;
-      vol[0] = math::gssim_volume(img, config.max_disp - config.min_disp + 1);
-      vol[1] = math::volume_l2r(vol[0]);
+      if(config.use_gssim_cost) {
+        vol[0] = math::gssim_volume(img, config.num_disp() + 1);
+        vol[1] = math::volume_l2r(vol[0]);
 
-      // FIXME
-      // auto energy = std::make_unique<CostVolumeEnergy>(img_color[0], img_color[1], vol[0], vol[1], params, num_disp);
-      // matcher.setStereoEnergyCPU(std::move(energy));
+        auto energy = std::make_unique<CostVolumeEnergy>(img_color[0], img_color[1],
+                                                         vol[0], vol[1],
+                                                         params, config.num_disp(), 0, 5);
+
+        float mn = -1, mx = -1;
+        for(int d = 0; d < vol[0].size.p[0]; d++) {
+          for(int u = 0; u < vol[0].size.p[1]; u++) {
+            for(int v = 0; v < vol[0].size.p[2]; v++) {
+              mn = mn < 0 ? vol[0].at<float>(d, u, v) : std::min(mn, vol[0].at<float>(d, u, v));
+              mx = std::max(mx, vol[0].at<float>(d, u, v));
+            }
+          }
+        }
+
+        std::cout << "cost min max: " << mn << " " << mx << std::endl;
+
+        matcher.setStereoEnergyCPU(std::move(energy));
+      }
 
       auto prop1 = ExpansionProposer(1);
       auto prop2 = RandomProposer(7, config.num_disp());
@@ -89,11 +104,8 @@ PointCloud& PointCloud::load_stereo(ImagePair& stereo) {
       matcher.addLayer(15, { &prop3, &prop4 });
       matcher.addLayer(25, { &prop3, &prop4 });
 
-      auto max_iters = 10;
-      auto pm_iters = 5;
-
       cv::Mat label, raw_label;
-      matcher.run(max_iters, { 0 }, pm_iters, label, raw_label);
+      matcher.run(config.max_iters, { 0 }, config.pm_iters, label, raw_label);
 
       disparity = matcher.getEnergyInstance().computeDisparities(label);
       disparity = disparity.mul(stereo.mask);
@@ -106,6 +118,10 @@ PointCloud& PointCloud::load_stereo(ImagePair& stereo) {
 
 py::array_t<float> PointCloud::get_disparity() {
   return util::mat_to_array<float>(disparity);
+}
+
+py::array_t<float> PointCloud::get_gssim_volume(int idx) {
+  return util::mat_to_array<float>(vol[idx]);
 }
 
 void PointCloud::init_pybind(py::module_& m) {
@@ -121,10 +137,14 @@ void PointCloud::init_pybind(py::module_& m) {
     .def("set_max_disp", &PointCloud::Builder::set_max_disp)
     .def("set_block_size", &PointCloud::Builder::set_block_size)
     .def("set_sigma_color", &PointCloud::Builder::set_sigma_color)
+    .def("set_use_gssim_cost", &PointCloud::Builder::set_use_gssim_cost)
+    .def("set_max_iters", &PointCloud::Builder::set_max_iters)
+    .def("set_pm_iters", &PointCloud::Builder::set_pm_iters)
     .def("build", &PointCloud::Builder::build)
     ;
   py::class_<PointCloud>(m, "PointCloud")
     .def("load_stereo", &PointCloud::load_stereo)
     .def("get_disparity", &PointCloud::get_disparity)
+    .def("get_gssim_volume", &PointCloud::get_gssim_volume)
     ;
 }

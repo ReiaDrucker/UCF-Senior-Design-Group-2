@@ -67,8 +67,36 @@ namespace math {
                   0, 1, -y0,
                   0, 0, scale);
 
-    auto h_ = util::for_each(H, [&](auto&& H, auto) {
-      return cv::Mat(T * H);
+    auto h_ = util::for_each(H, [&](auto&& H, auto k) {
+      cv::Mat ret(T * H);
+
+      int h = s[k][0], w = s[k][1];
+      cv::Matx34d mid(w / 2., w, w / 2., 0,
+                      0, h / 2., h, h / 2.,
+                      1, 1, 1, 1);
+
+      cv::Mat mid_ = cv::Mat((ret * mid).t()).reshape(3);
+
+      cv::convertPointsFromHomogeneous(mid_, mid_);
+
+      auto x = mid_.at<cv::Vec2d>(1) - mid_.at<cv::Vec2d>(3);
+      auto y = mid_.at<cv::Vec2d>(2) - mid_.at<cv::Vec2d>(0);
+
+      auto k1 = (h*h*x[1]*x[1] + w*w*y[1]*y[1]) / (h*w*(x[1]*y[0] - x[0]*y[1]));
+      auto k2 = (h*h*x[0]*x[1] + w*w*y[0]*y[1]) / (h*w*(x[0]*y[1] - x[1]*y[0]));
+
+      if(k1 < 0) {
+        k1 = -k1;
+        k2 = -k2;
+      }
+
+      cv::Matx33d S(k1, k2, 0,
+                    0, 1, 0,
+                    0, 0, 1);
+
+      std::cout << k1 << " " << k2 << std::endl;
+
+      return cv::Mat(S * ret);
     });
 
     cv::Size size((x1 - x0) / scale, (y1 - y0) / scale);
@@ -89,44 +117,6 @@ namespace math {
 
     ret.convertTo(ret, pts.type());
     return ret;
-  }
-
-  static float gssim(const std::array<cv::Mat, 4>& p, float alpha, float beta, float gamma, float eps) {
-    int h = p[0].rows, w = p[0].cols;
-    int N = w * h - 1;
-
-    auto mean = util::for_each(p, [](auto&& p, auto) { return cv::mean(p)[0]; });
-    auto var = util::for_each(p, [&](auto&& p, auto k) {
-      float ret = 0;
-      for(int u = 0; u < h; u++) {
-        for(int v = 0; v < w; v++) {
-          float x = (p.template at<float>(u, v) - mean[k]);
-          ret += x * x;
-        }
-      }
-      return ret / N;
-    });
-
-    float l = 0, c = 0, g = 0;
-    for(int i = 0; i < 2; i++) {
-      for(int j = 2; j < 4; j++) {
-        l += (2 * mean[i] * mean[j] + eps) / (mean[i] * mean[i] + mean[j] + mean[j] + eps);
-        c += (2 * sqrt(var[i]) * sqrt(var[j]) + eps) / (var[i] * var[j] + eps);
-
-        float covar = 0;
-        for(int u = 0; u < h; u++) {
-          for(int v = 0; v < w; v++) {
-            covar += (p[i].template at<float>(u, v) - mean[i]) * (p[j].template at<float>(u, v) - mean[j]);
-          }
-        }
-
-        covar /= N;
-
-        g += (covar + eps) / (2 * sqrt(var[i]) * sqrt(var[j]) + eps);
-      }
-    }
-
-    return pow(l, alpha) * pow(c, beta) * pow(g, gamma);
   }
 
   static void fill_out_of_view(cv::Mat& volume, int mode, int margin = 0) {
@@ -161,6 +151,48 @@ namespace math {
     }
   }
 
+  // Source: Structural Similarity Measurement Based Cost Function for Stereo Matching of Automotive Applications
+  static float gssim(const std::array<cv::Mat, 4>& p, float alpha, float beta, float gamma, float eps) {
+    int h = p[0].rows, w = p[0].cols;
+    int N = w * h - 1;
+
+    auto mean = util::for_each(p, [](auto&& p, auto) { return cv::mean(p)[0]; });
+    auto var = util::for_each(p, [&](auto&& p, auto k) {
+      float ret = 0;
+      for(int u = 0; u < h; u++) {
+        for(int v = 0; v < w; v++) {
+          float x = (p.template at<float>(u, v) - mean[k]);
+          ret += x * x;
+        }
+      }
+
+      return ret / N;
+    });
+
+    // luminence, contrast, structure
+    float l = 0, c = 0, s = 0;
+    for(int i = 0; i < 2; i++) {
+      for(int j = 2; j < 4; j++) {
+        l += (2 * mean[i] * mean[j] + eps) / (mean[i] * mean[i] + mean[j] * mean[j] + eps);
+
+        c += (2 * sqrt(var[i]) * sqrt(var[j]) + eps) / (var[i] + var[j] + eps);
+
+        float covar = 0;
+        for(int u = 0; u < h; u++) {
+          for(int v = 0; v < w; v++) {
+            covar += (p[i].template at<float>(u, v) - mean[i]) * (p[j].template at<float>(u, v) - mean[j]);
+          }
+        }
+
+        covar /= N;
+
+        s += (covar + eps) / (sqrt(var[i]) * sqrt(var[j]) + eps);
+      }
+    }
+
+    return pow(l, alpha) * pow(c, beta) * pow(s, gamma);
+  }
+
   static cv::Mat gssim_volume(const std::array<cv::Mat, 2>& p, int ndisp, int patch_size = 7,
                               float alpha = 0.9, float beta = 0.1, float gamma = 0.2, float eps = .001) {
     int h = p[0].rows, w = p[0].cols;
@@ -172,7 +204,7 @@ namespace math {
     for(int k = 0; k < 2; k++) {
       for(int dir = 0; dir < 2; dir++) {
         int idx = k * 2 + dir;
-        g[idx] = cv::Mat_<float>(h + 2 * pad, w + 2 * pad);
+        g[idx] = cv::Mat_<float>(h + 2 * pad, w + 2 * pad, 0.);
         cv::Sobel(p[k], g[idx](cv::Rect(pad, pad, w, h)), CV_32F, dir == 0, dir == 1);
       }
     }
@@ -194,7 +226,7 @@ namespace math {
             }
           }
 
-          ret.at<float>(d, u, v) = gssim(p, alpha, beta, gamma, eps);
+          ret.at<float>(d, u, v) = 6 - gssim(p, alpha, beta, gamma, eps);
         }
       }
     }

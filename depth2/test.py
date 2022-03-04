@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/bin/env python
 # TODO: pytest
 
 from copy import copy
@@ -11,6 +11,7 @@ import numpy as np
 import math
 
 import argparse
+import code
 
 from collections import namedtuple
 
@@ -101,14 +102,14 @@ def disparity(stereo, lo, hi):
     # TODO: do a better job detecting min/num disparities
     # especially in cases where the disparity might be reversed
     cloud = (depth.PointCloudBuilder()
-            .set_matcher(depth.PointCloudMatcherType.LOCAL_EXP)
-            # .set_matcher(depth.PointCloudMatcherType.SGBM)
-            .set_min_disp(lo)
-            .set_max_disp(hi)
-            .build()
-            .load_stereo(stereo))
+             .set_matcher(depth.PointCloudMatcherType.LOCAL_EXP)
+             # .set_matcher(depth.PointCloudMatcherType.SGBM)
+             .set_min_disp(lo)
+             .set_max_disp(hi)
+             .build()
+             .load_stereo(stereo))
 
-    return cloud.get_disparity()
+    return cloud.get_disparity(), cloud
 
 def focal_grid(n = 25):
     w = int(n ** .5)
@@ -126,6 +127,10 @@ def focal_grid(n = 25):
 
     plt.show()
 
+def guess_from_gssim_volume(vol):
+    vol2 = np.vstack(([np.ones(vol.shape[1:]) * np.inf], vol))
+    return np.nanargmin(vol2, axis=0)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Calculate and save point cloud disparity')
 
@@ -137,6 +142,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_disp', dest='max_disp', type=int, default=None,
                         help='Upper end of disparity search range')
     parser.add_argument('--no-rect', dest='no_rect', action='store_true', help='Skip rectification')
+    parser.add_argument('-i', dest='interactive', action='store_true', help='Open an interactive session before exiting')
 
     args = parser.parse_args()
 
@@ -167,7 +173,7 @@ if __name__ == '__main__':
     print('\tDisparity range:', lo, hi)
 
     print('\nDISPARITY...')
-    disp = disparity(stereo, lo, hi)
+    disp, cloud = disparity(stereo, lo, hi)
 
     np.save('disp', disp)
     plt.hist(disp, bins=20)
@@ -175,4 +181,7 @@ if __name__ == '__main__':
     print('\tOutput disparity range:', disp.min(), disp.max())
     plt.imshow(disp, cmap='gray')
     plt.show()
+
+    if args.interactive:
+        code.interact(local=dict(globals(), **locals()))
 

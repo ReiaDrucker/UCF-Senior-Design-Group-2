@@ -93,6 +93,7 @@ public:
 					}
 				}
 
+        if(isnan(C) || isinf(C)) C = COST_FOR_INVALID;
 				pC[x - filterRect.x] = std::min(C, params.th_col);
 			}
 		}
@@ -114,6 +115,7 @@ public:
 				else 
 					C = vol[mode].at<float>(d, y, x);
 
+        if(isnan(C) || isinf(C)) C = COST_FOR_INVALID;
 				pC[x - filterRect.x] = std::min(C, params.th_col);
 			}
 		}
@@ -160,8 +162,10 @@ public:
 
 					d = d + (float)D0;
 					C = r*d*d + p*d + q;
+
 				}
 
+        if(isnan(C) || isinf(C)) C = COST_FOR_INVALID;
 				pC[x - filterRect.x] = std::min(C, params.th_col);
 			}
 		}
