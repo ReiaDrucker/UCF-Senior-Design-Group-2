@@ -6,17 +6,15 @@
 
 #include <opencv2/features2d.hpp>
 
-ImagePair::ImagePair(ImagePair::array_t left, ImagePair::array_t right) {
+ImagePair& ImagePair::load_images(ImagePair::array_t left, ImagePair::array_t right) {
   img[0] = cv::Mat(left.shape(0), left.shape(1), CV_8UC1, (uint8_t*)left.data()).clone();
   img[1] = cv::Mat(right.shape(0), right.shape(1), CV_8UC1, (uint8_t*)right.data()).clone();
 
-  img[0] = math::rescale(img[0], TARGET_SCALE);
-  img[1] = math::rescale(img[1], TARGET_SCALE);
-
-  cv::fastNlMeansDenoising(img[0], img[0], 15);
-  cv::fastNlMeansDenoising(img[1], img[1], 15);
+  img[0] = math::rescale(img[0], config.TARGET_SCALE);
+  img[1] = math::rescale(img[1], config.TARGET_SCALE);
 
   mask = cv::Mat::ones(img[1].rows, img[1].cols, CV_32FC1);
+  return *this;
 }
 
 ImagePair& ImagePair::fill_matches() {
@@ -25,7 +23,7 @@ ImagePair& ImagePair::fill_matches() {
     cv::Mat des;
   };
 
-  auto detector = Detector::create(N_FEATURES);
+  auto detector = Detector::create(config.N_FEATURES);
   auto features = util::for_each(img, [&](auto&& img, auto) {
     kp_and_matches ret;
 
@@ -41,7 +39,7 @@ ImagePair& ImagePair::fill_matches() {
 
   matches.reserve(matches_.size());
   for(auto p: matches_) {
-    if(p[0].distance < RATIO * p[1].distance) {
+    if(p[0].distance < config.RATIO * p[1].distance) {
       auto& u = features[0].kp[p[0].queryIdx].pt;
       auto& v = features[1].kp[p[0].trainIdx].pt;
       matches.push_back({ u, v });
@@ -80,14 +78,23 @@ std::array<cv::Mat, 2> ImagePair::get_matches_tuple() {
 }
 
 void ImagePair::init_pybind(py::module_& m) {
+
+  py::class_<ImagePair::Builder>(m, "ImagePairBuilder")
+    .def(py::init<>())
+    .def("set_target_scale", &ImagePair::Builder::set_target_scale)
+    .def("set_feature_count", &ImagePair::Builder::set_target_scale)
+    .def("set_test_ratio", &ImagePair::Builder::set_test_ratio)
+    .def("build", &ImagePair::Builder::build)
+    ;
+
   py::class_<ImagePair>(m, "ImagePair")
-    .def(py::init<py::array_t<uint8_t>, py::array_t<uint8_t>>())
     .def("__copy__", [](const ImagePair& o) {
       return ImagePair(o);
     })
+    .def("load_images", &ImagePair::load_images)
     .def("fill_matches", &ImagePair::fill_matches)
+    .def("rectify", [](ImagePair& pair, CameraPose& pose) { return pair.rectify(pose); })
     .def("get_matches", &ImagePair::get_matches)
     .def("get_image", &ImagePair::get_image)
-    .def("rectify", [](ImagePair& pair, CameraPose& pose) { return pair.rectify(pose); })
     ;
 }

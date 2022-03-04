@@ -3,6 +3,7 @@
 #include <tuple>
 #include <array>
 #include <utility>
+#include <span>
 
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
@@ -35,11 +36,13 @@ namespace util {
   template <typename T>
   static py::array_t<T> mat_to_array(cv::Mat mat) {
     constexpr int elem_size = sizeof(T);
-    return {
-      {mat.rows, mat.cols},
-      {mat.cols * elem_size, elem_size},
-      (T*)mat.ptr()
-    };
+
+    std::vector<size_t> stride(mat.size.dims());
+    stride.back() = elem_size;
+    for(int i = mat.size.dims() - 1; i > 0; i--)
+      stride[i-1] = stride[i] * mat.size.p[i];
+
+    return {std::span{mat.size.p, mat.size.p + mat.size.dims()}, stride, (T*)mat.ptr()};
   }
 
   template <typename T>

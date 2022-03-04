@@ -181,7 +181,7 @@ public:
 		}
 
 		if (printProgress && print) if ( mode == 0)
-			std::cout << cv::format("%2d %5.1lf\t%.0lf\t%.0lf\t%.0lf\t%4.2lf\t%4.2lf", index, getCurrentTime(), eng2, dc2, sc2, all, nonocc) << std::endl;
+                                  // std::cout << cv::format("%2d %5.1lf\t%.0lf\t%.0lf\t%.0lf\t%4.2lf\t%4.2lf", index, getCurrentTime(), eng2, dc2, sc2, all, nonocc) << std::endl;
 
 		if (isTicking)
 			start();

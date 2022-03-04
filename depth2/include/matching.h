@@ -13,18 +13,29 @@ namespace py = pybind11;
 struct CameraPose;
 
 struct ImagePair {
-  static constexpr int N_FEATURES = 1e5;
-  static constexpr double RATIO = .75;
-  static constexpr int TARGET_SCALE = 500;
-  using Detector = cv::ORB;
+  using Detector = cv::ORB; // TODO: move to config, and eat dynamic polymorphism cost :/
   using array_t = py::array_t<uint8_t, py::array::c_style | py::array::forcecast>;
+
+  const struct Builder {
+    int TARGET_SCALE = 500;
+    int N_FEATURES = 1e5;
+    double RATIO = .75;
+
+    Builder() = default;
+    ImagePair build() { return ImagePair(*this); }
+
+    Builder& set_target_scale(int v) { TARGET_SCALE = v; return *this; }
+    Builder& set_feature_count(int v) { N_FEATURES = v; return *this; }
+    Builder& set_test_ratio(double v) { RATIO = v; return *this; }
+  } config;
+
+  ImagePair(const Builder& config): config(config) {}
 
   std::array<cv::Mat, 2> img;
   cv::Mat mask;
   std::vector<std::array<cv::Point2f, 2>> matches;
 
-  ImagePair(array_t left, array_t right);
-
+  ImagePair& load_images(array_t left, array_t right);
   ImagePair& fill_matches();
   ImagePair& rectify(CameraPose& pose);
 
