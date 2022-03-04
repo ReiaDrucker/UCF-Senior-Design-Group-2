@@ -211,7 +211,9 @@ namespace math {
 
     cv::Mat ret = cv::Mat::zeros(sizes.size(), sizes.data(), CV_32FC1);
 
-    float mx = 0;
+    std::vector<float> mx(ndisp);
+
+    #pragma omp parallel for
     for(int d = 0; d < ndisp; d++) {
       for(int u = 0; u < h; u++) {
         for(int v = 0; v < w; v++) {
@@ -228,13 +230,13 @@ namespace math {
             }
           }
 
-          mx = max(mx,
+          mx[d] = max(mx[d],
                    ret.at<float>(d, u, v) = gssim(p, alpha, beta, gamma, eps));
         }
       }
     }
 
-    ret = mx - ret;
+    ret = *std::max_element(mx.begin(), mx.end()) - ret;
 
     fill_out_of_view(ret, 0);
     return ret;

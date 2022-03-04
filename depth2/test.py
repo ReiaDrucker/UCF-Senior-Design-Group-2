@@ -103,9 +103,8 @@ def disparity(stereo, lo, hi):
     # especially in cases where the disparity might be reversed
     cloud = (depth.PointCloudBuilder()
              .set_matcher(depth.PointCloudMatcherType.LOCAL_EXP)
-             .set_gssim_consts([.1, .1, .1])
+             .set_gssim_consts([.9, .1, .2])
              .set_gssim_patch_size(5)
-             # .set_matcher(depth.PointCloudMatcherType.SGBM)
              .set_min_disp(lo)
              .set_max_disp(hi)
              .build()
