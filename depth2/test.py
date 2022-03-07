@@ -1,7 +1,7 @@
 #!/bin/env python
 # TODO: pytest
 
-from copy import copy
+from copy import deepcopy
 
 import depth_algo as depth
 import matplotlib.pyplot as plt
@@ -14,6 +14,13 @@ import argparse
 import code
 
 from collections import namedtuple
+
+with_timing = False
+try:
+    from codetiming import Timer
+    with_timing = True
+except:
+    print('No timing available, install codetiming if you want to measure time elapsed')
 
 config = {
     'verbose': True
@@ -64,27 +71,28 @@ def matching(l_path, r_path):
     right = cv.imread(r_path, cv.IMREAD_GRAYSCALE)
 
     stereo = (depth.ImagePairBuilder()
-            .build()
-            .load_images(left, right)
-            .fill_matches())
+              .set_target_scale(2000)
+              .build()
+              .load_images(left, right)
+              .fill_matches())
 
     print('\tMatches shape:', stereo.get_matches().shape)
 
     return stereo
 
 def rectify(stereo, fov):
-    stereo = copy(stereo)
-    pose = depth.CameraPose(stereo, fov * math.pi / 180)
+    stereo_ = deepcopy(stereo)
+    pose = depth.CameraPose(stereo_, fov * math.pi / 180)
 
     # pose.refine()
     # print(pose)
 
-    stereo.rectify(pose)
+    stereo_.rectify(pose)
 
     matches = pose.get_matches()
     print('\tFiltered matches shape:', matches.shape)
 
-    return stereo, matches
+    return stereo_, matches
 
 def guess_disparity_range(matches):
     n = matches.shape[0]
@@ -99,8 +107,7 @@ def guess_disparity_range(matches):
     return lo, hi
 
 def disparity(stereo, lo, hi):
-    # TODO: do a better job detecting min/num disparities
-    # especially in cases where the disparity might be reversed
+    # TODO: do a better job detecting min/max disparities
     cloud = (depth.PointCloudBuilder()
              .set_matcher(depth.PointCloudMatcherType.LOCAL_EXP)
              .set_gssim_consts([.9, .1, .2])
@@ -122,9 +129,13 @@ def focal_grid(n = 25):
 
     for i in range(n):
         x = s + step * i
-        stereo_, pose_ = rectify(stereo, x)
-        right = stereo_.get_image(1)
-        ax[i // w, i % w].imshow(right)
+        try:
+            stereo_, pose_ = rectify(stereo, x)
+            right = stereo_.get_image(1)
+            ax[i // w, i % w].imshow(right)
+            ax[i // w, i % w].set_title('fov: {}'.format(x))
+        except:
+            pass
 
     plt.show()
 
@@ -147,42 +158,50 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    timer = None
+    if with_timing:
+        timer = Timer('total')
+        timer.start()
+
     print('\nMATCHING...')
     stereo = matching(args.l_path, args.r_path)
 
-    matches = None
-    if args.no_rect:
-        matches = stereo.get_matches()
-    else:
-        print('\nRECTIFICATION...')
-        stereo, matches = rectify(stereo, args.fov)
-
-    left = stereo.get_image(0)
-    right = stereo.get_image(1)
-    cv.imwrite('rgb.png', left)
-    frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
-
-    lo, hi = args.min_disp, args.max_disp
-    if lo is None or hi is None:
-        if lo != hi:
-            print('Warning: Please set both of max_disp and min_disp.')
-
-        print('\nGUESSING DISPARITY RANGE...')
-        lo, hi = guess_disparity_range(matches)
-    else:
-        print('\nUSING SELECTED DISPARITY RANGE')
-    print('\tDisparity range:', lo, hi)
-
-    print('\nDISPARITY...')
-    disp, cloud = disparity(stereo, lo, hi)
-
-    np.save('disp', disp)
-    plt.hist(disp, bins=20)
-    plt.show()
-    print('\tOutput disparity range:', disp.min(), disp.max())
-    plt.imshow(disp, cmap='gray')
-    plt.show()
-
     if args.interactive:
         code.interact(local=dict(globals(), **locals()))
+    else:
+        matches = None
+        if args.no_rect:
+            matches = stereo.get_matches()
+        else:
+            print('\nRECTIFICATION...')
+            stereo, matches = rectify(stereo, args.fov)
+
+        left = stereo.get_image(0)
+        right = stereo.get_image(1)
+        cv.imwrite('rgb.png', left)
+        frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
+
+        lo, hi = args.min_disp, args.max_disp
+        if lo is None or hi is None:
+            if lo != hi:
+                print('Warning: Please set both of max_disp and min_disp.')
+
+            print('\nGUESSING DISPARITY RANGE...')
+            lo, hi = guess_disparity_range(matches)
+        else:
+            print('\nUSING SELECTED DISPARITY RANGE')
+        print('\tDisparity range:', lo, hi)
+
+        print('\nDISPARITY...')
+        disp, cloud = disparity(stereo, lo, hi)
+
+        if with_timing:
+            timer.stop()
+
+        np.save('disp', disp)
+        plt.hist(disp, bins=20)
+        plt.show()
+        print('\tOutput disparity range:', disp.min(), disp.max())
+        plt.imshow(disp, cmap='gray')
+        plt.show()
 

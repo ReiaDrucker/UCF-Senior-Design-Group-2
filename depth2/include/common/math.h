@@ -39,43 +39,13 @@ namespace math {
 
   static std::tuple<std::array<cv::Mat, 2>, cv::Size>
   get_optimal_homography(const std::array<cv::Mat, 2>& H, const std::array<cv::MatSize, 2>& s) {
-    double x0, x1, y0, y1;
-    x0 = x1 = y0 = y1 = 0;
-
-    util::for_each(s, [&](auto&& s, auto i) {
-      cv::Matx34d corners(0, s[1], 0, s[1],
-                          0, 0, s[0], s[0],
-                          1, 1, 1, 1);
-
-      corners = cv::Mat(H[i] * corners);
-
-      for(int i = 0; i < 4; i++) {
-        corners(0, i) /= corners(2, i);
-        corners(1, i) /= corners(2, i);
-        x0 = min(x0, corners(0, i));
-        x1 = max(x1, corners(0, i));
-        y0 = min(y0, corners(1, i));
-        y1 = max(y1, corners(1, i));
-      }
-
-      return 0;
-    });
-
-    double scale = max((x1 - x0) / s[0][0], (y1 - y0) / s[0][1]);
-
-    cv::Matx33d T(1, 0, -x0,
-                  0, 1, -y0,
-                  0, 0, scale);
-
-    auto h_ = util::for_each(H, [&](auto&& H, auto k) {
-      cv::Mat ret(T * H);
-
+    auto h0 = util::for_each(H, [&](auto&& H, auto k) {
       int h = s[k][0], w = s[k][1];
       cv::Matx34d mid(w / 2., w, w / 2., 0,
                       0, h / 2., h, h / 2.,
                       1, 1, 1, 1);
 
-      cv::Mat mid_ = cv::Mat((ret * mid).t()).reshape(3);
+      cv::Mat mid_ = cv::Mat((H * mid).t()).reshape(3);
 
       cv::convertPointsFromHomogeneous(mid_, mid_);
 
@@ -96,12 +66,45 @@ namespace math {
 
       std::cout << k1 << " " << k2 << std::endl;
 
-      return cv::Mat(S * ret);
+      return cv::Mat(S * H);
     });
+
+    double x0, x1, y0, y1;
+    x0 = y0 = std::numeric_limits<double>::infinity();
+    x1 = y1 = 0;
+
+    util::for_each(s, [&](auto&& s, auto i) {
+      cv::Matx34d corners(0, s[1], 0, s[1],
+                          0, 0, s[0], s[0],
+                          1, 1, 1, 1);
+
+      corners = cv::Mat(h0[i] * corners);
+
+      for(int i = 0; i < 4; i++) {
+        corners(0, i) /= corners(2, i);
+        corners(1, i) /= corners(2, i);
+        x0 = min(x0, corners(0, i));
+        x1 = max(x1, corners(0, i));
+        y0 = min(y0, corners(1, i));
+        y1 = max(y1, corners(1, i));
+      }
+
+      return 0;
+    });
+
+    double scale = max((x1 - x0) / s[0][1], (y1 - y0) / s[0][0]);
+
+    cv::Matx33d T(1, 0, -x0,
+                  0, 1, -y0,
+                  0, 0, scale);
 
     cv::Size size((x1 - x0) / scale, (y1 - y0) / scale);
 
-    return {h_, size};
+    auto h1 = util::for_each(h0, [&](auto&& H, auto) {
+      return cv::Mat(T * H);
+    });
+
+    return {h1, size};
   }
 
   static cv::Mat warp_points(const cv::Mat& pts, const cv::Mat& H) {
@@ -230,8 +233,7 @@ namespace math {
             }
           }
 
-          mx[d] = max(mx[d],
-                   ret.at<float>(d, u, v) = gssim(p, alpha, beta, gamma, eps));
+          mx[d] = max(mx[d], ret.at<float>(d, u, v) = gssim(p, alpha, beta, gamma, eps));
         }
       }
     }

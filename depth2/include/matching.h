@@ -7,6 +7,7 @@
 #include <pybind11/numpy.h>
 
 #include <opencv2/opencv.hpp>
+#include <common/util.h>
 
 namespace py = pybind11;
 
@@ -30,6 +31,11 @@ struct ImagePair {
   } config;
 
   ImagePair(const Builder& config): config(config) {}
+  ImagePair(const ImagePair& o):
+    config(o.config),
+    img(util::for_each(o.img, [](auto&& img, auto) { return img.clone(); })),
+    mask(o.mask.clone()),
+    matches(o.matches) {}
 
   std::array<cv::Mat, 2> img;
   cv::Mat mask;
