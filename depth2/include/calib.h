@@ -22,10 +22,13 @@ struct CameraPose {
 
   double e1, e2;
 
+  std::array<cv::Mat, 2> H;
+
   CameraPose(ImagePair& stereo, double fov);
 
   void refine();
   std::array<cv::Mat, 2> rectify(const std::array<cv::Mat, 2>& img, cv::Mat& mask);
+  cv::Mat unrectify(const cv::Mat& img, int idx);
 
   py::array_t<float> get_matches();
   friend std::ostream& operator<<(std::ostream& os, const CameraPose& pose);

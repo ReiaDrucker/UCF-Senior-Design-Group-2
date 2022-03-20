@@ -37,6 +37,33 @@ namespace math {
     return asin(v / sqrt(m1 * m2));
   }
 
+  static std::array<double, 4> get_warped_corners(const std::array<cv::Mat, 2>& H, const std::array<cv::MatSize, 2>& s) {
+    double x0, x1, y0, y1;
+    x0 = y0 = std::numeric_limits<double>::infinity();
+    x1 = y1 = 0;
+
+    util::for_each(s, [&](auto&& s, auto i) {
+      cv::Matx34d corners(0, s[1], 0, s[1],
+                          0, 0, s[0], s[0],
+                          1, 1, 1, 1);
+
+      corners = cv::Mat(H[i] * corners);
+
+      for(int i = 0; i < 4; i++) {
+        corners(0, i) /= corners(2, i);
+        corners(1, i) /= corners(2, i);
+        x0 = min(x0, corners(0, i));
+        x1 = max(x1, corners(0, i));
+        y0 = min(y0, corners(1, i));
+        y1 = max(y1, corners(1, i));
+      }
+
+      return 0;
+    });
+
+    return {x0, x1, y0, y1};
+  }
+
   static std::tuple<std::array<cv::Mat, 2>, cv::Size>
   get_optimal_homography(const std::array<cv::Mat, 2>& H, const std::array<cv::MatSize, 2>& s) {
     auto h0 = util::for_each(H, [&](auto&& H, auto k) {
@@ -69,28 +96,7 @@ namespace math {
       return cv::Mat(S * H);
     });
 
-    double x0, x1, y0, y1;
-    x0 = y0 = std::numeric_limits<double>::infinity();
-    x1 = y1 = 0;
-
-    util::for_each(s, [&](auto&& s, auto i) {
-      cv::Matx34d corners(0, s[1], 0, s[1],
-                          0, 0, s[0], s[0],
-                          1, 1, 1, 1);
-
-      corners = cv::Mat(h0[i] * corners);
-
-      for(int i = 0; i < 4; i++) {
-        corners(0, i) /= corners(2, i);
-        corners(1, i) /= corners(2, i);
-        x0 = min(x0, corners(0, i));
-        x1 = max(x1, corners(0, i));
-        y0 = min(y0, corners(1, i));
-        y1 = max(y1, corners(1, i));
-      }
-
-      return 0;
-    });
+    auto [x0, x1, y0, y1] = get_warped_corners(h0, s);
 
     double scale = max((x1 - x0) / s[0][1], (y1 - y0) / s[0][0]);
 

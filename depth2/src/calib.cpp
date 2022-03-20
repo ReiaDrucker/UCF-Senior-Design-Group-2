@@ -156,7 +156,6 @@ std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img, cv
   std::cout << (F * (1 / F(2, 2))) << std::endl;
 
   auto size = cv::Size(img[0].size[1], img[0].size[0]);
-  std::array<cv::Mat, 2> H;
   cv::stereoRectifyUncalibrated(pts[0], pts[1], F, size, H[0], H[1]);
 
   std::tie(H, size) = math::get_optimal_homography(H, {img[0].size, img[1].size});
@@ -172,6 +171,15 @@ std::array<cv::Mat, 2> CameraPose::rectify(const std::array<cv::Mat, 2>& img, cv
 
   cv::warpPerspective(mask, mask, H[0], size);
 
+  return ret;
+}
+
+cv::Mat CameraPose::unrectify(const cv::Mat& img, int k) {
+  array<cv::Mat, 2> H_i = util::for_each(H, [&](auto&& H, auto) -> cv::Mat { return H.inv(); });
+  auto [x0, x1, y0, y1] = math::get_warped_corners(H_i, {img.size, img.size});
+  auto size = cv::Size(x1, y1);
+  cv::Mat ret;
+  cv::warpPerspective(img, ret, H_i[k], size);
   return ret;
 }
 
@@ -215,10 +223,23 @@ std::ostream& operator<<(std::ostream& os, const CameraPose& pose) {
 }
 
 void CameraPose::init_pybind(py::module_& m) {
+  using array_float_t = py::array_t<float, py::array::c_style | py::array::forcecast>;
+  using array_uint8_t = py::array_t<float, py::array::c_style | py::array::forcecast>;
+
   py::class_<CameraPose>(m, "CameraPose")
     .def(py::init<ImagePair&, double>())
     .def("refine", &CameraPose::refine)
     .def("get_matches", &CameraPose::get_matches)
+    .def("unrectify", [](CameraPose& pose, array_float_t img, int idx) {
+      cv::Mat img_ = cv::Mat(img.shape(0), img.shape(1), CV_32FC1, (float*)img.data()).clone();
+      auto ret = pose.unrectify(img_, idx);
+      return util::mat_to_array<float>(ret);
+    })
+    .def("unrectify", [](CameraPose& pose, array_uint8_t img, int idx) {
+      cv::Mat img_ = cv::Mat(img.shape(0), img.shape(1), CV_32FC1, (uint8_t*)img.data()).clone();
+      auto ret = pose.unrectify(img_, idx);
+      return util::mat_to_array<float>(ret);
+    })
     .def("__repr__", [](const CameraPose& pose) {
       std::stringstream ss;
       ss << pose;

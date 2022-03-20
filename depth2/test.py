@@ -92,7 +92,7 @@ def rectify(stereo, fov):
     matches = pose.get_matches()
     print('\tFiltered matches shape:', matches.shape)
 
-    return stereo_, matches
+    return stereo_, pose
 
 def guess_disparity_range(matches):
     n = matches.shape[0]
@@ -166,6 +166,7 @@ if __name__ == '__main__':
     print('\nMATCHING...')
     stereo = matching(args.l_path, args.r_path)
 
+    pose = None
     if args.interactive:
         code.interact(local=dict(globals(), **locals()))
     else:
@@ -174,11 +175,11 @@ if __name__ == '__main__':
             matches = stereo.get_matches()
         else:
             print('\nRECTIFICATION...')
-            stereo, matches = rectify(stereo, args.fov)
+            stereo, pose = rectify(stereo, args.fov)
+            matches = pose.get_matches()
 
         left = stereo.get_image(0)
         right = stereo.get_image(1)
-        cv.imwrite('rgb.png', left)
         frame = debug_frame(StereoPair(left, right, matches), 0.5, True)
 
         lo, hi = args.min_disp, args.max_disp
@@ -195,8 +196,13 @@ if __name__ == '__main__':
         print('\nDISPARITY...')
         disp, cloud = disparity(stereo, lo, hi)
 
+        disp = pose.unrectify(disp, 0)
+        left_unrect = pose.unrectify(stereo.get_image(0), 0)
+
         if with_timing:
             timer.stop()
+
+        cv.imwrite('rgb.png', left_unrect)
 
         np.save('disp', disp)
         plt.hist(disp, bins=20)
