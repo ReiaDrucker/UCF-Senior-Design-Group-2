@@ -68,7 +68,8 @@ class PhotoDisplayer(QWidget):
         #Draw all vectors
         for name, vec in self.app.vectorTable:
             # Access the points that made this vector and draw a line based on those coordinates
-            painter.drawLine(vec.s.u, vec.s.v, vec.t.u, vec.t.v)
+            coords = (int(x) for x in (vec.s.u, vec.s.v, vec.t.u, vec.t.v))
+            painter.drawLine(*coords)
 
     def drawPoints(self, painter):
         painter.setPen(self.pointPen)

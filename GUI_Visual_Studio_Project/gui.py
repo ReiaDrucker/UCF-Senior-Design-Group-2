@@ -11,6 +11,7 @@ from vector import *
 from angle import *
 import pickle
 import os
+import math
 
 def createLabel(x):
     ret = []
@@ -35,7 +36,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.imagePath = [None] * 2
         self.lastDir = None
 
-        self.depthProvider = DepthProvider()
+        self.depthProvider = DepthProvider2(30 * math.pi / 180.)
 
     def addTable(self, columns, onNew, x, y, w, h, color=None, onColorChange=None):
         bottom_widgets = []

@@ -106,3 +106,57 @@ class DepthProvider(QtCore.QObject):
         if idx < len(self.images) and self.images[idx] is not None:
             self.current = idx
             self.imageChanged.emit()
+
+import depth_algo
+import math
+
+class DepthProvider2(DepthProvider):
+    def __init__(self, fov):
+        super().__init__()
+        self.fov = fov
+
+    def calculate(self):
+        old = self.images[self.current].shape
+
+        self.stereo = (depth_algo.ImagePairBuilder()
+                       .set_target_scale(2000)
+                       .build()
+                       .load_images(self.images[0], self.images[1])
+                       .fill_matches())
+
+        self.pose = depth_algo.CameraPose(self.stereo, self.fov)
+        self.stereo.rectify(self.pose)
+
+        matches = self.pose.get_matches()
+
+        dx = matches[:,0,0] - matches[:,1,0]
+        q1, q3 = np.quantile(dx, [.25, .75])
+        iqr = q3 - q1
+        lo = math.floor(q1 - iqr * 1.5)
+        hi = math.ceil(q3 + iqr * 1.5)
+
+        self.cloud = (depth_algo.PointCloudBuilder()
+                      .set_matcher(depth_algo.PointCloudMatcherType.LOCAL_EXP)
+                      .set_gssim_consts([.9, .1, .2])
+                      .set_gssim_patch_size(5)
+                      .set_min_disp(lo)
+                      .set_max_disp(hi)
+                      .build()
+                      .load_stereo(self.stereo))
+        self.d = self.cloud.get_disparity()
+
+        self.d = self.pose.unrectify(self.d, 0)
+        self.images = [self.pose.unrectify(self.stereo.get_image(i), i) for i in range(2)]
+
+        disparity_scaled = ((self.d - self.d.min()) * 255. / (self.d.max() - self.d.min())).astype(np.uint8)
+        self.images += [None, disparity_scaled]
+
+        new = self.images[self.current].shape
+        self.imageScaled.emit(new[1] / old[1], new[0] / old[0])
+        self.imageChanged.emit()
+
+        L = (new[0] * new[1]) ** .5
+        f = (L / 2) / math.tan(self.fov / 2)
+
+        self.depth = depth.make_xyz(self.d, f, 1)
+        self.depthUpdated.emit()

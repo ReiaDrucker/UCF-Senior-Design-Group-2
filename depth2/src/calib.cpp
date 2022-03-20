@@ -14,6 +14,7 @@
 
 #include <common/util.h>
 #include <common/math.h>
+#include <opencv2/core/hal/interface.h>
 
 void CameraPose::validateTypes() {
   if(p.type() != CV_64FC3
@@ -224,7 +225,7 @@ std::ostream& operator<<(std::ostream& os, const CameraPose& pose) {
 
 void CameraPose::init_pybind(py::module_& m) {
   using array_float_t = py::array_t<float, py::array::c_style | py::array::forcecast>;
-  using array_uint8_t = py::array_t<float, py::array::c_style | py::array::forcecast>;
+  using array_uint8_t = py::array_t<uint8_t, py::array::c_style | py::array::forcecast>;
 
   py::class_<CameraPose>(m, "CameraPose")
     .def(py::init<ImagePair&, double>())
@@ -236,9 +237,9 @@ void CameraPose::init_pybind(py::module_& m) {
       return util::mat_to_array<float>(ret);
     })
     .def("unrectify", [](CameraPose& pose, array_uint8_t img, int idx) {
-      cv::Mat img_ = cv::Mat(img.shape(0), img.shape(1), CV_32FC1, (uint8_t*)img.data()).clone();
+      cv::Mat img_ = cv::Mat(img.shape(0), img.shape(1), CV_8UC(img.ndim() == 2 ? 1 : img.shape(2)), (uint8_t*)img.data()).clone();
       auto ret = pose.unrectify(img_, idx);
-      return util::mat_to_array<float>(ret);
+      return util::mat_to_array<uint8_t>(ret);
     })
     .def("__repr__", [](const CameraPose& pose) {
       std::stringstream ss;
