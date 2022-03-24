@@ -227,7 +227,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Add actions to menus.
         add_actions_to_menu(self.menuFile, [self.actionLoadData, self.actionExportData])
         add_actions_to_menu(self.menuUploadImages, [self.actionUploadLeft, self.actionUploadRight])
-        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
+
+        # Show interpolated does nothing so just removing it for now
+        #add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
+        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowDisparityMapImage])
         add_actions_to_menu(self.menuZoomOptions, [self.actionZoomIn, self.actionZoomOut, self.actionZoomReset])
 
         # Add menus to menu bar.

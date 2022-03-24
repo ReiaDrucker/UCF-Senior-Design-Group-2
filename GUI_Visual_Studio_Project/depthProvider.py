@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
+import time
 
 import os, sys
 
@@ -25,6 +26,7 @@ class DepthProvider(QtCore.QObject):
         # self.depthUpdated.connect(self.debug)
 
     def calculate(self):
+        
         # TODO: detect/display errors
         old = self.images[self.current].shape
         stereo = matching.make_stereo_pair(*self.images)
@@ -49,6 +51,7 @@ class DepthProvider(QtCore.QObject):
         f = 3.2 * ((stereo.left.shape[0] * stereo.right.shape[1]) ** .5)
 
         self.depth = depth.make_xyz(self.d, f, 1)
+        
         self.depthUpdated.emit()
 
     def getXYZ(self, u, v):
@@ -116,6 +119,9 @@ class DepthProvider2(DepthProvider):
         self.fov = fov
 
     def calculate(self):
+        start_time = time.time()
+        #print(start_time)
+        
         old = self.images[self.current].shape
 
         self.stereo = (depth_algo.ImagePairBuilder()
@@ -159,4 +165,5 @@ class DepthProvider2(DepthProvider):
         f = (L / 2) / math.tan(self.fov / 2)
 
         self.depth = depth.make_xyz(self.d, f, 1)
+        print("--- Execution time: %s seconds ---" % (time.time() - start_time))
         self.depthUpdated.emit()
