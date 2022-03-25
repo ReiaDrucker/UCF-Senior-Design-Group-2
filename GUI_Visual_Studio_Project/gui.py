@@ -11,8 +11,8 @@ from vector import *
 from angle import *
 import pickle
 import os
-import math
 
+# Creates alphabetic label for tables depending on value x.
 def createLabel(x):
     ret = []
     first = True
@@ -27,55 +27,72 @@ def createLabel(x):
     return ''.join(ret[::-1])
 
 class Ui_MainWindow(QtWidgets.QWidget):
+    # Initializes the main window.
     def __init__(self):
         super().__init__()
+
+        # Set table index values to 0.
         self.pointIdx = 0
         self.vectorIdx = 0
         self.angleIdx = 0
 
+        # Initialize empty image paths.
         self.imagePath = [None] * 2
         self.lastDir = None
 
-        self.depthProvider = DepthProvider2(30 * math.pi / 180.)
+        # Initialize Depth Provider.
+        self.depthProvider = DepthProvider()
 
+    # Creates new table with flexible properties.
     def addTable(self, columns, onNew, x, y, w, h, color=None, onColorChange=None):
         bottom_widgets = []
 
+        # "New" button to click to add new item.
         new_button = QtWidgets.QPushButton('New')
         new_button.clicked.connect(onNew)
         bottom_widgets += [new_button]
 
+        # Determines color.
         if onColorChange is not None:
             color_select = ColorSelector(color)
             color_select.currentIndexChanged.connect(onColorChange)
             bottom_widgets += [color_select]
 
+        # Items are selected by rows, multiple rows can be selected, 
+        # and cells must be double-clicked to enable editing.
         widget = DataTableWidget(columns, bottom_widgets=bottom_widgets, parent=self.centralwidget)
         widget.get_table().setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         widget.get_table().setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         widget.get_table().setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
+        
+        # Table widget is added to window layout.
         self.layout.addWidget(widget, y, x, h, w)
 
+        # Connect adding function for this table.
         widget.onNew.connect(onNew)
         return widget.get_table()
 
+    # Main setup function for the MainWindow.
     def setupUi(self, MainWindow):
         # Window sizes should be based on the monitor resolution rather than a hard coded pixel value.
         # MainWindow.resize(1600, 1000)
+
+        # Basic properties of the window.
         MainWindow.setMouseTracking(True)
         MainWindow.setWindowTitle("Stereogram Depth Finder")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         MainWindow.setCentralWidget(self.centralwidget)
         self.centralwidget.setObjectName("centralwidget")
-
         self.layout = QtWidgets.QGridLayout()
 
+        # Initialize PhotoDisplayer and photoDisplayerContainer.
         self.pd = PhotoDisplayer(self)
         self.pd.displayToggle.connect(self.toggleTableEdits)
         self.pdContainer = photoDisplayerContainer(self.centralwidget, self.pd)
         self.pdContainer.setObjectName("pdContainer")
         self.layout.addWidget(self.pdContainer, 0, 0, 2, 2)
 
+        # Change pen color and send information to the PhotoDisplayer.
         def changeColor(pen):
             @QtCore.pyqtSlot(int)
             def f(idx):
@@ -83,6 +100,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.pd.update()
             return f
 
+        # Initialize point, vector, and angle tables.
         self.pointTable = self.addTable(['u', 'v', 'x', 'y', 'z', ''],
                                         self.addPoint, 2, 0, 1, 1,
                                         color = QtCore.Qt.red, onColorChange=changeColor(self.pd.pointPen))
@@ -91,6 +109,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                                          color = QtCore.Qt.black, onColorChange=changeColor(self.pd.vectorPen))
         self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', ''], self.addAngle, 0, 2, 1, 1)
 
+        # Connect point and vector table changes to the PhotoDisplayer.
         self.pointTable.onChange.connect(self.pd.update)
         self.vectorTable.onChange.connect(self.pd.update)
 
@@ -102,11 +121,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # # TODO: setGeometry
         # self.buttonTuneParameters.clicked.connect(self.tuneParameters)
 
+        # Set image properties of depthProvider.
         self.depthProvider.imageChanged.connect(self.setImage)
         self.depthProvider.imageScaled.connect(self.scalePoints)
 
         self.centralwidget.setLayout(self.layout)
-
+    
+    # Toggles table editing on or off.
     @QtCore.pyqtSlot()
     def toggleTableEdits(self):
         # Depending on current selection behavior, set to a different selection behavior and mode
@@ -120,9 +141,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
 
+    # Load depthProvider images into the PhotoDisplayer.
     @QtCore.pyqtSlot()
     def setImage(self):
+        # Only if there were already two images.
         if self.imagePath[0] is not None and self.imagePath[1] is not None:
+            # Reset the tables.
             self.pointTable.clearTable()
             self.vectorTable.clearTable()
             self.angleTable.clearTable()
@@ -131,45 +155,49 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.vectorIdx = 0
             self.angleIdx = 0
 
+        # But depthProvider image into the PhotoDisplayer.
         self.pd.setNewPixmap(self.depthProvider.current_pixmap())
         self.pdContainer.fitToWindow()
 
+    # Scales every point in the pointTable.
     @QtCore.pyqtSlot(float, float)
     def scalePoints(self, sx, sy):
         for name, point in self.pointTable:
             point.u *= sx
             point.v *= sy
 
+    # Adds point if drawing is enabled.
     @QtCore.pyqtSlot()
     def addPoint(self):
         if self.pd.drawStuff:
             self.addPointAtPixel()
 
+    # Adds point to pointTable.
     def addPointAtPixel(self, u = 0, v = 0):
         self.pointTable[createLabel(self.pointIdx)] = Point(self.depthProvider, u, v)
         self.pointIdx += 1
 
+    # Adds vector to vectorTable.
     @QtCore.pyqtSlot()
     def addVector(self):
         if self.pd.drawStuff:
+            # Don't add if vector already exists.
             selected = sorted(list(set(self.pointTable.row_name(x.row()) for x in self.pointTable.selectedItems())))
-
-            # don't add the same vector twice
             for k, v in self.vectorTable:
                 if sorted([v.s.name, v.t.name]) == selected:
                     return
 
+            # Add vector to the table if two points were selected.
             if len(selected) == 2:
                 vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]], self.pd)
                 self.vectorTable[createLabel(self.vectorIdx)] = vec
                 self.vectorIdx += 1
 
+    # Adds angle to angleTable.
     @QtCore.pyqtSlot()
     def addAngle(self):
         if self.pd.drawStuff:
             selected = sorted(list(set(self.vectorTable.row_name(x.row()) for x in self.vectorTable.selectedItems())))
-
-            # don't add the same angle twice
             for k, v in self.angleTable:
                 if sorted([v.a.name, v.b.name]) == selected:
                     return
@@ -227,10 +255,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Add actions to menus.
         add_actions_to_menu(self.menuFile, [self.actionLoadData, self.actionExportData])
         add_actions_to_menu(self.menuUploadImages, [self.actionUploadLeft, self.actionUploadRight])
-
-        # Show interpolated does nothing so just removing it for now
-        #add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
-        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowDisparityMapImage])
+        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
         add_actions_to_menu(self.menuZoomOptions, [self.actionZoomIn, self.actionZoomOut, self.actionZoomReset])
 
         # Add menus to menu bar.

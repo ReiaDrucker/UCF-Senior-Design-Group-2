@@ -1,11 +1,22 @@
 * GUI
-** photoDisplayer
+** Ui_MainWindow
+*** Initializing
+    - Inherits QWidget class.
+    - Initializes image paths, array indexes, and DepthProvider.
+*** Setup
+    - PhotoDisplayer instance pd is initialized.
+    - Calls the addTable function to initialize the point, vector and angle tables.
+    - pointTable and vectorTable are connected to pd.update upon any changes.
+    - By default, table editing is toggled off.
+    - 
+** PhotoDisplayer
    Displays an image and points and vectors atop it.
 *** Initializing
     - Takes parent app as a parameter.
     - Defaults to dimensions 1024 x 1024.
     - QPixmap for drawing defaults to blue canvas.
     - Red pen for drawing points, black pen for drawing vectors.
+    - By default, the PhotoDisplayer will not draw points or vectors.
 *** Drawing
     - On setNewPixmap(self, new), put new image into the QPixmap and update the canvas.
     - On drawPoints(self, painter) and drawVectors(self, painter), use QPainter object to draw points/vectors to screen.
