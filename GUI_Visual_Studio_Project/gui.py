@@ -11,6 +11,7 @@ from vector import *
 from angle import *
 import pickle
 import os
+import math
 
 # Creates alphabetic label for tables depending on value x.
 def createLabel(x):
@@ -41,7 +42,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lastDir = None
 
         # Initialize Depth Provider.
-        self.depthProvider = DepthProvider()
+        self.depthProvider = DepthProvider2(30 * math.pi / 180)
 
     # Creates new table with flexible properties.
     def addTable(self, columns, onNew, x, y, w, h, color=None, onColorChange=None):
@@ -255,8 +256,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Add actions to menus.
         add_actions_to_menu(self.menuFile, [self.actionLoadData, self.actionExportData])
         add_actions_to_menu(self.menuUploadImages, [self.actionUploadLeft, self.actionUploadRight])
-        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
+        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowDisparityMapImage])
         add_actions_to_menu(self.menuZoomOptions, [self.actionZoomIn, self.actionZoomOut, self.actionZoomReset])
+
+        # Interpolated image feature not implemented but here is how it would be added
+        #add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
 
         # Add menus to menu bar.
         self.menubar.addMenu(self.menuFile)

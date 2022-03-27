@@ -97,7 +97,7 @@ class Vector(DataTableRow):
         return self.dx * o.dx + self.dy * o.dy + self.dz * o.dz
 
     def recalculate(self):
-        self.dx = self.t.x - self.s.y
+        self.dx = self.t.x - self.s.x
         self.dy = self.t.y - self.s.y
         self.dz = self.t.z - self.s.z
 
