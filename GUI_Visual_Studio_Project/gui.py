@@ -238,6 +238,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             return action
 
+        # Creates all the actions for the menu bar.
         self.actionZoomIn = create_action("Zoom In 25%", self.pdContainer.zoomIn, "Zoom in on the image", "Ctrl+=")
         self.actionZoomOut = create_action("Zoom Out 25%", self.pdContainer.zoomOut, "Zoom out on the image", "Ctrl+-")
         self.actionZoomReset = create_action("Reset Zoom", self.pdContainer.resetZoom, "Restore Image to Normal Size", "Ctrl+r")
@@ -270,6 +271,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menubar.addMenu(self.menuToggleDisplayOptions)
         self.menubar.addMenu(self.menuZoomOptions)
 
+    # Upload image to the GUI.
     def uploadImage(self, idx):
         def f():
             desc = "Image File (*.jpeg *.jpg *.png *.gif *.tif *.tiff)"
@@ -291,7 +293,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.update()
 
         return f
-
+    
+    # Displays image in the depthProvider.
     def displayImage(self, selection):
         self.depthProvider.show(selection)
 
