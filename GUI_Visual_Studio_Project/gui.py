@@ -370,7 +370,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.pointTable.deserialize(state['point']['table'], lambda v: Point(self.depthProvider, v[0], v[1]))
                 self.pointIdx = state['point']['idx']
 
-                self.vectorTable.deserialize(state['vector']['table'], lambda v: Vector(self.pointTable[v[0]], self.pointTable[v[1]]))
+                self.vectorTable.deserialize(state['vector']['table'], lambda v: Vector(self.pointTable[v[0]], self.pointTable[v[1]], self.pd))
                 self.vectorIdx = state['vector']['idx']
 
                 self.angleTable.deserialize(state['angle']['table'], lambda v: Angle(self.vectorTable[v[0]], self.vectorTable[v[1]]))
