@@ -6,15 +6,18 @@ import numpy as np
 from dataTable import DataTableRow
 
 class Point(DataTableRow):
+    # Signal to check if any data in the point has been changed.
     dataChanged = QtCore.pyqtSignal()
     blocked = False
 
     def __init__(self, depthProvider, u = 0, v = 0):
         super().__init__()
 
+        # Bring the depthProvider into the point.
         self.depthProvider = depthProvider
         self.depthProvider.depthUpdated.connect(self.recast)
 
+        # Initialize column headers.
         for field in 'uv':
             self[field] = self.create_field(0, float, lambda x: f'{x:.1f}')
             self[field].dataChanged.signal.connect(self.recast)
@@ -29,9 +32,11 @@ class Point(DataTableRow):
         self.u = u
         self.v = v
 
+        # Place delete button next to every point row.
         self['D'] = QtWidgets.QPushButton('Delete')
         self['D'].clicked.connect(self.delete)
 
+    # Reproject point position.
     @QtCore.pyqtSlot()
     def reproject(self):
         if self.blocked:
@@ -45,6 +50,7 @@ class Point(DataTableRow):
 
         self.blocked = False
 
+    # Recast point position.
     @QtCore.pyqtSlot()
     def recast(self):
         if self.blocked:

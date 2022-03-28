@@ -200,16 +200,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def addAngle(self):
         if self.pd.drawStuff:
+            # Don't add if angle already exists.
             selected = sorted(list(set(self.vectorTable.row_name(x.row()) for x in self.vectorTable.selectedItems())))
             for k, v in self.angleTable:
                 if sorted([v.a.name, v.b.name]) == selected:
                     return
 
+            # Add angle to teh table if two points were selected.
             if len(selected) == 2:
                 ang = Angle(self.vectorTable[selected[0]], self.vectorTable[selected[1]])
                 self.angleTable[createLabel(self.angleIdx)] = ang
                 self.angleIdx += 1
 
+    # Set up menu bar.
     def setupMenu(self, MainWindow):
         # Creates menu bar.
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -225,7 +228,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-
+        
+        # Creates action to execute a function.
         def create_action(name, slot, desc = None, shortcut = None):
             action = QtWidgets.QAction(name, MainWindow)
             action.triggered.connect(slot)
