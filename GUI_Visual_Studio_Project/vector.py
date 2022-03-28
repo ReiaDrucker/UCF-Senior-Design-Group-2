@@ -5,6 +5,7 @@ from MagPopup import *
 from dataTable import DataTableRow
 
 class Vector(DataTableRow):
+    # Signal to check if any data in the point has been changed.
     dataChanged = QtCore.pyqtSignal()
 
     def __init__(self, s, t, pd):
@@ -19,6 +20,7 @@ class Vector(DataTableRow):
 
         self.pdRef = pd
 
+        # Create column headers.
         self['s'] = self.create_field(s, editable=False)
         s.dataChanged.connect(updater('s'))
         s.deleted.connect(self.delete)
