@@ -138,7 +138,7 @@ void PointCloud::init_pybind(py::module_& m) {
     .def("build", &PointCloud::Builder::build)
     ;
   py::class_<PointCloud>(m, "PointCloud")
-    .def("load_stereo", &PointCloud::load_stereo)
+    .def("load_stereo", &PointCloud::load_stereo, py::call_guard<py::gil_scoped_release>())
     .def("get_disparity", &PointCloud::get_disparity)
     .def("get_gssim_volume", &PointCloud::get_gssim_volume)
     ;

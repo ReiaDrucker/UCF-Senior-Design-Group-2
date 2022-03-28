@@ -26,10 +26,11 @@ class PhotoDisplayer(QWidget):
 
         self.drawStuff = False
 
-    def toggleDraw(self):
-       self.drawStuff = not(self.drawStuff)
-       self.displayToggle.emit()
-       self.update()
+    def toggleDraw(self, v = None):
+       if self.drawStuff is not v:
+        self.drawStuff = not(self.drawStuff)
+        self.displayToggle.emit()
+        self.update()
 
     def inBounds(self, xVal, yVal):
         return xVal >= 0 and yVal >= 0 and xVal <= self.width() and yVal <= self.height()

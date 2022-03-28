@@ -59,13 +59,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
             color_select.currentIndexChanged.connect(onColorChange)
             bottom_widgets += [color_select]
 
-        # Items are selected by rows, multiple rows can be selected, 
+        # Items are selected by rows, multiple rows can be selected,
         # and cells must be double-clicked to enable editing.
         widget = DataTableWidget(columns, bottom_widgets=bottom_widgets, parent=self.centralwidget)
         widget.get_table().setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         widget.get_table().setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         widget.get_table().setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
-        
+
         # Table widget is added to window layout.
         self.layout.addWidget(widget, y, x, h, w)
 
@@ -127,20 +127,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.depthProvider.imageScaled.connect(self.scalePoints)
 
         self.centralwidget.setLayout(self.layout)
-    
+
     # Toggles table editing on or off.
     @QtCore.pyqtSlot()
     def toggleTableEdits(self):
         # Depending on current selection behavior, set to a different selection behavior and mode
-        print("Toggling Edits")
+        turned_on = False
         if (self.pointTable.editTriggers() == QtWidgets.QAbstractItemView.DoubleClicked):
             self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
             self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
             self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         else:
+            turned_on = True
             self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
+        print("Toggled Edits", turned_on)
 
     # Load depthProvider images into the PhotoDisplayer.
     @QtCore.pyqtSlot()
@@ -324,7 +326,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 'table': self.angleTable.serialize(lambda a: a.serialize())
             },
 
-            'images': self.imagePath,
+            'images': self.depthProvider.get_images(),
+
+            'depth': self.depthProvider.get_depth(),
 
             'colors': {
                 'point': self.pd.pointPen.color(),
@@ -354,9 +358,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 # Load image path data
                 self.depthProvider.reset()
                 for idx, img in enumerate(state['images']):
-                    self.imagePath[idx] = img
                     self.depthProvider.set_image(idx, img, calculate=False)
-                self.depthProvider.calculate()
+                self.depthProvider.set_depth(state['depth'])
+
+                if self.depthProvider.should_calculate():
+                    self.depthProvider.calculate()
+
+                self.pd.toggleDraw(True)
 
                 # Load point and vector data
                 self.pointTable.deserialize(state['point']['table'], lambda v: Point(self.depthProvider, v[0], v[1]))
@@ -383,7 +391,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             return None
 
-    
 
 if __name__ == "__main__":
     import sys

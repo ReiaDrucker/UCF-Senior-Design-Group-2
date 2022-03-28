@@ -90,7 +90,7 @@ void ImagePair::init_pybind(py::module_& m) {
   py::class_<ImagePair>(m, "ImagePair")
     .def("__deepcopy__", [](const ImagePair& o, py::dict) { return ImagePair(o); })
     .def("load_images", &ImagePair::load_images)
-    .def("fill_matches", &ImagePair::fill_matches)
+    .def("fill_matches", &ImagePair::fill_matches, py::call_guard<py::gil_scoped_release>())
     .def("rectify", [](ImagePair& pair, CameraPose& pose) { return pair.rectify(pose); })
     .def("get_matches", &ImagePair::get_matches)
     .def("get_image", &ImagePair::get_image)
