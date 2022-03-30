@@ -32,10 +32,17 @@ class Vector(DataTableRow):
         for field in ['dx', 'dy', 'dz']:
             self[field] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
 
-        # Magnitude field.
-        distItem = self.create_field(0, float, lambda x: f'{x:.2f}', editable=True)
+        # Raw Magnitude field.
+        distItem = self.create_field(0, float, lambda x: f'{x:.2f}', editable=False)
         distItem.dataChanged.signal.connect(self.changeMag)
-        self['dist'] = distItem
+        self['rawMagnitude'] = distItem
+
+        # Real Magnitude Field
+        scaledItem = self.create_field(1, float, lambda x: f'{x:.2f}', editable=True)
+        scaledItem.dataChanged.signal.connect(self.scaleVectors)
+        self['scaledMagnitude'] = scaledItem
+
+        self.scaledMagnitudeScalar = 0
 
         self.prevDist = 0
 
@@ -48,10 +55,24 @@ class Vector(DataTableRow):
         # This is technically a waste of memory but it works and is easy and probably won't be an issue
         self.depthProviderRef = s.depthProvider;
 
+    # Calculates scalar between raw and real magnitudes and resizes all vectors.
+    def scaleVectors(self):
+        if (self.pdRef.app.scalarUpdateLock == 0):
+            self.pdRef.app.scalarUpdateLock = 1
+
+            self.scaledMagnitudeScalar = (self.scaledMagnitude/self.rawMagnitude)
+            print("Scaled Magnitude Scalar =", self.scaledMagnitudeScalar)
+            for name, vec in self.pdRef.app.vectorTable:
+                if (vec.s == self.s and vec.t == self.t):
+                    continue
+                vec.scaledMagnitude = vec.rawMagnitude * self.scaledMagnitudeScalar
+            self.pdRef.app.scalarUpdateLock = 0
+
     # Calculates percent of magnitude change and re-scales other vectors.
     def changeMag(self):
-        if (self.prevDist != 0 and self.prevDist != self.dist and self.pdRef.drawStuff):
-            percent = (self.dist/self.prevDist) * 100
+        if (self.prevDist != 0 and self.prevDist != self.rawMagnitude and self.pdRef.drawStuff):
+            percent = (self.rawMagnitude/self.prevDist) * 100
+
 
             # When you edit the magnitude, the vector display is toggled off
             #   and editing for the tables is turned off.
@@ -92,7 +113,7 @@ class Vector(DataTableRow):
             #test.func()
 
 
-        self.prevDist = self.dist
+        self.prevDist = self.rawMagnitude
 
 
     def dot(self, o):
@@ -104,7 +125,7 @@ class Vector(DataTableRow):
         self.dz = self.t.z - self.s.z
 
         dist = (self.dx ** 2 + self.dy ** 2 + self.dz ** 2) ** .5
-        self.dist = dist
+        self.rawMagnitude = dist
 
     def __str__(self):
         return f'{self.name}: <{self.dx:.1f}, {self.dy:.1f}, {self.dz:.1f}>'

@@ -31,7 +31,7 @@ class Angle(DataTableRow):
         self['D'].clicked.connect(self.delete)
 
     def recalculate(self):
-        c = self.a.dot(self.b) / self.a.dist / self.b.dist
+        c = self.a.dot(self.b) / self.a.rawMagnitude / self.b.rawMagnitude
         self.angle = math.acos(c) * 180 / math.pi
 
     def serialize(self):
