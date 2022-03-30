@@ -105,7 +105,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pointTable = self.addTable(['u', 'v', 'x', 'y', 'z', ''],
                                         self.addPoint, 2, 0, 1, 1,
                                         color = QtCore.Qt.red, onColorChange=changeColor(self.pd.pointPen))
-        self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Magnitude', ''],
+        self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Raw Magnitude', 'Scaled Magnitude', ''],
                                          self.addVector, 2, 1, 1, 1,
                                          color = QtCore.Qt.black, onColorChange=changeColor(self.pd.vectorPen))
         self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', ''], self.addAngle, 0, 2, 1, 1)
@@ -127,6 +127,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.depthProvider.imageScaled.connect(self.scalePoints)
 
         self.centralwidget.setLayout(self.layout)
+
+        # Jank Band-aid fix until I can find some better way to avoid the infinite recursion in the scalar
+        # update for vectors
+        self.scalarUpdateLock = 0
 
     # Toggles table editing on or off.
     @QtCore.pyqtSlot()

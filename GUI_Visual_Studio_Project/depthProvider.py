@@ -62,6 +62,8 @@ class DepthProvider(QtCore.QObject):
 
     def getXYZ(self, u, v):
         if self.depth is not None:
+            print(depth.get_xyz(self.depth, u, v))
+            print(type(depth.get_xyz(self.depth, u, v)))
             return depth.get_xyz(self.depth, u, v)
 
         return np.array([u, v, 1])
@@ -121,6 +123,12 @@ class DepthProvider(QtCore.QObject):
     def show(self, idx):
         if idx < len(self.images) and self.images[idx] is not None:
             self.current = idx
+            if (self.images[3] is not None):
+                print(self.images[3].shape)
+                print(self.images[3][0][0])
+                print(type(self.images[3][0][0]))
+                print(np.max(self.images[3]))
+                print(np.min(self.images[3]))
             self.imageChanged.emit()
 
 import depth_algo
