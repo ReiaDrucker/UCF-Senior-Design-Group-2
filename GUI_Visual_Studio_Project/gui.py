@@ -263,11 +263,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Add actions to menus.
         add_actions_to_menu(self.menuFile, [self.actionLoadData, self.actionExportData])
         add_actions_to_menu(self.menuUploadImages, [self.actionUploadLeft, self.actionUploadRight])
-        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowDisparityMapImage])
+        #add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowDisparityMapImage])
         add_actions_to_menu(self.menuZoomOptions, [self.actionZoomIn, self.actionZoomOut, self.actionZoomReset])
 
         # Interpolated image feature not implemented but here is how it would be added
-        #add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
+        add_actions_to_menu(self.menuToggleDisplayOptions, [self.actionShowVectors, self.actionShowLeftImage, self.actionShowRightImage, self.actionShowInterpolatedImage, self.actionShowDisparityMapImage])
 
         # Add menus to menu bar.
         self.menubar.addMenu(self.menuFile)
@@ -388,12 +388,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.pd.pointPen.setColor(state['colors']['point'])
                 self.pd.vectorPen.setColor(state['colors']['vector'])
 
+                # Only here since previous files didn't have an interpolated image this can and SHOULD be removed later
+                self.depthProvider.createInterpolatedImage()
+
                 self.pd.update()
-
-            # Read the data via inStream
-
-            # Turn off the old UI
-            # Return the new one
             return None
         else:
             return None

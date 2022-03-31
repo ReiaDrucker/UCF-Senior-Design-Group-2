@@ -27,6 +27,13 @@ class DepthProvider(QtCore.QObject):
 
         self.depth = None
 
+    # Could probably make this more generic but we don't really need to for our case
+    def createInterpolatedImage(self):
+        if (self.images[0] is not None) and (self.images[3] is not None):
+
+            self.images[2] = (self.images[0] * 0.25 + self.images[3] * 1)
+            self.images[2] = ((self.images[2] - self.images[2].min()) * (1/(self.images[2].max() - self.images[2].min()) * 255)).astype('uint8')
+
     def get_images(self):
         return self.images
 
@@ -177,3 +184,6 @@ class DepthProvider2(DepthProvider):
 
         self.update_depth_from_disparity()
         print("--- Execution time: %s seconds ---" % (time.time() - start_time))
+
+        self.createInterpolatedImage()
+        self.depthUpdated.emit()
