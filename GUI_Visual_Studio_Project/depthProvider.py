@@ -123,12 +123,6 @@ class DepthProvider(QtCore.QObject):
     def show(self, idx):
         if idx < len(self.images) and self.images[idx] is not None:
             self.current = idx
-            if (self.images[3] is not None):
-                print(self.images[3].shape)
-                print(self.images[3][0][0])
-                print(type(self.images[3][0][0]))
-                print(np.max(self.images[3]))
-                print(np.min(self.images[3]))
             self.imageChanged.emit()
 
 import depth_algo

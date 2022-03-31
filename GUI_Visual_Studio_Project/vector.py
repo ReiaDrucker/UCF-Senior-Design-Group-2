@@ -61,11 +61,13 @@ class Vector(DataTableRow):
             self.pdRef.app.scalarUpdateLock = 1
 
             self.scaledMagnitudeScalar = (self.scaledMagnitude/self.rawMagnitude)
-            print("Scaled Magnitude Scalar =", self.scaledMagnitudeScalar)
+            self.pdRef.app.scalarValue = self.scaledMagnitudeScalar
+            #print("Scaled Magnitude Scalar =", self.pdRef.app.scalarValue)
             for name, vec in self.pdRef.app.vectorTable:
                 if (vec.s == self.s and vec.t == self.t):
                     continue
                 vec.scaledMagnitude = vec.rawMagnitude * self.scaledMagnitudeScalar
+                vec.scaledMagnitudeScalar = self.scaledMagnitudeScalar
             self.pdRef.app.scalarUpdateLock = 0
 
     # Calculates percent of magnitude change and re-scales other vectors.

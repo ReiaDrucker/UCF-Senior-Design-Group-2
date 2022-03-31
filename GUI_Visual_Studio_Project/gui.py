@@ -128,9 +128,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.centralwidget.setLayout(self.layout)
 
-        # Jank Band-aid fix until I can find some better way to avoid the infinite recursion in the scalar
-        # update for vectors
+        # Boolean for updating scaled magnitudes of vectors.
         self.scalarUpdateLock = 0
+
+        self.scalarValue = 1
 
     # Toggles table editing on or off.
     @QtCore.pyqtSlot()
@@ -146,7 +147,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
-        print("Toggled Edits", turned_on)
+        #print("Toggled Edits", turned_on)
 
     # Load depthProvider images into the PhotoDisplayer.
     @QtCore.pyqtSlot()
@@ -199,6 +200,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]], self.pd)
                 self.vectorTable[createLabel(self.vectorIdx)] = vec
                 self.vectorIdx += 1
+                vec.scaledMagnitudeScalar = self.scalarValue
+                vec.scaledMagnitude = vec.rawMagnitude * vec.scaledMagnitudeScalar
 
     # Adds angle to angleTable.
     @QtCore.pyqtSlot()
@@ -329,7 +332,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             'vector': {
                 'idx': self.vectorIdx,
-                'table': self.vectorTable.serialize(lambda v: v.serialize())
+                'table': self.vectorTable.serialize(lambda v: v.serialize()),
+                'scalar': self.scalarValue
             },
 
             'angle': {
@@ -387,10 +391,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.angleTable.deserialize(state['angle']['table'], lambda v: Angle(self.vectorTable[v[0]], self.vectorTable[v[1]]))
                 self.angleIdx = state['angle']['idx']
 
+                try:
+                    self.scalarValue = state['vector']['scalar']
+                except:
+                    self.scalarValue = 1
+
                 # Load pen colors
                 # TODO: adjust color selector
                 self.pd.pointPen.setColor(state['colors']['point'])
                 self.pd.vectorPen.setColor(state['colors']['vector'])
+
+                # Bandaid fix until I can get the direct vectorTable index access working
+                for name, vec in self.vectorTable:
+                    vec.scaledMagnitude = vec.rawMagnitude * self.scalarValue
+                    break
 
                 self.pd.update()
 
