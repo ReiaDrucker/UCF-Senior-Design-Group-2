@@ -23,10 +23,12 @@ class Vector(DataTableRow):
         # Create column headers.
         self['s'] = self.create_field(s, editable=False)
         s.dataChanged.connect(updater('s'))
+        s.dataChanged.connect(self.rescaleSelf)
         s.deleted.connect(self.delete)
 
         self['t'] = self.create_field(t, editable=False)
         t.dataChanged.connect(updater('t'))
+        t.dataChanged.connect(self.rescaleSelf)
         t.deleted.connect(self.delete)
 
         for field in ['dx', 'dy', 'dz']:
@@ -55,11 +57,13 @@ class Vector(DataTableRow):
         # This is technically a waste of memory but it works and is easy and probably won't be an issue
         self.depthProviderRef = s.depthProvider;
 
+    def rescaleSelf(self):
+        self.scaledMagnitude = self.rawMagnitude * self.pdRef.app.scalarValue
+
     # Calculates scalar between raw and real magnitudes and resizes all vectors.
     def scaleVectors(self):
         if (self.pdRef.app.scalarUpdateLock == 0):
             self.pdRef.app.scalarUpdateLock = 1
-
             self.scaledMagnitudeScalar = (self.scaledMagnitude/self.rawMagnitude)
             self.pdRef.app.scalarValue = self.scaledMagnitudeScalar
             #print("Scaled Magnitude Scalar =", self.pdRef.app.scalarValue)
