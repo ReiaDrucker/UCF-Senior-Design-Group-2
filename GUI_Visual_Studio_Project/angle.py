@@ -27,6 +27,10 @@ class Angle(DataTableRow):
 
         self.recalculate()
 
+        self['xy'] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
+        self['xz'] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
+        self['yz'] = self.create_field(0, float, lambda x: f'{x:.1f}', editable=False)
+
         self['D'] = QtWidgets.QPushButton('Delete')
         self['D'].clicked.connect(self.delete)
 
