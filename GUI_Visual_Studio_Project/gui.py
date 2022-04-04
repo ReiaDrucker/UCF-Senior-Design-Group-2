@@ -108,7 +108,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Raw Magnitude', 'Scaled Magnitude', ''],
                                          self.addVector, 2, 1, 1, 1,
                                          color = QtCore.Qt.black, onColorChange=changeColor(self.pd.vectorPen))
-        self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', ''], self.addAngle, 0, 2, 1, 1)
+        self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', 'xz', 'xz', 'yz'], self.addAngle, 0, 2, 1, 1)
 
         # Connect point and vector table changes to the PhotoDisplayer.
         self.pointTable.onChange.connect(self.pd.update)
