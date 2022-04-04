@@ -15,23 +15,42 @@ class DepthProvider(QtCore.QObject):
     imageScaled = QtCore.pyqtSignal(float, float)
     depthUpdated = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, fov):
         super().__init__()
 
         self.images = [None] * 4
         self.current = 0
+
+        self.disparity = None
+        self.fov = fov
+        self.baseline = 1
+
         self.depth = None
-
-        # depthUpdated.connect(debug)
-
-    def should_calculate(self):
-        return (self.images[3] is None) and (self.images[0] is not None) and (self.images[1] is not None)
 
     def get_images(self):
         return self.images
 
-    def get_depth(self):
-        return self.depth
+    def set_image(self, idx, img_or_path, calculate = True):
+        if type(img_or_path) == str:
+            self.images[idx] = cv.imread(img_or_path, cv.IMREAD_GRAYSCALE)
+        else:
+            self.images[idx] = img_or_path
+
+        if (self.images[0] is not None) and (self.images[1] is not None):
+            if calculate:
+                self.calculate_async()
+        else:
+            self.show(idx)
+
+    def get_disparity(self):
+        return self.disparity
+
+    def set_disparity(self, disparity):
+        self.disparity = disparity
+        self.update_depth_from_disparity()
+
+    def should_calculate(self):
+        return (self.images[3] is None) and (self.images[0] is not None) and (self.images[1] is not None)
 
     def calculate(self):
         # TODO: detect/display errors
@@ -42,8 +61,6 @@ class DepthProvider(QtCore.QObject):
         # stereo = matching.surface_blur(stereo, 50)
         stereo = matching.fill_matches(stereo)
 
-        # debug_frame = matching.debug_frame(stereo, 0.5)
-
         self.images[:2] = [stereo.left, stereo.right]
         new = self.images[self.current].shape
 
@@ -52,19 +69,11 @@ class DepthProvider(QtCore.QObject):
 
         rectified = disparity.rectify(*stereo)
         d_w = disparity.disparity(*stereo[:3], filter=False)
-        d = disparity.unrectify(d_w, rectified.h1, stereo.left.shape)
+        self.disparity = disparity.unrectify(d_w, rectified.h1, stereo.left.shape)
 
+        self.update_depth_from_disparity()
         # for now just using this approximation of focal length for the human eye (pixels)
         f = 3.2 * ((stereo.left.shape[0] * stereo.right.shape[1]) ** .5)
-
-        self.depth = depth.make_xyz(d, f, 1)
-        depthUpdated.emit()
-
-    def getXYZ(self, u, v):
-        if self.depth is not None:
-            return depth.get_xyz(self.depth, u, v)
-
-        return np.array([u, v, 1])
 
     def calculate_async(self):
         class Runnable(QtCore.QRunnable):
@@ -80,13 +89,23 @@ class DepthProvider(QtCore.QObject):
         r = Runnable(self)
         pool.start(r)
 
-    def debug(self):
-        print(d.shape, np.min(d), np.max(d))
+    def update_image_from_disparity(self):
+        self.images[3] = ((self.disparity - self.disparity.min()) * 255.
+                          / (self.disparity.max() - self.disparity.min())).astype(np.uint8)
 
-        fig, ax = plt.subplots(2)
-        ax[0].imshow(d)
-        ax[1].imshow(debug_frame)
-        plt.show()
+    def update_depth_from_disparity(self):
+        dims = self.images[0].shape
+        L = (dims[0] * dims[1]) ** .5
+        f = (L / 2) / math.tan(self.fov / 2)
+
+        self.depth = depth.make_xyz(self.disparity, f, self.baseline)
+        self.depthUpdated.emit()
+
+    def getXYZ(self, u, v):
+        if self.depth is not None:
+            return depth.get_xyz(self.depth, u, v)
+
+        return np.array([u, v, 1])
 
     def pixmap(self, idx):
         img = QtGui.QImage(self.images[idx].data,
@@ -98,22 +117,6 @@ class DepthProvider(QtCore.QObject):
 
     def current_pixmap(self):
         return self.pixmap(self.current)
-
-    def set_image(self, idx, img_or_path, calculate = True):
-        if type(img_or_path) == str:
-            self.images[idx] = cv.imread(img_or_path, cv.IMREAD_GRAYSCALE)
-        else:
-            self.images[idx] = img_or_path
-
-        if (self.images[0] is not None) and (self.images[1] is not None):
-            if calculate:
-                self.calculate_async()
-        else:
-            self.show(idx)
-
-    def set_depth(self, depth):
-        self.depth = depth
-        self.depthUpdated.emit()
 
     def reset(self):
         self.images = [None] * 4
@@ -128,8 +131,7 @@ import math
 
 class DepthProvider2(DepthProvider):
     def __init__(self, fov):
-        super().__init__()
-        self.fov = fov
+        super().__init__(fov)
 
     def calculate(self):
         start_time = time.time()
@@ -162,21 +164,16 @@ class DepthProvider2(DepthProvider):
                       .set_max_disp(hi)
                       .build()
                       .load_stereo(stereo))
-        d = cloud.get_disparity()
+        d_w = cloud.get_disparity()
 
-        d = pose.unrectify(d, 0)
+        self.disparity = pose.unrectify(d_w, 0)
         self.images[:2] = [pose.unrectify(stereo.get_image(i), i) for i in range(2)]
 
-        disparity_scaled = ((d - d.min()) * 255. / (d.max() - d.min())).astype(np.uint8)
-        self.images[3] = disparity_scaled
+        self.update_image_from_disparity()
 
         new = self.images[self.current].shape
         self.imageScaled.emit(new[1] / old[1], new[0] / old[0])
         self.imageChanged.emit()
 
-        L = (new[0] * new[1]) ** .5
-        f = (L / 2) / math.tan(self.fov / 2)
-
-        self.depth = depth.make_xyz(d, f, 1)
+        self.update_depth_from_disparity()
         print("--- Execution time: %s seconds ---" % (time.time() - start_time))
-        self.depthUpdated.emit()

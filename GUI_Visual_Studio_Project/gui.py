@@ -335,7 +335,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             'images': self.depthProvider.get_images(),
 
-            'depth': self.depthProvider.get_depth(),
+            'disparity': self.depthProvider.get_disparity(),
 
             'colors': {
                 'point': self.pd.pointPen.color(),
@@ -366,7 +366,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.depthProvider.reset()
                 for idx, img in enumerate(state['images']):
                     self.depthProvider.set_image(idx, img, calculate=False)
-                self.depthProvider.set_depth(state['depth'])
+                self.depthProvider.set_disparity(state['disparity'])
 
                 if self.depthProvider.should_calculate():
                     self.depthProvider.calculate()
