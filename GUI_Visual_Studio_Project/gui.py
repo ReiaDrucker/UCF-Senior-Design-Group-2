@@ -367,6 +367,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 for idx, img in enumerate(state['images']):
                     self.depthProvider.set_image(idx, img, calculate=False)
                 self.depthProvider.set_disparity(state['disparity'])
+                self.depthProvider.update_images_from_disparity()
 
                 if self.depthProvider.should_calculate():
                     self.depthProvider.calculate()
@@ -387,9 +388,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 # TODO: adjust color selector
                 self.pd.pointPen.setColor(state['colors']['point'])
                 self.pd.vectorPen.setColor(state['colors']['vector'])
-
-                # Only here since previous files didn't have an interpolated image this can and SHOULD be removed later
-                self.depthProvider.createInterpolatedImage()
 
                 self.pd.update()
             return None

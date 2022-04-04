@@ -10,6 +10,9 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from depth import matching, disparity, depth
 
+def _normalize(img):
+    return ((img - img.min()) * 255. / (img.max() - img.min())).astype(np.uint8)
+
 class DepthProvider(QtCore.QObject):
     imageChanged = QtCore.pyqtSignal()
     imageScaled = QtCore.pyqtSignal(float, float)
@@ -26,13 +29,6 @@ class DepthProvider(QtCore.QObject):
         self.baseline = 1
 
         self.depth = None
-
-    # Could probably make this more generic but we don't really need to for our case
-    def createInterpolatedImage(self):
-        if (self.images[0] is not None) and (self.images[3] is not None):
-
-            self.images[2] = (self.images[0] * 0.25 + self.images[3] * 1)
-            self.images[2] = ((self.images[2] - self.images[2].min()) * (1/(self.images[2].max() - self.images[2].min()) * 255)).astype('uint8')
 
     def get_images(self):
         return self.images
@@ -69,14 +65,15 @@ class DepthProvider(QtCore.QObject):
         stereo = matching.fill_matches(stereo)
 
         self.images[:2] = [stereo.left, stereo.right]
-        new = self.images[self.current].shape
-
-        self.imageScaled.emit(new[1] / old[1], new[0] / old[0])
-        self.imageChanged.emit()
 
         rectified = disparity.rectify(*stereo)
         d_w = disparity.disparity(*stereo[:3], filter=False)
         self.disparity = disparity.unrectify(d_w, rectified.h1, stereo.left.shape)
+        self.update_images_from_disparity()
+
+        new = self.images[self.current].shape
+        self.imageScaled.emit(new[1] / old[1], new[0] / old[0])
+        self.imageChanged.emit()
 
         self.update_depth_from_disparity()
         # for now just using this approximation of focal length for the human eye (pixels)
@@ -96,9 +93,11 @@ class DepthProvider(QtCore.QObject):
         r = Runnable(self)
         pool.start(r)
 
-    def update_image_from_disparity(self):
-        self.images[3] = ((self.disparity - self.disparity.min()) * 255.
-                          / (self.disparity.max() - self.disparity.min())).astype(np.uint8)
+    def update_images_from_disparity(self):
+        self.images[3] = _normalize(self.images[3])
+
+        self.images[2] = (self.images[0] * 0.25 + self.images[3] * 1)
+        self.images[2] = _normalize(self.images[2])
 
     def update_depth_from_disparity(self):
         dims = self.images[0].shape
@@ -176,7 +175,7 @@ class DepthProvider2(DepthProvider):
         self.disparity = pose.unrectify(d_w, 0)
         self.images[:2] = [pose.unrectify(stereo.get_image(i), i) for i in range(2)]
 
-        self.update_image_from_disparity()
+        self.update_images_from_disparity()
 
         new = self.images[self.current].shape
         self.imageScaled.emit(new[1] / old[1], new[0] / old[0])
@@ -185,5 +184,4 @@ class DepthProvider2(DepthProvider):
         self.update_depth_from_disparity()
         print("--- Execution time: %s seconds ---" % (time.time() - start_time))
 
-        self.createInterpolatedImage()
         self.depthUpdated.emit()
