@@ -4,6 +4,8 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 import time
+from scipy.optimize import least_squares
+from math import exp
 
 import os, sys
 
@@ -18,17 +20,113 @@ class DepthProvider(QtCore.QObject):
     imageScaled = QtCore.pyqtSignal(float, float)
     depthUpdated = QtCore.pyqtSignal()
 
-    def __init__(self, fov):
-        super().__init__()
-
+    def reset(self, fov, baseline):
         self.images = [None] * 4
         self.current = 0
-
         self.disparity = None
         self.fov = fov
-        self.baseline = 1
-
+        self.baseline = baseline
+        self.principal = np.array([0, 0])
+        self.disp_offset = 0
         self.depth = None
+
+    def __init__(self, app, fov, baseline = 1):
+        super().__init__()
+        self.app = app
+        self.reset(fov, baseline)
+
+    def calibrate(self):
+        if self.disparity is None:
+            return
+
+        dims = self.images[3].shape
+
+        # collect an array the points we'll use for optimization
+        pts = []
+        for name, vec in self.app.vectorTable:
+            if math.isnan(vec.measured):
+                continue
+
+            def get_point_and_disparity(pt):
+                d = self.getDisp(pt.u, pt.v)
+                return np.array([pt.u, pt.v, d])
+
+            pts += [(get_point_and_disparity(vec.s),
+                     get_point_and_disparity(vec.t),
+                     vec.measured)]
+
+        if len(pts) < 2:
+            return
+
+        # Parameters we're trying to optimize:
+        # x[0]: focal length (pixels)
+        # x[1]: baseline
+        # x[2]: x-coord of principal point
+        # x[3]: y-coord of principal point
+        # x[4]: relative offset between x-coord of principal point in right image from left image
+        #       i.e, an offset for the disparity
+
+        side = (dims[0] * dims[1]) ** .5
+        f = (side / 2) / math.tan(self.fov / 2)
+        b = self.baseline
+        x_0 = [f, b, -dims[1] / 2, -dims[0] / 2, 0]
+
+        # in this case, cost is just a vector of the differences in magnitude between
+        # our projected vectors and the expected "known" lengths
+        # and then normalized
+        def cost(x):
+            def convert_to_3d(v):
+                U = v[0] + x[2]
+                V = v[1] + x[3]
+                D = v[2] + x[4]
+                return np.array([
+                    U * x[1] / D,
+                    V * x[1] / D,
+                    x[0] * x[1] / D,
+                ])
+
+            ret = []
+            for s, t, expected in pts:
+                S = convert_to_3d(s)
+                T = convert_to_3d(t)
+                dist = (S - T)
+
+                # signed magnitude if the points are flipped in our projection
+                sign = 1
+                if (d[0] < 0) != (s[0] < t[0]) or (d[1] < 0) != (s[1] < t[1]):
+                    sign = -1
+                dist = (sign * d.dot(d)) ** 0.5
+
+                ret += [dist / expected - 1]
+
+            return np.array(ret)
+
+        # boundaries:
+        radius = 100 # only vary the center points by up to 100 pixels to make this easier (TODO: should be percent)
+        x_lo = [300, 0, x_0[2] - radius, x_0[3] - radius, -np.inf]
+        x_hi = [np.inf, np.inf, x_0[2] + radius, x_0[3] + radius, np.inf]
+
+        res = least_squares(cost, x_0, xtol=None, ftol=None, bounds=(x_lo, x_hi))
+
+        print(res)
+        print('final cost', cost(res.x))
+
+        # extract the parameters from the result
+        self.baseline = res.x[1]
+        f = res.x[0]
+        self.fov = 2 * math.atan((side / 2) / f)
+        self.principal = np.array([-res.x[2], -res.x[3]])
+        self.disp_offset = res.x[4]
+
+        self.update_depth_from_disparity()
+
+        print('baseline:', self.baseline, 'fov:', self.fov)
+
+    def get_fov(self):
+        return self.fov
+
+    def get_baseline(self):
+        return self.baseline
 
     def get_images(self):
         return self.images
@@ -75,9 +173,9 @@ class DepthProvider(QtCore.QObject):
         self.imageScaled.emit(new[1] / old[1], new[0] / old[0])
         self.imageChanged.emit()
 
+        self.principal = np.array([disparity.shape[1] / 2, disparity.shape[0] / 2])
+
         self.update_depth_from_disparity()
-        # for now just using this approximation of focal length for the human eye (pixels)
-        f = 3.2 * ((stereo.left.shape[0] * stereo.right.shape[1]) ** .5)
 
     def calculate_async(self):
         class Runnable(QtCore.QRunnable):
@@ -103,15 +201,31 @@ class DepthProvider(QtCore.QObject):
         dims = self.images[0].shape
         L = (dims[0] * dims[1]) ** .5
         f = (L / 2) / math.tan(self.fov / 2)
+        print('focal length (px):', f)
 
         self.depth = depth.make_xyz(self.disparity, f, self.baseline)
         self.depthUpdated.emit()
 
     def getXYZ(self, u, v):
         if self.depth is not None:
-            return depth.get_xyz(self.depth, u, v)
+            dims = self.images[0].shape
+            L = (dims[0] * dims[1]) ** .5
+            f = (L / 2) / math.tan(self.fov / 2)
+            disp = depth.get_xyz(self.disparity, u, v) + self.disp_offset
+            return np.array([
+                (u - self.principal[0]) * self.baseline / disp,
+                (v - self.principal[1]) * self.baseline / disp,
+                f * self.baseline / disp,
+                disp
+            ])
 
-        return np.array([u, v, 1])
+        return np.array([u, v, 1, 0])
+
+    def getDisp(self, u, v):
+        # TODO
+        # should probably rename/move depth.get_xyz to util.image_interp,
+        # as it can clearly do more than just interp depth
+        return depth.get_xyz(self.disparity, u, v)
 
     def pixmap(self, idx):
         img = QtGui.QImage(self.images[idx].data,
@@ -124,9 +238,6 @@ class DepthProvider(QtCore.QObject):
     def current_pixmap(self):
         return self.pixmap(self.current)
 
-    def reset(self):
-        self.images = [None] * 4
-
     def show(self, idx):
         if idx < len(self.images) and self.images[idx] is not None:
             self.current = idx
@@ -136,8 +247,8 @@ import depth_algo
 import math
 
 class DepthProvider2(DepthProvider):
-    def __init__(self, fov):
-        super().__init__(fov)
+    def __init__(self, app, fov, baseline = 1):
+        super().__init__(app, fov, baseline)
 
     def calculate(self):
         start_time = time.time()

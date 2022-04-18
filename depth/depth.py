@@ -32,6 +32,8 @@ def make_xyz(disparity, f, b):
 
     uvd = np.stack((u, v, disparity), -1)
 
+    print(uvd)
+
     x, y, z = uvd_to_xyz(uvd, f, b)
     return np.stack((x, y, z), -1)
 
@@ -51,6 +53,7 @@ def get_xyz(depth, u, v):
         if a > c:
             return c;
         return a
+
     u0 = bound(u0, 0, w-1)
     u1 = bound(u1, 0, w-1)
     v0 = bound(v0, 0, h-1)
