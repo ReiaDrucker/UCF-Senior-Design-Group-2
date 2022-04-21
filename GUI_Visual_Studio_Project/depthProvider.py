@@ -91,11 +91,15 @@ class DepthProvider(QtCore.QObject):
                 T = convert_to_3d(t)
                 dist = (S - T)
 
+                print(dist, expected)
+
                 # signed magnitude if the points are flipped in our projection
                 sign = 1
-                if (d[0] < 0) != (s[0] < t[0]) or (d[1] < 0) != (s[1] < t[1]):
+                if (dist[0] < 0) != (s[0] < t[0]) or (dist[1] < 0) != (s[1] < t[1]):
                     sign = -1
-                dist = (sign * d.dot(d)) ** 0.5
+                dist = sign * dist.dot(dist) ** 0.5
+
+                print(dist, expected)
 
                 ret += [dist / expected - 1]
 
