@@ -91,15 +91,11 @@ class DepthProvider(QtCore.QObject):
                 T = convert_to_3d(t)
                 dist = (S - T)
 
-                print(dist, expected)
-
                 # signed magnitude if the points are flipped in our projection
                 sign = 1
                 if (dist[0] < 0) != (s[0] < t[0]) or (dist[1] < 0) != (s[1] < t[1]):
                     sign = -1
                 dist = sign * dist.dot(dist) ** 0.5
-
-                print(dist, expected)
 
                 ret += [dist / expected - 1]
 
@@ -107,10 +103,11 @@ class DepthProvider(QtCore.QObject):
 
         # boundaries:
         radius = 100 # only vary the center points by up to 100 pixels to make this easier (TODO: should be percent)
-        x_lo = [300, 0, x_0[2] - radius, x_0[3] - radius, -np.inf]
+        x_lo = [0, 0, x_0[2] - radius, x_0[3] - radius, -np.inf]
         x_hi = [np.inf, np.inf, x_0[2] + radius, x_0[3] + radius, np.inf]
 
-        res = least_squares(cost, x_0, xtol=None, ftol=None, bounds=(x_lo, x_hi))
+        x_0 = [f, b, -dims[1] / 2, -dims[0] / 2, 0]
+        res = least_squares(cost, x_0, xtol=None, ftol=None, bounds=(x_lo, x_hi), max_nfev=5000)
 
         print(res)
         print('final cost', cost(res.x))
@@ -124,7 +121,7 @@ class DepthProvider(QtCore.QObject):
 
         self.update_depth_from_disparity()
 
-        print('baseline:', self.baseline, 'fov:', self.fov)
+        print('baseline:', self.baseline, 'fov:', self.fov * 180 / math.pi, 'deg')
 
     def get_fov(self):
         return self.fov
@@ -287,8 +284,13 @@ class DepthProvider2(DepthProvider):
                       .load_stereo(stereo))
         d_w = cloud.get_disparity()
 
-        self.disparity = pose.unrectify(d_w, 0)
-        self.images[:2] = [pose.unrectify(stereo.get_image(i), i) for i in range(2)]
+        def maybe_unrectify(img, idx):
+            # return img
+            return pose.unrectify(img, idx)
+
+        self.disparity = maybe_unrectify(d_w, 0)
+        self.images[3] = self.disparity
+        self.images[:2] = [maybe_unrectify(stereo.get_image(i), i) for i in range(2)]
 
         self.update_images_from_disparity()
 

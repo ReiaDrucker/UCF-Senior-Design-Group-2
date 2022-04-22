@@ -112,6 +112,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # Connect point and vector table changes to the PhotoDisplayer and DepthProvider.
         self.pointTable.onChange.connect(self.pd.update)
+        self.pointTable.itemSelectionChanged.connect(self.pd.update)
         self.vectorTable.onChange.connect(self.pd.update)
 
         # Display is turned off until 2 images are uploaded.

@@ -32,8 +32,6 @@ def make_xyz(disparity, f, b):
 
     uvd = np.stack((u, v, disparity), -1)
 
-    print(uvd)
-
     x, y, z = uvd_to_xyz(uvd, f, b)
     return np.stack((x, y, z), -1)
 
