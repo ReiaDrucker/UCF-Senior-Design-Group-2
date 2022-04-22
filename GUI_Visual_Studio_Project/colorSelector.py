@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+# Stores colors for the PhotoDisplayer.
 class ColorSelector(QtWidgets.QComboBox):
     color_map = {
         'White': QtCore.Qt.white,

@@ -3,6 +3,7 @@ import sys
 
 import traceback
 
+# Stores data for a single table cell.
 class DataTableItem(QtWidgets.QTableWidgetItem):
     class Signaller(QtCore.QObject):
         signal = QtCore.pyqtSignal(object)
@@ -19,6 +20,7 @@ class DataTableItem(QtWidgets.QTableWidgetItem):
 
         self.setValue(value)
 
+    # Changes cell text and alerts the change.
     def setValue(self, value):
         self.value = value
 
@@ -30,6 +32,7 @@ class DataTableItem(QtWidgets.QTableWidgetItem):
 
         self.dataChanged.trigger(self)
 
+    # Changes cell value.
     def setData(self, role, value):
         if role == QtCore.Qt.EditRole:
             try:
@@ -42,7 +45,9 @@ class DataTableItem(QtWidgets.QTableWidgetItem):
         else:
             super().setData(role, value)
 
+# Stores data for table row.
 class DataTableRow(QtCore.QObject):
+    # Data signals for when a row is deleted or selected.
     deleted = QtCore.pyqtSignal()
     selected = QtCore.pyqtSignal()
 
@@ -85,6 +90,7 @@ class DataTableRow(QtCore.QObject):
 
         super().__dict__[key] = value
 
+    # Creates field/cell for this row.
     def create_field(self, value='', from_string=lambda x: x, to_string=str, editable=True):
         item = DataTableItem(value, from_string, to_string)
 
@@ -94,6 +100,7 @@ class DataTableRow(QtCore.QObject):
 
         return item
 
+    # Deletes row from table.
     def delete(self):
         self.deleted.emit()
         if self.name is not None:
@@ -113,7 +120,9 @@ class DataTableRow(QtCore.QObject):
     def __str__(self):
         return str({k: str(v.value) for k,v in self.items.items() if hasattr(v, 'value')})
 
+# Stores data for whole data table.
 class DataTable(QtWidgets.QTableWidget):
+    # Signal for any table change.
     onChange = QtCore.pyqtSignal()
 
     def __init__(self, parent = None):
