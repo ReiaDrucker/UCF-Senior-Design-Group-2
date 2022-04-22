@@ -9,6 +9,7 @@ from photoDisplayer import *
 import numpy as np
 import os
 
+# Holds the PhotoDisplayer and includes zoom capabilities.
 class photoDisplayerContainer(QtWidgets.QGraphicsView):
     factor = 2.0
 
@@ -25,12 +26,14 @@ class photoDisplayerContainer(QtWidgets.QGraphicsView):
         self.pd = pd
         self.scene.addWidget(self.pd)
 
+    # Adds point on left mouse click.
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             x = self.mapToScene(event.pos()).x()
             y = self.mapToScene(event.pos()).y()
             self.pd.addPoint(x, y)
 
+    # Zoom functions.
     def zoomIn(self):
         self.zoom(self.factor)
 
@@ -43,6 +46,7 @@ class photoDisplayerContainer(QtWidgets.QGraphicsView):
     def resetZoom(self):
         self.resetTransform()
 
+    # Fits the PhotoDisplayer into the window.
     def fitToWindow(self):
         self.setSceneRect(QRectF(self.pd.rect()))
         self.fitInView(self.sceneRect(), QtCore.Qt.KeepAspectRatio)

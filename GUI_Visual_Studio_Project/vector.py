@@ -12,6 +12,7 @@ class Vector(DataTableRow):
     def __init__(self, s, t):
         super().__init__()
 
+        # Updates data upon table cell change.
         def updater(key):
             @QtCore.pyqtSlot()
             def func():
@@ -43,12 +44,15 @@ class Vector(DataTableRow):
 
         self.recalculate()
 
+        # Place delete button next to every vector row.
         self['D'] = QtWidgets.QPushButton('Delete')
         self['D'].clicked.connect(self.delete)
 
+    # Dot product between two vectors.
     def dot(self, o):
         return self.dx * o.dx + self.dy * o.dy + self.dz * o.dz
 
+    # Recalculates vector properties.
     def recalculate(self):
         self.dx = self.t.x - self.s.x
         self.dy = self.t.y - self.s.y
