@@ -27,6 +27,7 @@ struct PointCloud {
     // special options for Local Exp
     int max_iters = 10;
     int pm_iters = 5;
+    float lambda = 1.0f;
     bool use_gssim_cost = true;
     int gssim_patch_size = 7;
     std::array<float, 3> gssim_consts = {0.9, 0.1, 0.2};
@@ -41,6 +42,7 @@ struct PointCloud {
     Builder& set_sigma_color(double v) { sigma_color = v; return *this; }
     Builder& set_max_iters(int v) { max_iters = v; return *this; }
     Builder& set_pm_iters(int v) { pm_iters = v; return *this; }
+    Builder& set_lambda(float v) { lambda = v; return *this; }
     Builder& set_use_gssim_cost(bool v) { use_gssim_cost = v; return *this; }
     Builder& set_gssim_patch_size(int v) { gssim_patch_size = v; return *this; }
     Builder& set_gssim_consts(std::array<float, 3> v) { gssim_consts = v; return *this; }

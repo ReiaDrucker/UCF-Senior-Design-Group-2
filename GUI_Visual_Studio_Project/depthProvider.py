@@ -106,8 +106,15 @@ class DepthProvider(QtCore.QObject):
         x_lo = [0, 0, x_0[2] - radius, x_0[3] - radius, -np.inf]
         x_hi = [np.inf, np.inf, x_0[2] + radius, x_0[3] + radius, np.inf]
 
-        x_0 = [f, b, -dims[1] / 2, -dims[0] / 2, 0]
-        res = least_squares(cost, x_0, xtol=None, ftol=None, bounds=(x_lo, x_hi), max_nfev=5000)
+        best = None
+        for fov in np.arange(20, 90, 10):
+            f = (side / 2) / math.tan(fov * math.pi / 360.)
+            x_0 = [f, b, -dims[1] / 2, -dims[0] / 2, 0]
+            res = least_squares(cost, x_0, xtol=None, ftol=None, bounds=(x_lo, x_hi), max_nfev=5000)
+            if best is None or best.cost > res.cost:
+                best = res
+
+        res = best
 
         print(res)
         print('final cost', cost(res.x))
@@ -257,8 +264,9 @@ class DepthProvider2(DepthProvider):
 
         old = self.images[self.current].shape
 
+        target_scale = min(max(self.images[0].shape[0], self.images[0].shape[1]), 2000)
         stereo = (depth_algo.ImagePairBuilder()
-                       .set_target_scale(2000)
+                       .set_target_scale(target_scale)
                        .build()
                        .load_images(self.images[0], self.images[1])
                        .fill_matches())
@@ -274,8 +282,11 @@ class DepthProvider2(DepthProvider):
         lo = math.floor(q1 - iqr * 1.5)
         hi = math.ceil(q3 + iqr * 1.5)
 
+        print(lo, hi)
+
         cloud = (depth_algo.PointCloudBuilder()
                       .set_matcher(depth_algo.PointCloudMatcherType.LOCAL_EXP)
+                      # .set_lambda(0.1)
                       .set_gssim_consts([.9, .1, .2])
                       .set_gssim_patch_size(5)
                       .set_min_disp(lo)
