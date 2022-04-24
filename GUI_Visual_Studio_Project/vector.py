@@ -3,6 +3,7 @@ from MagPopup import *
 
 from dataTable import DataTableRow
 import math
+import numpy as np
 
 class Vector(DataTableRow):
     # Signal to check if any data in the vector has been changed.
@@ -48,9 +49,8 @@ class Vector(DataTableRow):
         self['D'] = QtWidgets.QPushButton('Delete')
         self['D'].clicked.connect(self.delete)
 
-    # Dot product between two vectors.
-    def dot(self, o):
-        return self.dx * o.dx + self.dy * o.dy + self.dz * o.dz
+    def to_vec(self):
+        return np.array([self.dx, self.dy, self.dz])
 
     # Recalculates vector properties.
     def recalculate(self):
