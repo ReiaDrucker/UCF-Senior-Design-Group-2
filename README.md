@@ -14,6 +14,7 @@ UCF Senior Design Project for Stereogram Depth Analysis
 9. If the Scripts folder of your new Python installation is not on any line, click the "New" button and add the Scripts directory (e.g. "C:\Program Files\Python310\Scripts\").
 10. If the directory of Visual Studio's CMake is not on any line, click the "New" button and add it (e.g. "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin")
 11. If the directory of Visual Studio's MSVC executable is not on any line, click the. "New" button and add it (e.g. "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\bin\Hostx86\x64").
+12. To verify these are installed and usable by visual studio, open the Start menu and type "developer command prompt for VS 2022" and open that option. Enter "python --version", "pip --version" and "cmake --version" to make sure they're usable by visual studio and that the versions match what you installed.
 
 ### Cloning and pulling the repository
 1. Create a Github account if you don't already have one.
@@ -28,4 +29,11 @@ UCF Senior Design Project for Stereogram Depth Analysis
 10. Make sure your Current Branch is set to "main" and click the "Fetch origin" button at the top to ensure you have everything up to date. If there are updates, click the resulting "Pull" button.
 
 ### Build
-1. In Visual Studio 2022
+1. Open visual studio and open the "SDF.sln" file in the "GUI_Visual_Studio_Project" folder in the repository you cloned to your computer.
+2. Ensure Python 3.10 is being used by going to Tools -> Python -> Python Environments.
+3. If Python 3.10 is not shown, add the environment to Visual Studio manually in the same section.
+4. Go to Tools -> Command Line -> Developer Command Prompt
+5. Navigate to the "depth2" folder of the repository you cloned to your computer.
+6. Enter the command "pip install ." This will take a while.
+7. After the install is done, go back to Visual Studio and run "gui.py".
+8. When the command prompt opens, if there is any error involving a missing Python library, enter the command "pip install <missing library>". Repeat steps 7 and 8 until the GUI opens.
