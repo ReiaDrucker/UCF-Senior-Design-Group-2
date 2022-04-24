@@ -33,7 +33,7 @@ UCF Senior Design Project for Stereogram Depth Analysis
 2. Ensure Python 3.10 is being used by going to Tools -> Python -> Python Environments.
 3. If Python 3.10 is not shown, add the environment to Visual Studio manually in the same section.
 4. Go to Tools -> Command Line -> Developer Command Prompt
-5. Navigate to the "depth2" folder of the repository you cloned to your computer.
+5. Navigate to the "depth2" folder of the repository you cloned to your computer in the developer command prompt.
 6. Enter the command "pip install ." This will take a while.
 7. After the install is done, go back to Visual Studio and run "gui.py".
 8. When the command prompt opens, if there is any error involving a missing Python library, enter the command "pip install <missing library>". Repeat steps 7 and 8 until the GUI opens.
