@@ -136,8 +136,6 @@ class DepthProvider(QtCore.QObject):
     def get_baseline(self):
         return self.baseline
 
-        # depthUpdated.connect(debug)
-
     # Could probably make this more generic but we don't really need to for our case
     def createInterpolatedImage(self):
         if (self.images[0] is not None) and (self.images[3] is not None):
