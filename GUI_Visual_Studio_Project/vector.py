@@ -21,15 +21,19 @@ class Vector(DataTableRow):
                 self.recalculate()
             return func
 
+
         # Create column headers.
         self['s'] = self.create_field(s, editable=False)
         s.dataChanged.connect(updater('s'))
         s.sourceChanged.connect(self.sourceChanged.emit)
+
         s.deleted.connect(self.delete)
 
         self['t'] = self.create_field(t, editable=False)
         t.dataChanged.connect(updater('t'))
+
         t.sourceChanged.connect(self.sourceChanged.emit)
+
         t.deleted.connect(self.delete)
 
         for field in ['dx', 'dy', 'dz']:
@@ -37,6 +41,7 @@ class Vector(DataTableRow):
 
         # Magnitude field.
         self['dist'] = self.create_field(0, float, lambda x: f'{x:.2f}', editable=False)
+
 
         # Field for inputting known lengths
         self['measured'] = self.create_field(math.nan, float, lambda x: f'{x:.2f}', editable=True)
@@ -52,6 +57,7 @@ class Vector(DataTableRow):
     def to_vec(self):
         return np.array([self.dx, self.dy, self.dz])
 
+
     # Recalculates vector properties.
     def recalculate(self):
         self.dx = self.t.x - self.s.x
@@ -59,7 +65,7 @@ class Vector(DataTableRow):
         self.dz = self.t.z - self.s.z
 
         dist = (self.dx ** 2 + self.dy ** 2 + self.dz ** 2) ** .5
-        self.dist = dist
+        self.rawMagnitude = dist
 
         self.dataChanged.emit()
 

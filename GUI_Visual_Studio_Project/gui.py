@@ -105,10 +105,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pointTable = self.addTable(['u', 'v', 'd', 'x', 'y', 'z', ''],
                                         self.addPoint, 2, 0, 1, 1,
                                         color = QtCore.Qt.red, onColorChange=changeColor(self.pd.pointPen))
+
         self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Magnitude', 'Measured Mag.', ''],
                                          self.addVector, 2, 1, 1, 1,
                                          color = QtCore.Qt.black, onColorChange=changeColor(self.pd.vectorPen))
         self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', 'xz', 'xy', 'yz'], self.addAngle, 0, 2, 1, 1)
+
 
         # Connect point and vector table changes to the PhotoDisplayer and DepthProvider.
         self.pointTable.onChange.connect(self.pd.update)
@@ -129,6 +131,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.centralwidget.setLayout(self.layout)
 
+        # Boolean for updating scaled magnitudes of vectors.
+        self.scalarUpdateLock = 0
+
+        self.scalarValue = 1
+
     # Toggles table editing on or off.
     @QtCore.pyqtSlot()
     def toggleTableEdits(self):
@@ -143,7 +150,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.pointTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.vectorTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
             self.angleTable.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
-        print("Toggled Edits", turned_on)
+        #print("Toggled Edits", turned_on)
 
     # Load depthProvider images into the PhotoDisplayer.
     @QtCore.pyqtSlot()
@@ -196,7 +203,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]])
                 self.vectorTable[createLabel(self.vectorIdx)] = vec
                 self.vectorIdx += 1
+
                 vec.sourceChanged.connect(self.depthProvider.calibrate)
+
 
     # Adds angle to angleTable.
     @QtCore.pyqtSlot()
@@ -327,7 +336,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             'vector': {
                 'idx': self.vectorIdx,
-                'table': self.vectorTable.serialize(lambda v: v.serialize())
+                'table': self.vectorTable.serialize(lambda v: v.serialize()),
+                'scalar': self.scalarValue
             },
 
             'angle': {
@@ -393,7 +403,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.pointTable.deserialize(state['point']['table'], lambda v: Point(self.depthProvider, v[0], v[1]))
                 self.pointIdx = state['point']['idx']
 
-                self.vectorTable.deserialize(state['vector']['table'], lambda v: Vector(self.pointTable[v[0]], self.pointTable[v[1]]))
+                self.vectorTable.deserialize(state['vector']['table'], lambda v: Vector(self.pointTable[v[0]], self.pointTable[v[1]], self.pd))
                 self.vectorIdx = state['vector']['idx']
 
                 for name, vec in self.vectorTable:
@@ -402,10 +412,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.angleTable.deserialize(state['angle']['table'], lambda v: Angle(self.vectorTable[v[0]], self.vectorTable[v[1]]))
                 self.angleIdx = state['angle']['idx']
 
+                try:
+                    self.scalarValue = state['vector']['scalar']
+                except:
+                    self.scalarValue = 1
+
                 # Load pen colors
                 # TODO: adjust color selector
                 self.pd.pointPen.setColor(state['colors']['point'])
                 self.pd.vectorPen.setColor(state['colors']['vector'])
+
+                # Bandaid fix until I can get the direct vectorTable index access working
+                for name, vec in self.vectorTable:
+                    vec.scaledMagnitude = vec.rawMagnitude * self.scalarValue
+                    break
+
+                # Only here since previous files didn't have an interpolated image this can and SHOULD be removed later
+                self.depthProvider.createInterpolatedImage()
 
                 self.pd.update()
             return None

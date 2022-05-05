@@ -57,5 +57,6 @@ class Angle(DataTableRow):
         self.xz = calc_angle(A, B, [1,0,1])
         self.yz = calc_angle(A, B, [0,1,1])
 
+
     def serialize(self):
         return self.a.name, self.b.name
