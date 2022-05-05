@@ -49,7 +49,7 @@ PointCloud& PointCloud::load_stereo(ImagePair& stereo) {
   }
 
   else if(config.MATCHER == MatcherType::LOCAL_EXP) {
-    Parameters params(1.0f, 20, "GF", .001f);
+    Parameters params(config.lambda, 20, "GF", .001f);
 
     std::array<cv::Mat, 2> img;
     img[0] = stereo.img[0];
@@ -132,6 +132,7 @@ void PointCloud::init_pybind(py::module_& m) {
     .def("set_sigma_color", &PointCloud::Builder::set_sigma_color)
     .def("set_max_iters", &PointCloud::Builder::set_max_iters)
     .def("set_pm_iters", &PointCloud::Builder::set_pm_iters)
+    .def("set_lambda", &PointCloud::Builder::set_lambda)
     .def("set_use_gssim_cost", &PointCloud::Builder::set_use_gssim_cost)
     .def("set_gssim_consts", &PointCloud::Builder::set_gssim_consts)
     .def("set_gssim_patch_size", &PointCloud::Builder::set_gssim_patch_size)

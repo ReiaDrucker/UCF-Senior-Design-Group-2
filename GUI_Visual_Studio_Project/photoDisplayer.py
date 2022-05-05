@@ -79,7 +79,8 @@ class PhotoDisplayer(QWidget):
         # Draw all points
         for name, point in self.app.pointTable:
             # TODO: resize on selection?
-            sz = 1
+            selected = self.app.pointTable.item(point.get_row(), 0).isSelected()
+            sz = 5 if selected else 1
             painter.drawEllipse(QPointF(point.u, point.v), sz, sz)
 
 if __name__ == '__main__':

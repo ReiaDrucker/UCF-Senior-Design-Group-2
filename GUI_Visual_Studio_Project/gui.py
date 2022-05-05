@@ -42,7 +42,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lastDir = None
 
         # Initialize Depth Provider.
-        self.depthProvider = DepthProvider2(30 * math.pi / 180)
+        self.depthProvider = DepthProvider2(self, 45 * math.pi / 180)
 
     # Creates new table with flexible properties.
     def addTable(self, columns, onNew, x, y, w, h, color=None, onColorChange=None):
@@ -102,16 +102,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return f
 
         # Initialize point, vector, and angle tables.
-        self.pointTable = self.addTable(['u', 'v', 'x', 'y', 'z', ''],
+        self.pointTable = self.addTable(['u', 'v', 'd', 'x', 'y', 'z', ''],
                                         self.addPoint, 2, 0, 1, 1,
                                         color = QtCore.Qt.red, onColorChange=changeColor(self.pd.pointPen))
-        self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Raw Magnitude', 'Scaled Magnitude', ''],
+
+        self.vectorTable = self.addTable(['Start Point', 'End Point', 'dx', 'dy', 'dz', 'Magnitude', 'Measured Mag.', ''],
                                          self.addVector, 2, 1, 1, 1,
                                          color = QtCore.Qt.black, onColorChange=changeColor(self.pd.vectorPen))
-        self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', 'xz', 'xz', 'yz'], self.addAngle, 0, 2, 1, 1)
+        self.angleTable = self.addTable(['Vector 1', 'Vector 2', 'Angle', 'xz', 'xy', 'yz'], self.addAngle, 0, 2, 1, 1)
 
-        # Connect point and vector table changes to the PhotoDisplayer.
+
+        # Connect point and vector table changes to the PhotoDisplayer and DepthProvider.
         self.pointTable.onChange.connect(self.pd.update)
+        self.pointTable.itemSelectionChanged.connect(self.pd.update)
         self.vectorTable.onChange.connect(self.pd.update)
 
         # Display is turned off until 2 images are uploaded.
@@ -197,11 +200,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             # Add vector to the table if two points were selected.
             if len(selected) == 2:
-                vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]], self.pd)
+                vec = Vector(self.pointTable[selected[0]], self.pointTable[selected[1]])
                 self.vectorTable[createLabel(self.vectorIdx)] = vec
                 self.vectorIdx += 1
-                vec.scaledMagnitudeScalar = self.scalarValue
-                vec.scaledMagnitude = vec.rawMagnitude * vec.scaledMagnitudeScalar
+
+                vec.sourceChanged.connect(self.depthProvider.calibrate)
+
 
     # Adds angle to angleTable.
     @QtCore.pyqtSlot()
@@ -235,7 +239,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        
+
         # Creates action to execute a function.
         def create_action(name, slot, desc = None, shortcut = None):
             action = QtWidgets.QAction(name, MainWindow)
@@ -304,7 +308,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.update()
 
         return f
-    
+
     # Displays image in the depthProvider.
     def displayImage(self, selection):
         self.depthProvider.show(selection)
@@ -343,11 +347,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             'images': self.depthProvider.get_images(),
 
-            'depth': self.depthProvider.get_depth(),
+            'disparity': self.depthProvider.get_disparity(),
 
             'colors': {
                 'point': self.pd.pointPen.color(),
                 'vector': self.pd.vectorPen.color()
+            },
+
+            'camera_params': {
+                'fov': self.depthProvider.get_fov(),
+                'baseline': self.depthProvider.get_baseline()
             }
         }
 
@@ -370,11 +379,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
             with open(filePath[0], 'rb') as handle:
                 state = pickle.load(handle)
 
+                if 'camera_params' not in state.keys():
+                    state['camera_params'] = {
+                        'fov': 30 * math.pi / 180,
+                        'baseline': 1
+                    }
+
                 # Load image path data
-                self.depthProvider.reset()
+                self.depthProvider.reset(state['camera_params']['fov'],
+                                         state['camera_params']['baseline'])
+
                 for idx, img in enumerate(state['images']):
                     self.depthProvider.set_image(idx, img, calculate=False)
-                self.depthProvider.set_depth(state['depth'])
+                self.depthProvider.set_disparity(state['disparity'])
+                self.depthProvider.update_images_from_disparity()
 
                 if self.depthProvider.should_calculate():
                     self.depthProvider.calculate()
@@ -387,6 +405,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
                 self.vectorTable.deserialize(state['vector']['table'], lambda v: Vector(self.pointTable[v[0]], self.pointTable[v[1]], self.pd))
                 self.vectorIdx = state['vector']['idx']
+
+                for name, vec in self.vectorTable:
+                    vec.sourceChanged.connect(self.depthProvider.calibrate)
 
                 self.angleTable.deserialize(state['angle']['table'], lambda v: Angle(self.vectorTable[v[0]], self.vectorTable[v[1]]))
                 self.angleIdx = state['angle']['idx']

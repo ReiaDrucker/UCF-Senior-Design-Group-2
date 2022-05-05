@@ -51,6 +51,7 @@ def get_xyz(depth, u, v):
         if a > c:
             return c;
         return a
+
     u0 = bound(u0, 0, w-1)
     u1 = bound(u1, 0, w-1)
     v0 = bound(v0, 0, h-1)
