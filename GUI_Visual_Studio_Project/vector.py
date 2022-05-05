@@ -65,7 +65,7 @@ class Vector(DataTableRow):
         self.dz = self.t.z - self.s.z
 
         dist = (self.dx ** 2 + self.dy ** 2 + self.dz ** 2) ** .5
-        self.rawMagnitude = dist
+        self.dist = dist
 
         self.dataChanged.emit()
 
